@@ -95,6 +95,7 @@
 #include "Saturation/ExtensionalityClauseContainer.hpp"
 
 #include "Shell/AnswerExtractor.hpp"
+#include "Shell/Dedukti.hpp"
 #include "Shell/Options.hpp"
 #include "Shell/Statistics.hpp"
 #include "Shell/UIHelper.hpp"
@@ -583,6 +584,9 @@ void SaturationAlgorithm::onClauseReduction(Clause* cl, Clause** replacements, u
       onParenthood(replacement, premStack.pop());
     }
   }
+
+  if(!replacement && env.options->proof() == Options::Proof::DEDUKTI)
+    Dedukti::unregisterUnit(cl);
 }
 
 
