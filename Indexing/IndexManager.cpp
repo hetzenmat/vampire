@@ -223,6 +223,12 @@ Index* IndexManager::create(IndexType t)
     isGenerating = false;
     break;
 
+  case MAXIMAL_FW_SUBSUMPTION_SUBST_TREE:
+    is=new LiteralSubstitutionTree();
+    res=new MaximalLiteralForwardSubsumptionIndex(is, _alg->getOrdering());
+    isGenerating = false;
+    break;
+
   case FSD_SUBST_TREE:
     is = new LiteralSubstitutionTree();
     res = new FSDLiteralIndex(is);

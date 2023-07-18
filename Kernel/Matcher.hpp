@@ -72,6 +72,7 @@ public:
   static bool match(Literal* base, Literal* instance, bool complementary, Binder& binder)
   {
     CALL("MatchingUtils::match(Literal*, Literal*, bool, Binder&)");
+    TIME_TRACE("match");
 
     if(!Literal::headersMatch(base,instance,complementary)) {
       return false;

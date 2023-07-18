@@ -98,6 +98,23 @@ protected:
   void handleClause(Clause* c, bool adding) override;
 };
 
+class MaximalLiteralForwardSubsumptionIndex
+: public LiteralIndex
+{
+public:
+  CLASS_NAME(MaximalLiteralForwardSubsumptionIndex);
+  USE_ALLOCATOR(MaximalLiteralForwardSubsumptionIndex);
+
+  MaximalLiteralForwardSubsumptionIndex(LiteralIndexingStructure* is, Ordering& ord)
+    : LiteralIndex(is), _ord(ord)
+  { }
+
+protected:
+  void handleClause(Clause* c, bool adding) override;
+
+  Ordering& _ord;
+};
+
 class FSDLiteralIndex
 : public LiteralIndex
 {

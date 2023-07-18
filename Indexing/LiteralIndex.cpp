@@ -123,6 +123,34 @@ void FwSubsSimplifyingLiteralIndex::handleClause(Clause* c, bool adding)
   handleLiteral(best, c, adding);
 }
 
+inline bool GorGEorIC(const TriangularArray<Ordering::Result>& array, unsigned i, unsigned j) {
+  Ordering::Result comp = i > j ? array.get(i,j) : array.get(j,i);
+  if (i > j) {
+    return comp == Ordering::Result::LESS || comp == Ordering::Result::LESS_EQ || comp == Ordering::Result::INCOMPARABLE;
+  } else {
+    return comp == Ordering::Result::GREATER || comp == Ordering::Result::GREATER_EQ || comp == Ordering::Result::INCOMPARABLE;
+  }
+}
+
+void MaximalLiteralForwardSubsumptionIndex::handleClause(Clause* c, bool adding)
+{
+  CALL("MaximalLiteralForwardSubsumptionIndex::handleClause");
+
+  const auto& lo = c->getLiteralOrder(_ord);
+  for (unsigned i = 0; i < c->length(); i++) {
+    auto maximal = true;
+    for (unsigned j = 0; j < c->length(); j++) {
+      if (i != j && !GorGEorIC(lo,i,j)) {
+        maximal = false;
+        break;
+      }
+    }
+    if (maximal) {
+      handleLiteral((*c)[i], c, adding);
+    }
+  }
+}
+
 void FSDLiteralIndex::handleClause(Clause* c, bool adding)
 {
   CALL("FSDLiteralIndex::handleClause");

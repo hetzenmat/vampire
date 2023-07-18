@@ -70,8 +70,9 @@ public:
     return ((_2sideMinus1+1)*(_2sideMinus1+3)) / 8;
   }
 
-  T& get(size_t x, size_t y)
+  T& get(size_t x, size_t y) const
   {
+    CALL("TriangularArray::get");
     ASS_GE(x,y);
     ASS_L(x,(_2sideMinus1+1)/2);
     ASS_L(x + (y*(_2sideMinus1-y))/2, _capacity);
@@ -80,6 +81,7 @@ public:
 
   void set(size_t x, size_t y, T val)
   {
+    CALL("TriangularArray::set");
     ASS_GE(x,y);
     ASS_L(x,(_2sideMinus1+1)/2);
     ASS_L(x + (y*(_2sideMinus1-y))/2, _capacity);

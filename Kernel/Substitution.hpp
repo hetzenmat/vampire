@@ -53,6 +53,7 @@ public:
   void unbind(int var);
   void reset();
   bool isEmpty() const { return _map.isEmpty(); }
+  DHMap<unsigned,TermList>::Iterator iterator() const { return DHMap<unsigned,TermList>::Iterator(_map); }
 
   /** applies the function f to every term */
   template<class F> 

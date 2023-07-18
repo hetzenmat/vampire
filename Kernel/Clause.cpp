@@ -73,6 +73,8 @@ Clause::Clause(unsigned length,const Inference& inf)
     _refCnt(0),
     _reductionTimestamp(0),
     _literalPositions(0),
+    _literalOrder(_length ? _length : 1),
+    _literalOrderComputed(false),
     _numActiveSplits(0),
     _auxTimestamp(0)
 {
@@ -748,6 +750,55 @@ unsigned Clause::getLiteralPosition(Literal* lit)
   }
 }
 
+inline bool g_pred(const Ordering::Result& c) {
+  return c == Ordering::GREATER || c == Ordering::GREATER_EQ;
+}
+
+inline bool l_pred(const Ordering::Result& c) {
+  return c == Ordering::LESS || c == Ordering::LESS_EQ;
+}
+
+const TriangularArray<Ordering::Result>& Clause::getLiteralOrder(const Ordering& ord)
+{
+  CALL("Clause::getLiteralOrder");
+  TIME_TRACE("Clause::getLiteralOrder");
+
+  if (_literalOrderComputed) {
+    return _literalOrder;
+  }
+
+  // cout << "compute order for clause " << *this << endl;
+  for (unsigned i = 0; i < _length; i++) {
+    _literalOrder.set(i,i,Ordering::Result::EQUAL);
+    for (unsigned j = i+1; j < _length; j++) {
+      Ordering::Result res = Ordering::Result::INCOMPARABLE;
+      for (unsigned k = 0; k < i; k++) {
+        auto& ki = _literalOrder.get(i,k);
+        auto& kj = _literalOrder.get(j,k);
+        // L[i] <[=] L[k] <[=] L[j], hence L[i] <[=] L[j]
+        if (g_pred(ki) && l_pred(kj)) {
+          res = (ki == Ordering::Result::GREATER || kj == Ordering::Result::LESS)
+                ? Ordering::Result::LESS : Ordering::Result::LESS_EQ;
+          break;
+        }
+        // L[i] >[=] L[k] >[=] L[j], hence L[i] >[=] L[j]
+        if (l_pred(ki) && g_pred(kj)) {
+          res = (ki == Ordering::Result::LESS || kj == Ordering::Result::GREATER)
+                ? Ordering::Result::GREATER : Ordering::Result::GREATER_EQ;
+          break;
+        }
+      }
+      if (res == Ordering::Result::INCOMPARABLE) {
+        res = ord.compare(_literals[i],_literals[j]);
+      }
+      // cout << i << " " << Ordering::resultToString(res) << static_cast<unsigned>(res) << " " << j << endl;
+      _literalOrder.set(j,i,res);
+    }
+  }
+  _literalOrderComputed = true;
+  return _literalOrder;
+}
+
 /**
  * This method should be called when literals of the clause are
  * reordered (e.g. after literal selection), so that the information
@@ -756,6 +807,7 @@ unsigned Clause::getLiteralPosition(Literal* lit)
 void Clause::notifyLiteralReorder()
 {
   CALL("Clause::notifyLiteralReorder");
+  _literalOrderComputed = false; // this should be done better..
   if (_literalPositions) {
     _literalPositions->update(_literals);
   }

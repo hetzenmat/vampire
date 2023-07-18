@@ -241,6 +241,7 @@ bool ForwardSubsumptionAndResolution::perform(Clause *cl, Clause *&replacement, 
         premises = pvi(getSingletonIterator(premise));
         env.statistics->forwardSubsumed++;
         result = true;
+        // cout << *cl << " by " << *premise << endl;
         goto fin;
       }
     }
@@ -273,6 +274,7 @@ bool ForwardSubsumptionAndResolution::perform(Clause *cl, Clause *&replacement, 
           premises = pvi(getSingletonIterator(mcl));
           env.statistics->forwardSubsumed++;
           result = true;
+          // cout << *cl << " by " << *mcl << endl;
           goto fin;
         }
       }
