@@ -1720,14 +1720,14 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     }
   }
   if (opt.forwardSubsumption()) {
-    if (opt.forwardSubsumptionResolution()) {
-      //res->addForwardSimplifierToFront(new CTFwSubsAndRes(true));
-      res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(true));
-    }
-    else {
-      //res->addForwardSimplifierToFront(new CTFwSubsAndRes(false));
-      res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(false));
-    }
+    // if (opt.forwardSubsumptionResolution()) {
+    //   //res->addForwardSimplifierToFront(new CTFwSubsAndRes(true));
+    //   res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(true));
+    // }
+    // else {
+    //   //res->addForwardSimplifierToFront(new CTFwSubsAndRes(false));
+    //   res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(false));
+    // }
     res->addForwardSimplifierToFront(new NewForwardSubsumption());
   }
   else if (opt.forwardSubsumptionResolution()) {
