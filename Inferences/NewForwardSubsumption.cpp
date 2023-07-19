@@ -62,32 +62,6 @@ inline bool GorGEorIC(const TriangularArray<Ordering::Result>& array, unsigned i
   }
 }
 
-struct State {
-  vset<unsigned> litsSD;
-  vset<unsigned> litsSR;
-
-  Substitution subst;
-};
-
-struct Binder {
-  Binder(Substitution& subst) : subst(subst) {}
-
-  bool bind(unsigned var, TermList term)
-  {
-    TermList t;
-    if (subst.findBinding(var, t)) {
-      return false;
-    }
-    subst.bind(var,term);
-    return true;
-  }
-
-  void reset() { subst.reset(); }
-  void specVar(unsigned var, TermList term) { ASSERTION_VIOLATION; }
-
-  Substitution& subst; 
-};
-
 struct ClauseMatches {
   CLASS_NAME(ForwardSubsumptionAndResolution::ClauseMatches);
   USE_ALLOCATOR(ClauseMatches);
@@ -190,6 +164,68 @@ bool checkSubsumption(Clause* cl, Clause* premise)
   return MLMatcher::canBeMatched(premise, cl, cms->_matches, 0);
 }
 
+struct State {
+  vvector<unsigned> litsSD;
+  vvector<unsigned> litsSR;
+
+  Substitution subst;
+};
+
+struct Binder {
+  Binder(Substitution& subst) : subst(subst) {}
+
+  bool bind(unsigned var, TermList term)
+  {
+    TermList t;
+    if (subst.findBinding(var, t)) {
+      return false;
+    }
+    subst.bind(var,term);
+    return true;
+  }
+
+  void reset() { subst.reset(); }
+  void specVar(unsigned var, TermList term) { ASSERTION_VIOLATION; }
+
+  Substitution& subst; 
+};
+
+struct BindingBO : public BacktrackObject
+{
+  BindingBO(Substitution& subst, unsigned var) : _subst(subst), _var(var) {}
+  void backtrack() { _subst.unbind(_var); }
+
+  CLASS_NAME(BindingBO);
+  USE_ALLOCATOR(BindingBO);
+
+  Substitution& _subst;
+  unsigned _var;
+};
+
+struct SetBoolBO : public BacktrackObject
+{
+  SetBoolBO(vvector<bool>& v, unsigned i) : _v(v), _i(i) {}
+  void backtrack() { _v[_i] = true; }
+
+  CLASS_NAME(SetBoolBO);
+  USE_ALLOCATOR(SetBoolBO);
+
+  vvector<bool>& _v;
+  unsigned _i;
+};
+
+struct ValueSetBO : public BacktrackObject
+{
+  ValueSetBO(unsigned& ref, unsigned v) : _ref(ref), _v(v) {}
+  void backtrack() { _ref = _v; }
+
+  CLASS_NAME(ValueSetBO);
+  USE_ALLOCATOR(ValueSetBO);
+
+  unsigned& _ref;
+  unsigned _v;
+};
+
 bool NewForwardSubsumption::perform(Clause *cl, Clause *&replacement, ClauseIterator &premises)
 {
   CALL("NewForwardSubsumption::perform");
@@ -209,129 +245,280 @@ bool NewForwardSubsumption::perform(Clause *cl, Clause *&replacement, ClauseIter
     while (rit.hasNext()) {
       auto qr = rit.next();
       Clause *premise = qr.clause;
+      size_t lenSR = premise->length();
       const auto& premiseLo = premise->getLiteralOrder(ord);
       vmap<pair<unsigned,unsigned>,pair<bool,Substitution>> cache;
 
       // cout << *qr.literal << " matched " << *((*cl)[li]) << endl;
-      State s;
-      {
-        TIME_TRACE("init");
-        // get substitution
-        VariableIterator it(qr.literal);
-        ASS(qr.substitution->isIdentityOnQueryWhenResultBound());
-        while(it.hasNext()) {
-          TermList v = it.next();
-          ASS(v.isVar());
-          s.subst.rebind(v.var(), qr.substitution->applyToBoundResult(v));
-        }
-        // get available literals from both clauses
-        auto currSR = premise->getLiteralPosition(qr.literal);
-        for (unsigned j = 0; j < premise->length(); j++) {
-          if (j != currSR) {
-            // cout << "insertSR " << j << endl;
-            s.litsSR.insert(j);
-          }
-        }
-        for (unsigned j = 0; j < clen; j++) {
-          if (li != j && GorGEorIC(clLo,li,j)) {
-            // cout << "insertSD " << j << endl;
-            s.litsSD.insert(j);
-          }
-        }
+      // State s;
+
+
+      // the state:
+      // current indices of matcher and matched literals
+      unsigned iSR = 0;
+      unsigned iSD = 0;
+      auto currSR = premise->getLiteralPosition(qr.literal);
+      unsigned currSD = li;
+      if (lenSR == 1) {
+        // unit subsumption
+        return true;
       }
 
-      Stack<State> todo;
-      todo.push(s);
+      // remaining lits of subsumer, initially all true except currently matched
+      vvector<bool> litsSR(lenSR, true);
+      litsSR[currSR] = false;
 
-      // cout << "cl " << *cl << endl << "premise " << *premise << endl;
-      // cout << s.litsSR.size() << " " << s.litsSD.size() << endl << endl;
-
-      while (todo.isNonEmpty()) {
-        auto s = todo.pop();
-        if (s.litsSR.empty()) {
-          TIME_TRACE("unit subsumption?");
-          if (premise->length() > 1) {
-            TIME_TRACE("non-unit subsumption");
-          }
-          if (!checkSubsumption(cl, premise)) {
-            cout << "wrong subsumption " << *cl << endl 
-                 << "by                " << *premise << endl;
-          }
-          return true;
+      // remaining lits of subsumed, initially set below
+      vvector<bool> litsSD(clen, false);
+      for (unsigned j = 0; j < clen; j++) {
+        if (currSD != j && GorGEorIC(clLo,currSD,j)) {
+          litsSD[j] = true;
         }
-        if (s.litsSD.empty()) {
-          continue;
-        }
+      }
+      // current partial order within lits of subsumer
+      TriangularArray<Ordering::Result> litOrderSR(lenSR); // TODO copy from premiseLo
 
-        for (const auto& lSD : s.litsSD) {
-          for (const auto& lSR : s.litsSR) {
-            // TIME_TRACE("match try");
-            auto p = make_pair(lSR,lSD);
-            if (cache.count(p) == 0) {
-              cache.insert(make_pair(p,make_pair(false,Substitution())));
-              auto& ref = cache.at(p);
-              Binder binder(ref.second);
-              // cout << "try " << *(*premise)[lSR] << " with " << *(*cl)[lSD] << endl;
-              if (!MatchingUtils::match((*premise)[lSR], (*cl)[lSD], false, binder)) {
-                // binder.reset();
-                continue;
-              }
-              ref.first = true;
-            }
+      // current matching substitution
+      Substitution subst;
+      VariableIterator it(qr.literal);
+      ASS(qr.substitution->isIdentityOnQueryWhenResultBound());
+      while(it.hasNext()) {
+        TermList v = it.next();
+        ASS(v.isVar());
+        subst.rebind(v.var(), qr.substitution->applyToBoundResult(v));
+      }
+      Stack<BacktrackData> bds;
 
-            auto& ref = cache.at(p);
-            if (!ref.first) {
+      // cout << "match " << *premise << endl
+      //      << "   to " << *cl << endl << endl;
+      Substitution newSubst;
+      Binder binder(newSubst);
+      while (true) {
+        // choose next possible match
+        bool found = false;
+        for (unsigned i = iSR; i < lenSR; i++) {
+          if (!litsSR[i]) {
+            continue;
+          }
+          for (unsigned j = (i==iSR) ? iSD : 0; j < clen; j++) {
+            if (!litsSD[j]) {
               continue;
             }
-            State next;
-            auto it = ref.second.iterator();
-            while (it.hasNext()) {
-              unsigned v;
-              TermList t;
-              it.next(v,t);
-              next.subst.bind(v,t);
+            // cout << "trying to match " << i << " with " << j << endl;
+            if (!MatchingUtils::match((*premise)[i], (*cl)[j], false, binder)) {
+              continue;
             }
-            it = s.subst.iterator();
-            bool match = true;
+            BacktrackData localBD;
+            auto it = newSubst.iterator();
             while (it.hasNext()) {
               unsigned v;
               TermList t;
               it.next(v,t);
               TermList temp;
-              if (next.subst.findBinding(v,temp)) {
+              if (subst.findBinding(v,temp)) {
                 if (temp!=t) {
-                  match = false;
-                  break;
+                  // cout << "nomatch1" << endl;
+                  goto nomatch;
                 }
               } else {
-                next.subst.bind(v,t);
+                subst.bind(v,t);
+                localBD.addBacktrackObject(new BindingBO(subst, v));
               }
             }
-            if (!match) {
-              // cout << "fail" << endl;
-              continue;
-            }
-            for (const auto& liSR : s.litsSR) {
-              if (liSR != lSR && GorGEorIC(premiseLo,lSR,liSR)) {
-                // cout << "insertSR " << liSR << endl;
-                next.litsSR.insert(liSR);
+            // check arrays
+            {
+              bool anyLeft = false;
+              for (unsigned k = 0; k < lenSR; k++) {
+                if (i == k || !litsSR[k]) {
+                  continue;
+                }
+                anyLeft = true;
+                if (!GorGEorIC(premiseLo,i,k)) {
+                  // cout << "nomatch2" << endl;
+                  goto nomatch;
+                }
+              }
+              if (!anyLeft) {
+                // subsumption
+                // if (lenSR == 1) {
+                //   cout << "unit subsumption" << endl;
+                // }
+                env.statistics->newForwardSubsumed++;
+                if (!checkSubsumption(cl, premise)) {
+                  cout << "wrong subsumption " << *cl << endl 
+                       << "by                " << *premise << endl;
+                }
+                return true;
+              }
+              // cout << "setting false litsSR " << i << endl;
+              litsSR[i] = false;
+              localBD.addBacktrackObject(new SetBoolBO(litsSR,i));
+
+              anyLeft = false;
+              for (unsigned k = 0; k < clen; k++) {
+                if (j == k || !GorGEorIC(clLo,j,k)) {
+                  // cout << "setting false litsSD " << k << endl;
+                  litsSD[k] = false;
+                  localBD.addBacktrackObject(new SetBoolBO(litsSD,k));
+                } else {
+                  anyLeft = true;
+                }
+              }
+              if (!anyLeft) {
+                  // cout << "nomatch3" << endl;
+                goto nomatch;
               }
             }
-            // we lost some literals on the way, fail
-            if (next.litsSR.size() != s.litsSR.size()-1) {
-              // cout << "fail" << endl;
-              continue;
-            }
-            for (const auto& liSD : s.litsSD) {
-              if (liSD != lSD && GorGEorIC(clLo,lSD,liSD)) {
-                // cout << "insertSD " << liSD << endl;
-                next.litsSD.insert(liSD);
-              }
-            }
-            todo.push(next);
+            found = true;
+            localBD.addBacktrackObject(new ValueSetBO(iSR,i));
+            localBD.addBacktrackObject(new ValueSetBO(iSD,j+1));
+            iSR = 0;
+            iSD = 0;
+            bds.push(localBD);
+            goto fin;
+
+            nomatch:
+              localBD.backtrack();            
           }
         }
+      fin:
+        // if no new match found we have nothing in bd
+        if (!found) {
+          if (bds.isEmpty()) {
+            // fail
+            // cout << "fail" << endl;
+            goto fail;
+          }
+          // otherwise backtrack
+          // cout << "backtrack" << endl;
+          auto bd = bds.pop();
+          bd.backtrack();
+          continue;
+        }
       }
+
+      fail: continue;
+
+      // {
+      //   TIME_TRACE("init");
+      //   // get substitution
+      //   VariableIterator it(qr.literal);
+      //   ASS(qr.substitution->isIdentityOnQueryWhenResultBound());
+      //   while(it.hasNext()) {
+      //     TermList v = it.next();
+      //     ASS(v.isVar());
+      //     s.subst.rebind(v.var(), qr.substitution->applyToBoundResult(v));
+      //     subst.rebind(v.var(), qr.substitution->applyToBoundResult(v));
+      //   }
+      //   // get available literals from both clauses
+      //   auto currSR = premise->getLiteralPosition(qr.literal);
+      //   for (unsigned j = 0; j < premise->length(); j++) {
+      //     if (j != currSR) {
+      //       // cout << "insertSR " << j << endl;
+      //       s.litsSR.push_back(j);
+      //     }
+      //   }
+      //   for (unsigned j = 0; j < clen; j++) {
+      //     if (li != j && GorGEorIC(clLo,li,j)) {
+      //       // cout << "insertSD " << j << endl;
+      //       s.litsSD.push_back(j);
+      //     }
+      //   }
+      // }
+
+      // Stack<BacktrackData> bds;
+      // Stack<State> todo;
+      // todo.push(s);
+
+      // // cout << "cl " << *cl << endl << "premise " << *premise << endl;
+      // // cout << s.litsSR.size() << " " << s.litsSD.size() << endl << endl;
+
+      // while (todo.isNonEmpty()) {
+      //   auto s = todo.pop();
+      //   if (s.litsSR.empty()) {
+      //     TIME_TRACE("subsumption aftercheck");
+      //     if (!checkSubsumption(cl, premise)) {
+      //       cout << "wrong subsumption " << *cl << endl 
+      //            << "by                " << *premise << endl;
+      //     }
+      //     env.statistics->newForwardSubsumed++;
+      //     return true;
+      //   }
+      //   if (s.litsSD.empty()) {
+      //     continue;
+      //   }
+
+      //   // cout << s.litsSD.size()*s.litsSR.size() << endl;
+      //   for (const auto& lSD : s.litsSD) {
+      //     for (const auto& lSR : s.litsSR) {
+      //       TIME_TRACE("match try");
+      //       auto p = make_pair(lSR,lSD);
+      //       if (cache.count(p) == 0) {
+      //         cache.insert(make_pair(p,make_pair(false,Substitution())));
+      //         auto& ref = cache.at(p);
+      //         Binder binder(ref.second);
+      //         // cout << "try " << *(*premise)[lSR] << " with " << *(*cl)[lSD] << endl;
+      //         if (!MatchingUtils::match((*premise)[lSR], (*cl)[lSD], false, binder)) {
+      //           // binder.reset();
+      //           continue;
+      //         }
+      //         ref.first = true;
+      //       }
+
+      //       auto& ref = cache.at(p);
+      //       if (!ref.first) {
+      //         continue;
+      //       }
+      //       TIME_TRACE("add next");
+      //       State next;
+      //       auto it = ref.second.iterator();
+      //       while (it.hasNext()) {
+      //         unsigned v;
+      //         TermList t;
+      //         it.next(v,t);
+      //         next.subst.bind(v,t);
+      //       }
+      //       it = s.subst.iterator();
+      //       bool match = true;
+      //       while (it.hasNext()) {
+      //         unsigned v;
+      //         TermList t;
+      //         it.next(v,t);
+      //         TermList temp;
+      //         if (next.subst.findBinding(v,temp)) {
+      //           if (temp!=t) {
+      //             match = false;
+      //             break;
+      //           }
+      //         } else {
+      //           next.subst.bind(v,t);
+      //         }
+      //       }
+      //       if (!match) {
+      //         // cout << "fail" << endl;
+      //         continue;
+      //       }
+      //       for (const auto& liSR : s.litsSR) {
+      //         if (liSR != lSR && GorGEorIC(premiseLo,lSR,liSR)) {
+      //           // cout << "insertSR " << liSR << endl;
+      //           next.litsSR.push_back(liSR);
+      //         }
+      //       }
+      //       // we lost some literals on the way, fail
+      //       if (next.litsSR.size() != s.litsSR.size()-1) {
+      //         // cout << "fail" << endl;
+      //         continue;
+      //       }
+      //       for (const auto& liSD : s.litsSD) {
+      //         if (liSD != lSD && GorGEorIC(clLo,lSD,liSD)) {
+      //           // cout << "insertSD " << liSD << endl;
+      //           next.litsSD.push_back(liSD);
+      //         }
+      //       }
+      //       todo.push(next);
+      //     }
+      //   }
+      // }
     }
   }
   return false;

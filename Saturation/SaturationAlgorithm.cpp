@@ -1726,7 +1726,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     // }
     // else {
     //   //res->addForwardSimplifierToFront(new CTFwSubsAndRes(false));
-    //   res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(false));
+      res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(false));
     // }
     res->addForwardSimplifierToFront(new NewForwardSubsumption());
   }

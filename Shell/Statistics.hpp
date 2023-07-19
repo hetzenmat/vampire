@@ -223,6 +223,7 @@ public:
   /** number of equational tautologies s=s */
   unsigned equationalTautologies;
   /** number of forward subsumed clauses */
+  unsigned newForwardSubsumed;
   unsigned forwardSubsumed;
   /** number of backward subsumed clauses */
   unsigned backwardSubsumed;

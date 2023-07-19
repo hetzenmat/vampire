@@ -137,6 +137,7 @@ Statistics::Statistics()
     deepEquationalTautologies(0),
     simpleTautologies(0),
     equationalTautologies(0),
+    newForwardSubsumed(0),
     forwardSubsumed(0),
     backwardSubsumed(0),
     taDistinctnessSimplifications(0),
@@ -349,6 +350,7 @@ void Statistics::print(ostream& out)
   COND_OUT("Simple tautologies", simpleTautologies);
   COND_OUT("Equational tautologies", equationalTautologies);
   COND_OUT("Deep equational tautologies", deepEquationalTautologies);
+  COND_OUT("New forward subsumptions", newForwardSubsumed);
   COND_OUT("Forward subsumptions", forwardSubsumed);
   COND_OUT("Backward subsumptions", backwardSubsumed);
   COND_OUT("Fw demodulations to eq. taut.", forwardDemodulationsToEqTaut);
