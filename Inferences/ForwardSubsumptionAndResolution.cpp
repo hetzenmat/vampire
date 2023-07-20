@@ -233,19 +233,19 @@ bool ForwardSubsumptionAndResolution::perform(Clause *cl, Clause *&replacement, 
   static CMStack cmStore(64);
   ASS(cmStore.isEmpty());
 
-  for (unsigned li = 0; li < clen; li++) {
-    SLQueryResultIterator rit = _unitIndex->getGeneralizations((*cl)[li], false, false);
-    while (rit.hasNext()) {
-      Clause *premise = rit.next().clause;
-      if (ColorHelper::compatible(cl->color(), premise->color())) {
-        premises = pvi(getSingletonIterator(premise));
-        env.statistics->forwardSubsumed++;
-        result = true;
-        // cout << "should have subsumed " << *cl << " by " << *premise << endl;
-        goto fin;
-      }
-    }
-  }
+  // for (unsigned li = 0; li < clen; li++) {
+  //   SLQueryResultIterator rit = _unitIndex->getGeneralizations((*cl)[li], false, false);
+  //   while (rit.hasNext()) {
+  //     Clause *premise = rit.next().clause;
+  //     if (ColorHelper::compatible(cl->color(), premise->color())) {
+  //       premises = pvi(getSingletonIterator(premise));
+  //       env.statistics->forwardSubsumed++;
+  //       result = true;
+  //       // cout << "should have subsumed " << *cl << " by " << *premise << endl;
+  //       goto fin;
+  //     }
+  //   }
+  // }
 
   {
     LiteralMiniIndex miniIndex(cl);
@@ -274,6 +274,16 @@ bool ForwardSubsumptionAndResolution::perform(Clause *cl, Clause *&replacement, 
           premises = pvi(getSingletonIterator(mcl));
           env.statistics->forwardSubsumed++;
           result = true;
+          // bool noEqs = true;
+          // for (unsigned i = 0; i < mcl->length(); i++) {
+          //   if ((*mcl)[i]->isEquality()) {
+          //     noEqs = false;
+          //     break;
+          //   }
+          // }
+          // if (noEqs) {
+          //   cout << "should have subsumed " << *cl << " by " << *mcl << endl;
+          // }
           // cout << "should have subsumed " << *cl << " by " << *mcl << endl;
           goto fin;
         }

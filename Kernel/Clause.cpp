@@ -38,6 +38,8 @@
 #include "Term.hpp"
 #include "TermIterators.hpp"
 
+#include "RobSubstitution.hpp"
+
 #include <cmath>
 
 #include "Clause.hpp"
@@ -75,6 +77,8 @@ Clause::Clause(unsigned length,const Inference& inf)
     _literalPositions(0),
     _literalOrder(_length ? _length : 1),
     _literalOrderComputed(false),
+    _literalUnifications(_length ? _length : 1),
+    _minimumMatchingLiteralCount(_length),
     _numActiveSplits(0),
     _auxTimestamp(0)
 {
@@ -793,6 +797,31 @@ const TriangularArray<Ordering::Result>& Clause::getLiteralOrder(const Ordering&
       }
       // cout << i << " " << Ordering::resultToString(res) << static_cast<unsigned>(res) << " " << j << endl;
       _literalOrder.set(j,i,res);
+    }
+  }
+
+  _minimumMatchingLiteralCount = _length;
+  for (unsigned i = 0; i < _length; i++) {
+    _literalUnifications.set(i,i,true);
+    for (unsigned j = i+1; j < _length; j++) {
+      if (_literalOrder.get(j,i) == Ordering::Result::INCOMPARABLE) {
+        bool unify = false;
+        for (unsigned k = 0; k < i; k++) {
+          if (_literalUnifications.get(i,k) && _literalUnifications.get(j,k)) {
+            unify = true;
+            break;
+          }
+        }
+        if (!unify) {
+          RobSubstitution subst;
+          if (subst.unifiers(_literals[i],0,_literals[j],1,false).hasNext()) {
+            unify = true;
+            _minimumMatchingLiteralCount--;
+            ASS(_minimumMatchingLiteralCount);
+          }
+        }
+        _literalUnifications.set(j,i,unify);
+      }
     }
   }
   _literalOrderComputed = true;

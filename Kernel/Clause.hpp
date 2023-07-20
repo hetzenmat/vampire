@@ -359,6 +359,7 @@ public:
   unsigned numPositiveLiterals(); // number of positive literals in the clause
 
   const TriangularArray<Ordering::Result>& getLiteralOrder(const Ordering& ord);
+  unsigned matchingMinimumLiteralCount(const Ordering& ord) { getLiteralOrder(ord); return _minimumMatchingLiteralCount; }
 
 protected:
   /** number of literals */
@@ -393,6 +394,8 @@ protected:
 
   TriangularArray<Ordering::Result> _literalOrder;
   bool _literalOrderComputed;
+  TriangularArray<bool> _literalUnifications;
+  unsigned _minimumMatchingLiteralCount;
 
   int _numActiveSplits;
 

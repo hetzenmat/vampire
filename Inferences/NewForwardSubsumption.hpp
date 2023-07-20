@@ -20,6 +20,8 @@
 #include "Forwards.hpp"
 #include "InferenceEngine.hpp"
 
+#include "Indexing/CodeTreeInterfaces.hpp"
+
 namespace Inferences {
 
 using namespace Kernel;
@@ -39,6 +41,7 @@ public:
 
 private:
   MaximalLiteralForwardSubsumptionIndex* _index;
+  CodeTreeSubsumptionIndex* _ctIndex;
 };
 
 

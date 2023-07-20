@@ -581,7 +581,11 @@ bool MLMatcher::Impl::nextMatch()
   CALL("MLMatcher::Impl::nextMatch");
   MatchingData* const md = &s_matchingData;
 
+  // unsigned cnt = 0;
   while (true) {
+    // if (cnt++ % 50000 == 0) {
+    //   cout << "ORIG " << cnt << endl;
+    // }
     MatchingData::InitResult ires = md->ensureInit(s_currBLit);
     if (ires != MatchingData::OK) {
       if (ires == MatchingData::MUST_BACKTRACK) {

@@ -147,6 +147,7 @@ void MaximalLiteralForwardSubsumptionIndex::handleClause(Clause* c, bool adding)
     }
     if (maximal) {
       handleLiteral((*c)[i], c, adding);
+      return;
     }
   }
 }
