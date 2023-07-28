@@ -37,7 +37,7 @@ public:
 
   void attach(SaturationAlgorithm* salg) override;
   void detach() override;
-  bool perform(Clause* cl, Clause*& replacement, ClauseIterator& premises) override = 0;
+  VirtualIterator<pair<Clause*,ClauseIterator>> perform(Clause* cl) override = 0;
 protected:
   bool _preorderedOnly;
   bool _redundancyCheck;
@@ -53,7 +53,7 @@ public:
   CLASS_NAME(ForwardDemodulationImpl);
   USE_ALLOCATOR(ForwardDemodulationImpl);
 
-  bool perform(Clause* cl, Clause*& replacement, ClauseIterator& premises) override;
+  VirtualIterator<pair<Clause*,ClauseIterator>> perform(Clause* cl) override;
 private:
 };
 

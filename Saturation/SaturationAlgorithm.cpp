@@ -62,11 +62,11 @@
 #include "Inferences/Injectivity.hpp"
 #include "Inferences/Factoring.hpp"
 #include "Inferences/ForwardDemodulation.hpp"
-#include "Inferences/ForwardLiteralRewriting.hpp"
+// #include "Inferences/ForwardLiteralRewriting.hpp"
 #include "Inferences/ForwardSubsumptionAndResolution.hpp"
-#include "Inferences/ForwardSubsumptionDemodulation.hpp"
-#include "Inferences/GlobalSubsumption.hpp"
-#include "Inferences/InnerRewriting.hpp"
+// #include "Inferences/ForwardSubsumptionDemodulation.hpp"
+// #include "Inferences/GlobalSubsumption.hpp"
+// #include "Inferences/InnerRewriting.hpp"
 #include "Inferences/TermAlgebraReasoning.hpp"
 #include "Inferences/SLQueryBackwardSubsumption.hpp"
 #include "Inferences/Superposition.hpp"
@@ -990,15 +990,20 @@ bool SaturationAlgorithm::forwardSimplify(Clause* cl)
     ForwardSimplificationEngine* fse=fsit.next();
 
     {
-      Clause* replacement = 0;
-      ClauseIterator premises = ClauseIterator::getEmpty();
+      auto sIt = fse->perform(cl);
 
-      if (fse->perform(cl,replacement,premises)) {
+      auto removed = sIt.hasNext();
+      while (sIt.hasNext()) {
+        auto kv = sIt.next();
+        auto replacement = kv.first;
+        auto premises = kv.second;
         if (replacement) {
           addNewClause(replacement);
         }
         onClauseReduction(cl, &replacement, 1, premises);
+      }
 
+      if (removed) {
         return false;
       }
     }
@@ -1620,20 +1625,20 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
 
   // create forward simplification engine
   if (prb.hasEquality() && opt.innerRewriting()) {
-    res->addForwardSimplifierToFront(new InnerRewriting());
+    // res->addForwardSimplifierToFront(new InnerRewriting());
   }
   if (opt.globalSubsumption()) {
-    res->addForwardSimplifierToFront(new GlobalSubsumption(opt));
+    // res->addForwardSimplifierToFront(new GlobalSubsumption(opt));
   }
   if (opt.forwardLiteralRewriting()) {
-    res->addForwardSimplifierToFront(new ForwardLiteralRewriting());
+    // res->addForwardSimplifierToFront(new ForwardLiteralRewriting());
   }
   if (prb.hasEquality()) {
     // NOTE:
     // fsd should be performed after forward subsumption,
     // because every successful forward subsumption will lead to a (useless) match in fsd.
     if (opt.forwardSubsumptionDemodulation()) {
-      res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation(false));
+      // res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation(false));
     }
   }
   if (prb.hasEquality()) {

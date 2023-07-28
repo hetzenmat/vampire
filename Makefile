@@ -278,12 +278,8 @@ VINF_OBJ=Inferences/BackwardDemodulation.o\
          Inferences/ForwardDemodulation.o\
          Inferences/CombinatorDemodISE.o\
          Inferences/CombinatorNormalisationISE.o\
-         Inferences/ForwardLiteralRewriting.o\
          Inferences/ForwardSubsumptionAndResolution.o\
          Inferences/SubsumptionDemodulationHelper.o\
-         Inferences/ForwardSubsumptionDemodulation.o\
-         Inferences/GlobalSubsumption.o\
-         Inferences/InnerRewriting.o\
          Inferences/EquationalTautologyRemoval.o\
          Inferences/InferenceEngine.o\
 	 Inferences/Instantiation.o\

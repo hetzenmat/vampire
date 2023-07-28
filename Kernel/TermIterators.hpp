@@ -443,6 +443,23 @@ public:
     }
   }
 
+  void reset(Term* term, bool includeSelf=false)
+  {
+    _stack.reset();
+    _added = 0;
+    if(term->isLiteral()){
+      TermList t0 = *term->nthArgument(0);
+      TermList t1 = *term->nthArgument(1);
+      if(!t0.isVar()){ _stack.push(t0.term()); }
+      if(!t1.isVar()){ _stack.push(t1.term()); }
+      return;
+    }
+    _stack.push(term);
+    if (!includeSelf) {
+      FirstOrderSubtermIt::next();
+    }
+  }
+
   bool hasNext(){ return !_stack.isEmpty(); }
   Term* next();
   void right();
@@ -660,6 +677,16 @@ public:
     }
   }
   // NonVariableIterator(TermList ts);
+
+  void reset(Term* term, bool includeSelf=false)
+  {
+    _stack.reset();
+    _added = 0;
+    _stack.push(term);
+    if (!includeSelf) {
+      NonVariableNonTypeIterator::next();
+    }
+  }
 
   /** true if there exists at least one subterm */
   bool hasNext() { return !_stack.isEmpty(); }

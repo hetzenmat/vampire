@@ -99,8 +99,8 @@ IGAlgorithm::IGAlgorithm(Problem& prb,const Options& opt)
   _gnd = new  IGGrounder(_satSolver);
 
   if(_opt.globalSubsumption()) {
-    _groundingIndex = new GroundingIndex(opt);
-    _globalSubsumption = new GlobalSubsumption(_opt,_groundingIndex.ptr());
+    // _groundingIndex = new GroundingIndex(opt);
+    // _globalSubsumption = new GlobalSubsumption(_opt,_groundingIndex.ptr());
   }
 
   _use_hashing = _opt.useHashingVariantIndex();
@@ -144,7 +144,7 @@ void IGAlgorithm::init()
   if(_opt.instGenWithResolution()) {
     _saturationIndexManager = new IndexManager(0);
     if(_opt.globalSubsumption()) {
-      _saturationIndexManager->provideIndex(GLOBAL_SUBSUMPTION_INDEX, _groundingIndex.ptr());
+      // _saturationIndexManager->provideIndex(GLOBAL_SUBSUMPTION_INDEX, _groundingIndex.ptr());
     }
 
     _saturationProblem = _prb.copy(true);
@@ -221,23 +221,23 @@ redundancy_check:
     env.endOutput();
   }
 
-  if(_globalSubsumption) {
-    static Stack<Unit*> prems_dummy;
+  // if(_globalSubsumption) {
+  //   static Stack<Unit*> prems_dummy;
     
-    Clause* newCl = _globalSubsumption->perform(cl,prems_dummy);
-    if(newCl!=cl) {
-      ASS_L(newCl->length(), cl->length());
+  //   Clause* newCl = _globalSubsumption->perform(cl,prems_dummy);
+  //   if(newCl!=cl) {
+  //     ASS_L(newCl->length(), cl->length());
       
-      if (newCl->length() == 0) {
-        // A future integration of instgen with AVATAR should consider the case
-        // of conditional empty clause
-        throw RefutationFoundException(newCl);
-      }
+  //     if (newCl->length() == 0) {
+  //       // A future integration of instgen with AVATAR should consider the case
+  //       // of conditional empty clause
+  //       throw RefutationFoundException(newCl);
+  //     }
                   
-      cl = newCl;
-      goto redundancy_check;
-    }
-  }
+  //     cl = newCl;
+  //     goto redundancy_check;
+  //   }
+  // }
 
   if (env.options->randomTraversals()) {
     TIME_TRACE(TimeTrace::SHUFFLING);

@@ -70,11 +70,12 @@ void ForwardDemodulation::detach()
 }
 
 template <bool combinatorySupSupport>
-bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*& replacement, ClauseIterator& premises)
+VirtualIterator<pair<Clause*,ClauseIterator>> ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl)
 {
   TIME_TRACE("forward demodulation");
 
   Ordering& ordering = _salg->getOrdering();
+  auto resIt = VirtualIterator<pair<Clause*,ClauseIterator>>::getEmpty();
 
   //Perhaps it might be a good idea to try to
   //replace subterms in some special order, like
@@ -221,8 +222,14 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
         Literal* resLit = EqHelper::replace(lit,trm,rhsS);
         if(EqHelper::isEqTautology(resLit)) {
           env.statistics->forwardDemodulationsToEqTaut++;
-          premises = pvi( getSingletonIterator(qr.clause));
-          return true;
+          auto premises = pvi( getSingletonIterator(qr.clause));
+          resIt = pvi(getConcatenatedIterator(resIt,getSingletonIterator(make_pair(nullptr,premises))));
+          if (cl->derivedFromGoal()) {
+            it.reset(trm.term());
+            continue;
+          } else {
+            goto fin;
+          }
         }
 
         Clause* res = new(cLen) Clause(cLen,
@@ -240,14 +247,20 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
 
         env.statistics->forwardDemodulations++;
 
-        premises = pvi( getSingletonIterator(qr.clause));
-        replacement = res;
-        return true;
+        auto premises = pvi( getSingletonIterator(qr.clause));
+        resIt = pvi(getConcatenatedIterator(resIt,getSingletonIterator(make_pair(res,premises))));
+        if (cl->derivedFromGoal()) {
+          it.reset(trm.term());
+          continue;
+        } else {
+          goto fin;
+        }
       }
     }
   }
 
-  return false;
+fin:
+  return resIt;
 }
 
 // This is necessary for templates defined in cpp files.

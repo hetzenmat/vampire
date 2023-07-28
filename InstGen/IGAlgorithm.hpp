@@ -33,7 +33,7 @@
 #include "Indexing/IndexManager.hpp"
 #include "Indexing/LiteralIndex.hpp"
 
-#include "Inferences/GlobalSubsumption.hpp"
+// #include "Inferences/GlobalSubsumption.hpp"
 #include "Inferences/InferenceEngine.hpp"
 #include "Inferences/TautologyDeletionISE.hpp"
 #include "Inferences/URResolution.hpp"
@@ -72,7 +72,7 @@ public:
   IGAlgorithm(Problem& prb, const Options& opt);
   ~IGAlgorithm();
 
-  GroundingIndex& getGroundingIndex() { return *_groundingIndex.ptr(); }
+  // GroundingIndex& getGroundingIndex() { return *_groundingIndex.ptr(); }
 
   ClauseIterator getActive();
 
@@ -129,8 +129,8 @@ private:
   ScopedPtr<IGGrounder> _gnd;
 
   /** Used by global subsumption */
-  ScopedPtr<GroundingIndex> _groundingIndex;
-  ScopedPtr<GlobalSubsumption> _globalSubsumption;
+  // ScopedPtr<GroundingIndex> _groundingIndex;
+  // ScopedPtr<GlobalSubsumption> _globalSubsumption;
 
   Options _saturationOptions;
   ScopedPtr<IndexManager> _saturationIndexManager;

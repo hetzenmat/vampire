@@ -38,7 +38,7 @@ public:
 
   void attach(SaturationAlgorithm* salg) override;
   void detach() override;
-  bool perform(Clause* cl, Clause*& replacement, ClauseIterator& premises) override;
+  VirtualIterator<pair<Clause*,ClauseIterator>> perform(Clause* cl) override;
 
   static Clause* generateSubsumptionResolutionClause(Clause* cl, Literal* lit, Clause* baseClause);
 private:

@@ -275,7 +275,7 @@ public:
    * @b premises will contain clauses that justify the simplification
    * performed.
    */
-  virtual bool perform(Clause* cl, Clause*& replacement, ClauseIterator& premises) = 0;
+  virtual VirtualIterator<pair<Clause*,ClauseIterator>> perform(Clause* cl) = 0;
 };
 
 

@@ -405,11 +405,11 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/FastCondensation.cpp
     Inferences/FOOLParamodulation.cpp
     Inferences/ForwardDemodulation.cpp
-    Inferences/ForwardLiteralRewriting.cpp
+    # Inferences/ForwardLiteralRewriting.cpp
     Inferences/ForwardSubsumptionAndResolution.cpp
-    Inferences/ForwardSubsumptionDemodulation.cpp
-    Inferences/GlobalSubsumption.cpp
-    Inferences/InnerRewriting.cpp
+    # Inferences/ForwardSubsumptionDemodulation.cpp
+    # Inferences/GlobalSubsumption.cpp
+    # Inferences/InnerRewriting.cpp
     Inferences/EquationalTautologyRemoval.cpp
     Inferences/Induction.cpp
     Inferences/InductionHelper.cpp
@@ -441,10 +441,10 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/FastCondensation.hpp
     Inferences/FOOLParamodulation.hpp
     Inferences/ForwardDemodulation.hpp
-    Inferences/ForwardLiteralRewriting.hpp
+    # Inferences/ForwardLiteralRewriting.hpp
     Inferences/ForwardSubsumptionAndResolution.hpp
-    Inferences/GlobalSubsumption.hpp
-    Inferences/InnerRewriting.hpp
+    # Inferences/GlobalSubsumption.hpp
+    # Inferences/InnerRewriting.hpp
     Inferences/EquationalTautologyRemoval.hpp
     Inferences/InductionHelper.hpp
     Inferences/InferenceEngine.hpp

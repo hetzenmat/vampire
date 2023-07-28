@@ -210,18 +210,20 @@ bool checkForSubsumptionResolution(Clause *cl, ClauseMatches *cms, Literal *resL
   return MLMatcher::canBeMatched(mcl, cl, cms->_matches, resLit);
 }
 
-bool ForwardSubsumptionAndResolution::perform(Clause *cl, Clause *&replacement, ClauseIterator &premises)
+VirtualIterator<pair<Clause*,ClauseIterator>> ForwardSubsumptionAndResolution::perform(Clause *cl)
 {
   Clause *resolutionClause = 0;
 
   unsigned clen = cl->length();
   if (clen == 0) {
-    return false;
+    return VirtualIterator<pair<Clause*,ClauseIterator>>::getEmpty();
   }
 
   TIME_TRACE("forward subsumption");
 
   bool result = false;
+  Clause* replacement = nullptr;
+  auto premises = ClauseIterator::getEmpty();
 
   Clause::requestAux();
 
@@ -360,7 +362,10 @@ fin:
   while (cmStore.isNonEmpty()) {
     delete cmStore.pop();
   }
-  return result;
+  if (result) {
+    return pvi(getSingletonIterator(make_pair(replacement,premises)));
+  }
+  return VirtualIterator<pair<Clause*,ClauseIterator>>::getEmpty();
 }
 
 } // namespace Inferences
