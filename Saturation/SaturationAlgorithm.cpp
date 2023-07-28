@@ -1075,6 +1075,10 @@ void SaturationAlgorithm::backwardSimplify(Clause* cl)
       //as otherwise the redundant one might demodulate the replacement into
       //a tautology
 
+      if (redundant->store()==Clause::NONE) {
+        TIME_TRACE("backward simplified already removed clause");
+        continue;
+      }
       redundant->incRefCnt(); //we don't want the clause deleted before we record the simplification
 
       removeActiveOrPassiveClause(redundant);

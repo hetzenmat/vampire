@@ -36,6 +36,7 @@ public:
   TermQueryResultIterator getUnifications(TypedTermList t, bool retrieveSubstitutions = true, bool withConstraints = false);
   TermQueryResultIterator getGeneralizations(TypedTermList t, bool retrieveSubstitutions = true);
   TermQueryResultIterator getInstances(TypedTermList t, bool retrieveSubstitutions = true);
+  TermIndexingStructure* getIS() { return _is; }
 
 protected:
   TermIndex(TermIndexingStructure* is) : _is(is) {}

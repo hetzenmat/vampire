@@ -56,6 +56,8 @@ void ForwardDemodulation::attach(SaturationAlgorithm* salg)
   ForwardSimplificationEngine::attach(salg);
   _index=static_cast<DemodulationLHSIndex*>(
 	  _salg->getIndexManager()->request(DEMODULATION_LHS_CODE_TREE) );
+  _bwIndex=static_cast<DemodulationSubtermIndex*>(
+	  _salg->getIndexManager()->request(DEMODULATION_SUBTERM_SUBST_TREE) );
 
   _preorderedOnly = getOptions().forwardDemodulation()== Options::Demodulation::PREORDERED;
   _redundancyCheck = getOptions().demodulationRedundancyCheck() != Options::DemodulationRedunancyCheck::OFF;
@@ -64,9 +66,39 @@ void ForwardDemodulation::attach(SaturationAlgorithm* salg)
 
 void ForwardDemodulation::detach()
 {
+  _bwIndex = nullptr;
   _index=0;
   _salg->getIndexManager()->release(DEMODULATION_LHS_CODE_TREE);
   ForwardSimplificationEngine::detach();
+}
+
+void handleSubtermsForBackwardDemodulation(Clause* cl, Literal* lit, Term* t, DemodulationSubtermIndex* index)
+{
+  TIME_TRACE("extra insertion");
+  cl->incRefCnt();
+  DHSet<Term*> done;
+  for(unsigned li=0;li<cl->length();li++) {
+    NonVariableNonTypeIterator nvi((*cl)[li]);
+    while (nvi.hasNext()) {
+      auto st = nvi.next();
+      if (!done.insert(st) || !st->containsSubterm(TermList(t))) {
+        nvi.right();
+        continue;
+      }
+      TIME_TRACE("insert term into bw index");
+      index->getIS()->insert(st, (*cl)[li], cl);
+    }
+  }
+  NonVariableNonTypeIterator nvi(t);
+  while (nvi.hasNext()) {
+    auto st = nvi.next();
+    if (!done.insert(st)) {
+      nvi.right();
+      continue;
+    }
+    TIME_TRACE("insert term into bw index");
+    index->getIS()->insert(st, lit, cl);
+  }
 }
 
 template <bool combinatorySupSupport>
@@ -76,6 +108,8 @@ VirtualIterator<pair<Clause*,ClauseIterator>> ForwardDemodulationImpl<combinator
 
   Ordering& ordering = _salg->getOrdering();
   auto resIt = VirtualIterator<pair<Clause*,ClauseIterator>>::getEmpty();
+  // auto multipath = false;
+  auto multipath = cl->derivedFromGoal();
 
   //Perhaps it might be a good idea to try to
   //replace subterms in some special order, like
@@ -223,13 +257,15 @@ VirtualIterator<pair<Clause*,ClauseIterator>> ForwardDemodulationImpl<combinator
         if(EqHelper::isEqTautology(resLit)) {
           env.statistics->forwardDemodulationsToEqTaut++;
           auto premises = pvi( getSingletonIterator(qr.clause));
+          if (multipath && !resIt.hasNext()) {
+            handleSubtermsForBackwardDemodulation(cl, lit, trm.term(), _bwIndex);
+          }
           resIt = pvi(getConcatenatedIterator(resIt,getSingletonIterator(make_pair(nullptr,premises))));
-          if (cl->derivedFromGoal()) {
+          if (multipath) {
             it.reset(trm.term());
             continue;
-          } else {
-            goto fin;
           }
+          goto fin;
         }
 
         Clause* res = new(cLen) Clause(cLen,
@@ -248,13 +284,15 @@ VirtualIterator<pair<Clause*,ClauseIterator>> ForwardDemodulationImpl<combinator
         env.statistics->forwardDemodulations++;
 
         auto premises = pvi( getSingletonIterator(qr.clause));
+        if (multipath && !resIt.hasNext()) {
+          handleSubtermsForBackwardDemodulation(cl, lit, trm.term(), _bwIndex);
+        }
         resIt = pvi(getConcatenatedIterator(resIt,getSingletonIterator(make_pair(res,premises))));
-        if (cl->derivedFromGoal()) {
+        if (multipath) {
           it.reset(trm.term());
           continue;
-        } else {
-          goto fin;
         }
+        goto fin;
       }
     }
   }
