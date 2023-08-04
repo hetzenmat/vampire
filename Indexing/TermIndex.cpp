@@ -195,6 +195,28 @@ void UnitRewritingLHSIndex::handleClause(Clause* c, bool adding)
   }
 }
 
+void UnitEqualityConjectureIndex::handleClause(Clause* c, bool adding)
+{
+  if (c->length()!=1) {
+    return;
+  }
+
+  Literal* lit=(*c)[0];
+  if (!lit->isEquality() || lit->isPositive()) {
+    return;
+  }
+  DHSet<Term*> done;
+  NonVariableIterator nvi(lit);
+  while (nvi.hasNext()) {
+    auto st = nvi.next();
+    if (!done.insert(st.term())) {
+      nvi.right();
+      continue;
+    }
+    _is->handle(st.term(), lit, c, adding);
+  }
+}
+
 void InductionTermIndex::handleClause(Clause* c, bool adding)
 {
   TIME_TRACE("induction term index maintenance");

@@ -152,6 +152,18 @@ protected:
   void handleClause(Clause* c, bool adding);
 };
 
+class UnitEqualityConjectureIndex
+: public TermIndex
+{
+public:
+  CLASS_NAME(UnitEqualityConjectureIndex);
+  USE_ALLOCATOR(UnitEqualityConjectureIndex);
+
+  UnitEqualityConjectureIndex(TermIndexingStructure* is) : TermIndex(is) {}
+protected:
+  void handleClause(Clause* c, bool adding);
+};
+
 /**
  * Term index for induction
  */

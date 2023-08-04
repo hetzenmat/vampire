@@ -215,6 +215,12 @@ Index* IndexManager::create(IndexType t)
     isGenerating = false;
     break;
 
+  case UNIT_EQUALITY_CONJECTURE_INDEX:
+    tis=new TermSubstitutionTree();
+    res=new UnitEqualityConjectureIndex(tis);
+    isGenerating = false;
+    break;
+
   case FW_SUBSUMPTION_CODE_TREE:
     res=new CodeTreeSubsumptionIndex();
     isGenerating = false;

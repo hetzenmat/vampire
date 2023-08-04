@@ -28,8 +28,15 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
+class UnitEqualityReduction
+{
+public:
+  Clause* perform(Clause* conj, Literal* conjLit, Clause* cpMain, Literal* cpMainLit, Clause* cpSide, Literal* cpSideLit, TermList l, TermList t, const Ordering& ord, DemodulationLHSIndex* index);
+};
+
 class ForwardUnitEqualityReduction
 : public ForwardSimplificationEngine
+, public UnitEqualityReduction
 {
 public:
   CLASS_NAME(ForwardUnitEqualityReduction);
@@ -45,6 +52,7 @@ protected:
 
 class BackwardUnitEqualityReduction
 : public BackwardSimplificationEngine
+, public UnitEqualityReduction
 {
 public:
   CLASS_NAME(BackwardUnitEqualityReduction);
@@ -55,8 +63,9 @@ public:
 
   void perform(Clause* premise, BwSimplificationRecordIterator& simplifications);
 private:
-  DemodulationSubtermIndex* _index;
+  UnitEqualityConjectureIndex* _index;
   DemodulationLHSIndex* _lhsIndex;
+  SuperpositionSubtermIndex* _overlapIndex;
 };
 
 };
