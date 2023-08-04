@@ -124,6 +124,34 @@ private:
   const Options& _opt;
 };
 
+class RewritingRHSIndex
+: public TermIndex
+{
+public:
+  CLASS_NAME(RewritingRHSIndex);
+  USE_ALLOCATOR(RewritingRHSIndex);
+
+  RewritingRHSIndex(TermIndexingStructure* is, Ordering& ord, const Options& opt)
+  : TermIndex(is), _ord(ord), _opt(opt) {};
+protected:
+  void handleClause(Clause* c, bool adding);
+private:
+  Ordering& _ord;
+  const Options& _opt;
+};
+
+class UnitRewritingLHSIndex
+: public TermIndex
+{
+public:
+  CLASS_NAME(UnitRewritingLHSIndex);
+  USE_ALLOCATOR(UnitRewritingLHSIndex);
+
+  UnitRewritingLHSIndex(TermIndexingStructure* is) : TermIndex(is) {}
+protected:
+  void handleClause(Clause* c, bool adding);
+};
+
 /**
  * Term index for induction
  */

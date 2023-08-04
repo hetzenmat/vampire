@@ -51,6 +51,11 @@ public:
     return SubstHelper::apply(t, *this);
   }
 
+  Literal* applyToBoundQuery(Literal* lit) override
+  {
+    return SubstHelper::apply(lit, *this);
+  }
+
   TermList apply(unsigned var)
   {
     TermList normalized=_parent->derefQueryBinding(var);

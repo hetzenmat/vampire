@@ -688,6 +688,8 @@ vstring Kernel::ruleName(InferenceRule rule)
     return "equality resolution";
   case InferenceRule::FORWARD_DEMODULATION:
     return "forward demodulation";
+  case InferenceRule::UNIT_EQUALITY_REDUCTION:
+    return "unit equality reduction";
   case InferenceRule::BACKWARD_DEMODULATION:
     return "backward demodulation";
   case InferenceRule::FORWARD_SUBSUMPTION_DEMODULATION:

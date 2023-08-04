@@ -162,6 +162,7 @@ public:
 
   class ScopedTimer {
     TimeTrace& _trace;
+    bool _running = true;
 #if VDEBUG
     TimePoint _start;
     const char* _name;
@@ -170,6 +171,7 @@ public:
     ScopedTimer(const char* name);
     ScopedTimer(TimeTrace& trace, const char* name);
     ~ScopedTimer();
+    void stop();
   };
 
 

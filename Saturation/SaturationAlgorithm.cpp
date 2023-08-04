@@ -38,6 +38,7 @@
 #include "Kernel/Problem.hpp"
 #include "Kernel/SubformulaIterator.hpp"
 #include "Kernel/Unit.hpp"
+#include "Kernel/Matcher.hpp"
 
 #include "Inferences/InterpretedEvaluation.hpp"
 #include "Inferences/PolynomialEvaluation.hpp"
@@ -61,7 +62,9 @@
 #include "Inferences/FOOLParamodulation.hpp"
 #include "Inferences/Injectivity.hpp"
 #include "Inferences/Factoring.hpp"
+// #include "Inferences/Demodulation.hpp"
 #include "Inferences/ForwardDemodulation.hpp"
+#include "Inferences/UnitEqualityReduction.hpp"
 // #include "Inferences/ForwardLiteralRewriting.hpp"
 #include "Inferences/ForwardSubsumptionAndResolution.hpp"
 // #include "Inferences/ForwardSubsumptionDemodulation.hpp"
@@ -91,6 +94,7 @@
 #include "Inferences/CasesSimp.hpp"
 #include "Inferences/Cases.hpp"
 #include "Inferences/DefinitionIntroduction.hpp"
+#include "Inferences/UnitEqualityCC.hpp"
 
 #include "Saturation/ExtensionalityClauseContainer.hpp"
 
@@ -1193,6 +1197,44 @@ void SaturationAlgorithm::activate(Clause* cl)
     _selector->select(cl);
   }
 
+  static Term* hint;
+
+  if (cl->length() == 1 && (*cl)[0]->isEquality()) {
+    auto lit = (*cl)[0];
+    auto l0 = lit->termArg(0);
+    auto l1 = lit->termArg(1);
+    auto comp = _ordering->compare(l0,l1);
+    if (lit->isNegative()) {
+      if (comp == Ordering::Result::GREATER || comp == Ordering::Result::GREATER_EQ) {
+        // cout << "hint " << l0 << endl;
+        hint = l0.term();
+      } else {
+        // cout << "hint " << l1 << endl;
+        hint = l1.term();
+      }
+      // _passive->addRHSHint(hint);
+    } else {
+      if (hint) {
+        auto rhs = (comp == Ordering::Result::GREATER || comp == Ordering::Result::GREATER_EQ) ? l1 : l0;
+        NonVariableNonTypeIterator nvi(hint,true);
+        bool matched = false;
+        while (nvi.hasNext()) {
+          auto st = nvi.next();
+          if (MatchingUtils::matchTerms(rhs, TermList(st))) {
+            // cout << rhs << " " << *st << endl;
+            matched = true;
+            break;
+          }
+        }
+        if (matched) {
+          TIME_TRACE("activated rhs matches");
+        } else {
+          TIME_TRACE("activated rhs does not match");
+        }
+      }
+    }
+  }
+
   ASS_EQ(cl->store(), Clause::SELECTED);
   cl->setStore(Clause::ACTIVE);
   env.statistics->activeClauses++;
@@ -1506,6 +1548,8 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     gie->addFront(res->_instantiation);
   }
 
+  // gie->addFront(new UnitEqualityCC(res->_ordering.ptr()));
+
   if (prb.hasEquality()) {
     gie->addFront(new EqualityFactoring());
     gie->addFront(new EqualityResolution());
@@ -1645,6 +1689,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
       // res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation(false));
     }
   }
+  res->addForwardSimplifierToFront(new ForwardUnitEqualityReduction());
   if (prb.hasEquality()) {
     switch(opt.forwardDemodulation()) {
     case Options::Demodulation::ALL:
@@ -1654,6 +1699,11 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
       } else {
         res->addForwardSimplifierToFront(new ForwardDemodulationImpl<false>());
       }
+      // if(opt.combinatorySup()){
+      //   res->addForwardSimplifierToFront(new ForwardDemodulationImplNew<true>());
+      // } else {
+      //   res->addForwardSimplifierToFront(new ForwardDemodulationImplNew<false>());
+      // }
       break;
     case Options::Demodulation::OFF:
       break;
@@ -1677,6 +1727,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     USER_ERROR("Forward subsumption resolution requires forward subsumption to be enabled.");
   }
 
+  res->addBackwardSimplifierToFront(new BackwardUnitEqualityReduction());
   // create backward simplification engine
   if (prb.hasEquality()) {
     switch(opt.backwardDemodulation()) {

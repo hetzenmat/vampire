@@ -197,10 +197,21 @@ Index* IndexManager::create(IndexType t)
     res=new DemodulationLHSIndex(tis, _alg->getOrdering(), _alg->getOptions());
     isGenerating = false;
     break;
+  case UNIT_REWRITING_RHS_INDEX:
+    tis=new CodeTreeTIS();
+    res=new RewritingRHSIndex(tis, _alg->getOrdering(), _alg->getOptions());
+    isGenerating = false;
+    break;
 
   case DEMODULATION_LHS_SUBST_TREE:
     tis=new TermSubstitutionTree();
     res=new DemodulationLHSIndex(tis, _alg->getOrdering(), _alg->getOptions());
+    isGenerating = false;
+    break;
+
+  case UNIT_REWRITING_LHS_INDEX:
+    tis=new TermSubstitutionTree();
+    res=new UnitRewritingLHSIndex(tis);
     isGenerating = false;
     break;
 

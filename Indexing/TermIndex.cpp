@@ -21,6 +21,7 @@
 #include "Kernel/Clause.hpp"
 #include "Kernel/EqHelper.hpp"
 #include "Kernel/Formula.hpp"
+#include "Kernel/Matcher.hpp"
 #include "Kernel/Ordering.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Term.hpp"
@@ -134,8 +135,63 @@ void DemodulationLHSIndex::handleClause(Clause* c, bool adding)
 
   Literal* lit=(*c)[0];
   auto lhsi = EqHelper::getDemodulationLHSIterator(lit, true, _ord, _opt);
+  Term* l0 = nullptr;
   while (lhsi.hasNext()) {
-    _is->handle(lhsi.next(), lit, c, adding);
+    auto t = lhsi.next();
+    {
+      TIME_TRACE("variant calculation");
+      if (l0 && l0->functor()==t.term()->functor() && MatchingUtils::haveVariantArgs(l0,t.term())) {
+        continue;
+      }
+    }
+    l0 = t.term();
+    _is->handle(t, lit, c, adding);
+  }
+}
+
+void RewritingRHSIndex::handleClause(Clause* c, bool adding)
+{
+  if (c->length()!=1) {
+    return;
+  }
+
+  Literal* lit=(*c)[0];
+  auto lhsi = EqHelper::getDemodulationLHSIterator(lit, true, _ord, _opt);
+  Term* l0 = nullptr;
+  while (lhsi.hasNext()) {
+    auto t = lhsi.next();
+    {
+      TIME_TRACE("variant calculation");
+      if (l0 && l0->functor()==t.term()->functor() && MatchingUtils::haveVariantArgs(l0,t.term())) {
+        continue;
+      }
+    }
+    l0 = t.term();
+    auto other = EqHelper::getOtherEqualitySide(lit, t);
+    if (!other.containsAllVariablesOf(t)) {
+      continue;
+    }
+    _is->handle(TypedTermList(other, SortHelper::getEqualityArgumentSort(lit)), lit, c, adding);
+  }
+}
+
+void UnitRewritingLHSIndex::handleClause(Clause* c, bool adding)
+{
+  if (c->length()!=1) {
+    return;
+  }
+
+  Literal* lit=(*c)[0];
+  if (!lit->isEquality() || lit->isNegative()) {
+    return;
+  }
+  for (unsigned i = 0; i <= 1; i++) {
+    auto lhs = lit->termArg(i);
+    auto rhs = lit->termArg(1-i);
+    if (lhs.isVar() || !lhs.containsAllVariablesOf(rhs)) {
+      continue;
+    }
+    _is->handle(lhs.term(), lit, c, adding);
   }
 }
 

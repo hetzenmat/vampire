@@ -76,6 +76,15 @@ void TimeTrace::setEnabled(bool v)
 
 TimeTrace::ScopedTimer::~ScopedTimer()
 {
+  stop();
+}
+
+void TimeTrace::ScopedTimer::stop()
+{
+  if (!_running) {
+    return;
+  }
+  _running = false;
   if (_trace._enabled) {
     auto now = Clock::now();
     auto cur = _trace._stack.pop();

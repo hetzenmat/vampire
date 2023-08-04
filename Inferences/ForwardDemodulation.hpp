@@ -28,6 +28,42 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
+
+class NonParallelNonVariableNonTypeIterator
+  : public IteratorCore<Term*>
+{
+public:
+  NonParallelNonVariableNonTypeIterator(const NonParallelNonVariableNonTypeIterator&);
+
+  NonParallelNonVariableNonTypeIterator(Literal* term)
+  : _stack(8),
+    _added(0)
+  {
+    _stack.push(term);
+    NonParallelNonVariableNonTypeIterator::next();
+  }
+
+  void reset(Term* term, bool includeSelf=false)
+  {
+    _stack.reset();
+    _added = 0;
+    _stack.push(term);
+    if (!includeSelf) {
+      NonParallelNonVariableNonTypeIterator::next();
+    }
+  }
+
+  /** true if there exists at least one subterm */
+  bool hasNext() { return !_stack.isEmpty(); }
+  Term* next();
+  void right();
+private:
+  /** available non-variable subterms */
+  Stack<Term*> _stack;
+  /** the number of non-variable subterms added at the last iteration, used by right() */
+  int _added;
+};
+
 class ForwardDemodulation
 : public ForwardSimplificationEngine
 {
@@ -56,6 +92,9 @@ public:
 
   VirtualIterator<pair<Clause*,ClauseIterator>> perform(Clause* cl) override;
 private:
+  void perform(TypedTermList trm, Literal* lit, Clause* cl, Stack<pair<Clause*,Clause*>>& resPremisePairs, bool exhaustive);
+
+  DHSet<TermList> _attempted;
 };
 
 

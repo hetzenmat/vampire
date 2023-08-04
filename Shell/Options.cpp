@@ -1659,6 +1659,13 @@ void Options::init()
     _forwardDemodulation.tag(OptionTag::INFERENCES);
     _forwardDemodulation.setRandomChoices({"all","all","all","off","preordered"});
     
+    _exhaustiveDemodulation = BoolOptionValue("exhaustive_demodulation","ed",false);
+    _exhaustiveDemodulation.description="Perform demodulation across all paths for negative unit equalities.";
+    _lookup.insert(&_exhaustiveDemodulation);
+    _exhaustiveDemodulation.tag(OptionTag::INFERENCES);
+    _exhaustiveDemodulation.onlyUsefulWith(InferencingSaturationAlgorithm());
+    _exhaustiveDemodulation.setRandomChoices({"on","off"});
+
     _forwardLiteralRewriting = BoolOptionValue("forward_literal_rewriting","flr",false);
     _forwardLiteralRewriting.description="Perform forward literal rewriting.";
     _lookup.insert(&_forwardLiteralRewriting);

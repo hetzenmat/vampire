@@ -405,6 +405,8 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/FastCondensation.cpp
     Inferences/FOOLParamodulation.cpp
     Inferences/ForwardDemodulation.cpp
+    Inferences/Demodulation.cpp
+    Inferences/UnitEqualityReduction.cpp
     # Inferences/ForwardLiteralRewriting.cpp
     Inferences/ForwardSubsumptionAndResolution.cpp
     # Inferences/ForwardSubsumptionDemodulation.cpp
@@ -441,6 +443,8 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/FastCondensation.hpp
     Inferences/FOOLParamodulation.hpp
     Inferences/ForwardDemodulation.hpp
+    Inferences/Demodulation.hpp
+    Inferences/UnitEqualityReduction.hpp
     # Inferences/ForwardLiteralRewriting.hpp
     Inferences/ForwardSubsumptionAndResolution.hpp
     # Inferences/GlobalSubsumption.hpp
@@ -472,6 +476,8 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/PolynomialEvaluation.cpp
     Inferences/Cancellation.hpp
     Inferences/Cancellation.cpp
+    Inferences/UnitEqualityCC.hpp
+    Inferences/UnitEqualityCC.cpp
     )
 source_group(inference_source_files FILES ${VAMPIRE_INFERENCE_SOURCES})
 

@@ -276,6 +276,7 @@ VINF_OBJ=Inferences/BackwardDemodulation.o\
          Inferences/FOOLParamodulation.o\
          Inferences/Injectivity.o\
          Inferences/ForwardDemodulation.o\
+         Inferences/UnitEqualityReduction.o\
          Inferences/CombinatorDemodISE.o\
          Inferences/CombinatorNormalisationISE.o\
          Inferences/ForwardSubsumptionAndResolution.o\
@@ -305,7 +306,8 @@ VINF_OBJ=Inferences/BackwardDemodulation.o\
          Inferences/BoolEqToDiseq.o\
          Inferences/GaussianVariableElimination.o\
          Inferences/InterpretedEvaluation.o\
-         Inferences/TheoryInstAndSimp.o
+         Inferences/TheoryInstAndSimp.o\
+         Inferences/UnitEqualityCC.o
 #         Inferences/RenamingOnTheFly.o\
 
 VSAT_OBJ=SAT/MinimizingSolver.o\

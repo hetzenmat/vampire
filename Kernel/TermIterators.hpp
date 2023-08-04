@@ -427,7 +427,7 @@ class FirstOrderSubtermIt
 : public IteratorCore<Term*>
 {
 public:
-  FirstOrderSubtermIt(Term* term, bool includeSelf=false) 
+  FirstOrderSubtermIt(Term* term, bool includeSelf=false)
   : _stack(8), _added(0)
   {
     if(term->isLiteral()){

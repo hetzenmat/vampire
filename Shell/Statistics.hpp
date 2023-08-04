@@ -170,6 +170,7 @@ public:
   unsigned backwardSubsumptionResolution;
   /** number of forward demodulations */
   unsigned forwardDemodulations;
+  unsigned unitEqualityReductions;
   /** number of forward demodulations into equational tautologies */
   unsigned forwardDemodulationsToEqTaut;
   /** number of backward demodulations */
