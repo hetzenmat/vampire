@@ -672,6 +672,33 @@ private:
   int _added;
 }; // NonVariableIterator
 
+template <bool combinatorySupSupport>
+class TracedNonVariableNonTypeIterator
+  : public IteratorCore<Term*>
+{
+public:
+  TracedNonVariableNonTypeIterator(Literal* lit)
+  : _stack(8), _ready(true)
+  {
+    for (unsigned i = lit->numTypeArguments(); i < lit->arity(); i++) {
+      auto t = lit->nthArgument(i);
+      if (t->isTerm()) {
+        _stack.push(std::make_pair(t->term(),0));
+      }
+    }
+  }
+
+  bool hasNext();
+  Term* next();
+  void right();
+  const Stack<Term*>& getTrace() const { return _trace; }
+private:
+  /** available non-variable subterms and their depth */
+  Stack<std::pair<Term*,unsigned>> _stack;
+  Stack<Term*> _trace;
+  bool _ready;
+}; // TracedNonVariableNonTypeIterator
+
 /**
  * Iterator that iterator over disagreement set of two terms
  * or literals in DFS left to right order.

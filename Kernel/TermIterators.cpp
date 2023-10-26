@@ -478,6 +478,66 @@ void NonVariableNonTypeIterator::right()
   }
 } // NonVariableIterator::right
 
+template <bool combinatorySupSupport>
+bool TracedNonVariableNonTypeIterator<combinatorySupSupport>::hasNext()
+{
+  if (_ready) {
+    return _stack.isNonEmpty();
+  }
+  std::pair<Term*,unsigned> kv = _stack.pop();
+  Term* t = kv.first;
+  unsigned d = kv.second;
+
+  if (combinatorySupSupport) {
+    static TermStack args;
+    TermList head;
+    args.reset();
+    AH::getHeadAndArgs(t, head, args);
+    if(!AH::isComb(head) || AH::isUnderApplied(head, args.size())){
+      for(unsigned i = 0; i < args.size(); i++){
+        if(!args[i].isVar()){
+          _stack.push(std::make_pair(args[i].term(),d+1));
+        }
+      }
+    }
+  } else {
+    Signature::Symbol* sym = env.signature->getFunction(t->functor());
+    for (unsigned i = sym->numTypeArguments(); i < sym->arity(); i++) {
+      auto ts = t->nthArgument(i);
+      if (ts->isTerm()) {
+        _stack.push(std::make_pair(const_cast<Term*>(ts->term()),d+1));
+      }
+    }
+  }
+
+  while (d < _trace.size()) {
+    _trace.pop();
+  }
+  _trace.push(t);
+  _ready = true;
+  return _stack.isNonEmpty();
+}
+
+template <bool combinatorySupSupport>
+Term* TracedNonVariableNonTypeIterator<combinatorySupSupport>::next()
+{
+  _ready = false;
+  return _stack.top().first;
+}
+
+template <bool combinatorySupSupport>
+void TracedNonVariableNonTypeIterator<combinatorySupSupport>::right()
+{
+  if (_ready) {
+    return;
+  }
+  _ready = true;
+  _stack.pop();
+}
+
+template class TracedNonVariableNonTypeIterator<false>;
+template class TracedNonVariableNonTypeIterator<true>;
+
 /**
  * True if there exists next non-variable subterm
  */
