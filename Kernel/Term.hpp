@@ -764,6 +764,10 @@ public:
     ASS(isSpecial());
     return reinterpret_cast<SpecialTermData*>(this)-1;
   }
+
+  virtual bool computable() const;
+  virtual bool computableOrVar() const;
+
 protected:
   vstring headToString() const;
 
@@ -1052,8 +1056,13 @@ public:
     return headersMatch(this, lit, complementary);
   }
 
+  bool isAnswerLiteral() const;
+
   vstring toString() const;
   const vstring& predicateName() const;
+
+  virtual bool computable() const;
+  virtual bool computableOrVar() const;
 
 private:
   static Literal* createVariableEquality(bool polarity, TermList arg1, TermList arg2, TermList variableSort);

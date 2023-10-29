@@ -74,7 +74,6 @@ Clause::Clause(unsigned length,const Inference& inf)
     _refCnt(0),
     _reductionTimestamp(0),
     _literalPositions(0),
-    _rewrites(0),
     _numActiveSplits(0),
     _auxTimestamp(0)
 {
@@ -194,6 +193,9 @@ void Clause::destroy()
   static Stack<Clause*> toDestroy(32);
   Clause* cl = this;
   for(;;) {
+    if ((env.options->proofExtra()==Options::ProofExtra::FULL) && env.proofExtra) {
+      env.proofExtra->remove(cl);
+    }
     Inference::Iterator it = cl->_inference.iterator();
     while (cl->_inference.hasNext(it)) {
       Unit* refU = cl->_inference.next(it);
@@ -749,6 +751,27 @@ std::ostream& operator<<(std::ostream& out, Clause::Store const& store)
     case Clause::SELECTED:    return out << "SELECTED";
   }
   ASSERTION_VIOLATION;
+}
+
+Literal* Clause::getAnswerLiteral() {
+  for (unsigned i = 0; i < _length; ++i) {
+    if (_literals[i]->isAnswerLiteral()) {
+      return _literals[i];
+    }
+  }
+  return nullptr;
+}
+
+bool Clause::computable() {
+  for (unsigned i = 0; i < length(); ++i) {
+    if ((*this)[i]->isAnswerLiteral()) {
+      continue;
+    }
+    if (!(*this)[i]->computable()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 }

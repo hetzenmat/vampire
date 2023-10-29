@@ -353,9 +353,13 @@ public:
 
   unsigned numPositiveLiterals(); // number of positive literals in the clause
 
-  DHMap<Term*,Indexing::TermQueryResult>* rewrites() { return _rewrites; }
-  void transferRewrites(Clause* receiver) { receiver->_rewrites = _rewrites; _rewrites = nullptr; }
-  void setRewrites(DHMap<Term*,Indexing::TermQueryResult>* rewrites) { _rewrites = rewrites; }
+  Literal* getAnswerLiteral();
+
+  bool hasAnswerLiteral() {
+    return getAnswerLiteral() != nullptr;
+  }
+
+  bool computable();
 
 protected:
   /** number of literals */
@@ -387,7 +391,6 @@ protected:
   unsigned _reductionTimestamp;
   /** a map that translates Literal* to its index in the clause */
   InverseLookup<Literal>* _literalPositions;
-  DHMap<Term*,Indexing::TermQueryResult>* _rewrites;
 
   int _numActiveSplits;
 
@@ -399,7 +402,6 @@ protected:
   static bool _auxInUse;
 #endif
 
-//#endif
 
   /** Array of literals of this unit */
   Literal* _literals[1];

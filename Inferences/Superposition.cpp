@@ -39,6 +39,7 @@
 
 #include "Saturation/SaturationAlgorithm.hpp"
 
+#include "Shell/AnswerExtractor.hpp"
 #include "Shell/Options.hpp"
 #include "Shell/Statistics.hpp"
 
@@ -420,7 +421,11 @@ Clause* Superposition::performSuperposition(
     }
   }
 
-  unsigned newLength = rwLength+eqLength-1+conLength;
+  bool synthesis = (env.options->questionAnswering() == Options::QuestionAnsweringMode::SYNTHESIS);
+  Literal* rwAnsLit = synthesis ? rwClause->getAnswerLiteral() : nullptr;
+  Literal* eqAnsLit = synthesis ? eqClause->getAnswerLiteral() : nullptr;
+  bool bothHaveAnsLit = (rwAnsLit != nullptr) && (eqAnsLit != nullptr);
+  unsigned newLength = rwLength+eqLength-1+conLength - (bothHaveAnsLit ? 1 : 0);
 
   static bool afterCheck = getOptions().literalMaximalityAftercheck() && _salg->getLiteralSelector().isBGComplete();
 
@@ -463,15 +468,15 @@ Clause* Superposition::performSuperposition(
     if (!env.proofExtra) {
       env.proofExtra = new DHMap<const Unit*,vstring>();
     }
-    env.proofExtra->insert(res,extra);
+    ALWAYS(env.proofExtra->insert(res,extra));
   }
 
   (*res)[0] = tgtLitS;
-  int next = 1;
+  unsigned next = 1;
   unsigned weight=tgtLitS->weight();
   for(unsigned i=0;i<rwLength;i++) {
     Literal* curr=(*rwClause)[i];
-    if(curr!=rwLit) {
+    if(curr!=rwLit && (!bothHaveAnsLit || curr!=rwAnsLit)) {
       Literal* currAfter = subst->apply(curr, !eqIsResult);
 
       if (doSimS) {
@@ -512,7 +517,7 @@ Clause* Superposition::performSuperposition(
 
     for(unsigned i=0;i<eqLength;i++) {
       Literal* curr=(*eqClause)[i];
-      if(curr!=eqLit) {
+      if(curr!=eqLit && (!bothHaveAnsLit || curr!=eqAnsLit)) {
         Literal* currAfter = subst->apply(curr, eqIsResult);
 
         if(EqHelper::isEqTautology(currAfter)) {
@@ -568,6 +573,14 @@ Clause* Superposition::performSuperposition(
     }
   }
 
+  if (bothHaveAnsLit) {
+    ASS_REP2(next == newLength-1, rwClause->toString(), eqClause->toString());
+    Literal* newLitC = subst->apply(rwAnsLit, !eqIsResult);
+    Literal* newLitD = subst->apply(eqAnsLit, eqIsResult);
+    Literal* condLit = subst->apply(eqLit, eqIsResult);
+    (*res)[next] = SynthesisManager::getInstance()->makeITEAnswerLiteral(condLit, newLitC, newLitD);
+  }
+
   if(needsToFulfilWeightLimit && !passiveClauseContainer->fulfilsWeightLimit(weight, numPositiveLiteralsLowerBound, res->inference())) {
     RSTAT_CTR_INC("superpositions skipped for weight limit after the clause was built");
     env.statistics->discardedNonRedundantClauses++;
@@ -592,39 +605,6 @@ Clause* Superposition::performSuperposition(
       env.statistics->cForwardSuperposition++;
     } else {
       env.statistics->cBackwardSuperposition++;
-    }
-  }
-  if (false) {
-    TIME_TRACE("rewrites update");
-    auto resRewrites = new DHMap<Term*,TermQueryResult>();
-    if (eqClause->rewrites()) {
-      DHMap<Term*,TermQueryResult>::Iterator eqIt(*eqClause->rewrites());
-      while (eqIt.hasNext()) {
-        Term* lhs;
-        TermQueryResult qr;
-        eqIt.next(lhs,qr);
-        auto lhsS = subst->apply(TermList(lhs),eqIsResult);
-        resRewrites->insert(lhsS.term(),qr);
-      }
-    }
-    if (rwClause->rewrites()) {
-      DHMap<Term*,TermQueryResult>::Iterator rwIt(*rwClause->rewrites());
-      while (rwIt.hasNext()) {
-        Term* lhs;
-        TermQueryResult qr;
-        rwIt.next(lhs,qr);
-        auto lhsS = subst->apply(TermList(lhs),!eqIsResult);
-        resRewrites->insert(lhsS.term(),qr);
-      }
-    }
-    if (comp==Ordering::LESS && eqClause->length()!=1) {
-      // cout << "added rule " << rwTermS << " -> " << tgtTermS << endl;
-      resRewrites->insert(rwTermS.term(), TermQueryResult(eqLHS,eqLit,eqClause));
-    }
-    if (resRewrites->isEmpty()) {
-      delete resRewrites;
-    } else {
-      res->setRewrites(resRewrites);
     }
   }
 

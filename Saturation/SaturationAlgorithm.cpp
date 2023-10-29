@@ -64,6 +64,7 @@
 #include "Inferences/ForwardDemodulation.hpp"
 #include "Inferences/ForwardLiteralRewriting.hpp"
 #include "Inferences/ForwardSubsumptionAndResolution.hpp"
+#include "Inferences/InvalidAnswerLiteralRemoval.hpp"
 #include "Inferences/ForwardSubsumptionDemodulation.hpp"
 #include "Inferences/GlobalSubsumption.hpp"
 #include "Inferences/InnerRewriting.hpp"
@@ -905,7 +906,6 @@ void SaturationAlgorithm::addUnprocessedClause(Clause* cl)
 
   env.checkTimeSometime<64>();
 
-
   cl=doImmediateSimplification(cl);
   if (!cl) {
     return;
@@ -1031,6 +1031,25 @@ bool SaturationAlgorithm::forwardSimplify(Clause* cl)
         onClauseReduction(cl, repStack.begin(), repStack.size(), 0);
         return false;
       }
+    }
+  }
+
+  bool synthesis = (env.options->questionAnswering() == Options::QuestionAnsweringMode::SYNTHESIS);
+
+  if (synthesis) {
+    ASS((_answerLiteralManager != nullptr));
+    Clause* ansLitCl = cl;
+    if (_splitter && cl->hasAnswerLiteral() && !cl->noSplits() && cl->computable()) {
+      ansLitCl = _splitter->reintroduceAvatarAssertions(cl);
+    }
+    Clause* reduced = _answerLiteralManager->recordAnswerAndReduce(ansLitCl);
+    if (reduced) {
+      ansLitCl = reduced;
+    }
+    if (ansLitCl != cl) {
+      addNewClause(ansLitCl);
+      onClauseReduction(cl, &ansLitCl, 1, 0);
+      return false;
     }
   }
 
@@ -1255,21 +1274,6 @@ start:
     Clause* c = _unprocessed->pop();
     ASS(!isRefutation(c));
 
-    if (!c->rewrites()) {
-      auto it = c->inference().iterator();
-      if (c->inference().hasNext(it)) {
-        auto u = c->inference().next(it);
-        if (u->isClause()) {
-          auto p = u->asClause();
-          if (p->rewrites()) {
-            static vset<InferenceRule> rules;
-            if (rules.insert(c->inference().rule()).second) {
-              cout << "inference not covered: " << ruleName(c->inference().rule()) << endl;
-            }
-          }
-        }
-      }
-    }
     if (forwardSimplify(c)) {
       onClauseRetained(c);
       addToPassive(c);
@@ -1730,6 +1734,8 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
   }
   if (opt.questionAnswering()==Options::QuestionAnsweringMode::ANSWER_LITERAL) {
     res->_answerLiteralManager = AnswerLiteralManager::getInstance();
+  } else if (opt.questionAnswering()==Options::QuestionAnsweringMode::SYNTHESIS) {
+    res->_answerLiteralManager = SynthesisManager::getInstance();
   }
   return res;
 } // SaturationAlgorithm::createFromOptions
@@ -1836,6 +1842,8 @@ ImmediateSimplificationEngine* SaturationAlgorithm::createISE(Problem& prb, cons
   }
   res->addFront(new DuplicateLiteralRemovalISE());
 
+  if (env.options->questionAnswering() == Options::QuestionAnsweringMode::SYNTHESIS)
+     res->addFront(new InvalidAnswerLiteralRemoval());
   return res;
 }
 

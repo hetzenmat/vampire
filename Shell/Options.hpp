@@ -140,18 +140,31 @@ public:
     bool checkGlobalOptionConstraints(bool fail_early=false);
     bool checkProblemOptionConstraints(Property*, bool before_preprocessing, bool fail_early=false);
 
-    // Randomize strategy (will only work if randomStrategy=on)
-    // should only be called after all other options are set
-    //
-    // The usage is overloaded. If prop=0 then this function will randomize
-    // options that do not require a Property (no ProblemConstraints) 
-    // (note it is possible to supress the requirement, see Options.cpp)
-    // Otherwise all other options will be randomized.
-    //
-    // This dual usage is required as the property object is created during
-    // the preprocessing stage. This means that in vampire.cpp we call this twice
-    void randomizeStrategy(Property* prop);
-    
+    /**
+     * Sample a random strategy from a distribution described by the given file.
+     *
+     * The format of the sampler file should be easy to understant (Look for examples samplerFOL.txt, samplerFNT.txt, samplerSMT.txt under vampire root).
+     * The file describes a sequence of sampling rules (one on each line, barring empty lines and comment lines starting with a #),
+     * which are executed in order, and each rule (provided its preconditions are satisfied) triggers
+     * sampling of a value for a particular option from a specified distribution.
+     * The most common sampler is for the categorical distribution (~cat), which is specified by a list of values with corresponding integer frequencies.
+     * Other samplers include ratios, uniform floats and integers, and a (shifted) geometric distribution for potentially unbounded integers.
+     * A notable feature is the ability to sample also fake (non-existent) options, recognized by a $-sign prefixed, whose value can later be reference in the conditions.
+     *
+     * Example:
+     *
+     * # naming
+     * > $nm ~cat Z:1,NZ:5
+     * $nm=Z > nm ~cat 0:1
+     * $nm=NZ > nm ~sgd 0.07,2
+     *
+     * First samples a fake option $nm with either a value Z (1 out of 6) or Nz (5 out of 6).
+     * Then, if $nm is set to Z samples the (actual) naming option with value 0 (nm ~cat 0:1 is simply an assignment to the effect of nm := 0),
+     * and if $nm is set to NZ, samples from a shifted geometric distribution with p=0.07 and a shift=2. (So 2 gets selected with a probability p,
+     * 3 with a probability p(1-p), ... and 2+i with a probability p(1-p)^i).
+     */
+    void sampleStrategy(const vstring& samplerFileName);
+
     /**
      * Return the problem name
      *
@@ -195,6 +208,8 @@ public:
         SAT,
         AVATAR,
         INFERENCES,
+        INDUCTION,
+        THEORIES,
         LRS,
         SATURATION,
         PREPROCESSING,
@@ -314,13 +329,6 @@ public:
     CONTOUR
   };
 
-  enum class RandomStrategy : unsigned int {
-    ON,
-    OFF,
-    SAT,
-    NOCHECK
-  };
-
   enum class BadOption : unsigned int {
     HARD,
     FORCED,
@@ -393,7 +401,6 @@ public:
     PREPROCESS,
     PREPROCESS2,
     PROFILE,
-    RANDOM_STRATEGY,
     SMTCOMP,
     SPIDER,
     TCLAUSIFY,
@@ -488,7 +495,8 @@ public:
   enum class QuestionAnsweringMode : unsigned int {
     ANSWER_LITERAL = 0,
     FROM_PROOF = 1,
-    OFF = 2
+    SYNTHESIS = 2,
+    OFF = 3
   };
 
   enum class InterpolantMode : unsigned int {
@@ -777,7 +785,10 @@ public:
     //
     // The details are explained in comments below
 private:
-    
+    // helper function of sampleStrategy
+    void strategySamplingAssign(vstring optname, vstring value, DHMap<vstring,vstring>& fakes);
+    vstring strategySamplingLookup(vstring optname, DHMap<vstring,vstring>& fakes);
+
     /**
      * These store the names of the choices for an option.
      * They can be declared using initializer lists i.e. {"on","off","half_on"}
@@ -860,25 +871,24 @@ private:
         // Returns false if we cannot set (will cause a UserError in Options::set)
         virtual bool setValue(const vstring& value) = 0;
 
-        bool set(const vstring& value){
-          bool okay = setValue(value); 
-          if(okay) is_set=true;
+        bool set(const vstring& value, bool dont_touch_if_defaulting = false) {
+          bool okay = setValue(value);
+          if (okay && (!dont_touch_if_defaulting || !isDefault())) {
+            is_set=true;
+          }
           return okay;
         }
-        
-        // Set to a random value
-        virtual bool randomize(Property* P) = 0;
 
         // Experimental options are not included in help
         void setExperimental(){experimental=true;}
-        
+
         // Meta-data
         vstring longName;
         vstring shortName;
         vstring description;
         bool experimental;
         bool is_set;
-        
+
         // Checking constraits
         virtual bool checkConstraints() = 0;
         virtual bool checkProblemConstraints(Property* prop) = 0;
@@ -937,24 +947,6 @@ private:
         typedef std::unique_ptr<DArray<vstring>> vstringDArrayUP;
 
         typedef std::pair<OptionProblemConstraintUP,vstringDArrayUP> RandEntry;
-
-        void setRandomChoices(std::initializer_list<vstring> list){
-          rand_choices.push(RandEntry(OptionProblemConstraintUP(),toArray(list)));
-        }
-        void setRandomChoices(std::initializer_list<vstring> list,
-                              std::initializer_list<vstring> list_sat){
-          rand_choices.push(RandEntry(isRandOn(),toArray(list)));
-          rand_choices.push(RandEntry(isRandSat(),toArray(list_sat)));
-        }
-        void setRandomChoices(OptionProblemConstraintUP c,
-                              std::initializer_list<vstring> list){
-          rand_choices.push(RandEntry(std::move(c),toArray(list)));
-        }
-        void setNoPropertyRandomChoices(std::initializer_list<vstring> list){
-          rand_choices.push(RandEntry(OptionProblemConstraintUP(),toArray(list)));
-          supress_problemconstraints=true;
-        }
-
  
     private:
         // Tag state
@@ -970,7 +962,6 @@ private:
         }
     protected:
         // Note has LIFO semantics so use BottomFirstIterator
-        Stack<RandEntry> rand_choices;
         bool supress_problemconstraints;
     };
     
@@ -1071,10 +1062,7 @@ private:
             AbstractOptionValue::output(out,linewrap);
             out << "\tdefault: " << getStringOfValue(defaultValue) << std::endl;
         }
-       
-        // This is where actual randomisation happens
-        bool randomize(Property* p);
- 
+
     private:
         Lib::Stack<OptionValueConstraintUP<T>> _constraints;
         Lib::Stack<OptionProblemConstraintUP> _prob_constraints;
@@ -1237,6 +1225,8 @@ RatioOptionValue(vstring l, vstring s, int def, int other, char sp=':') :
 OptionValue(l,s,def), sep(sp), defaultOtherValue(other), otherValue(other) {};
 
 virtual OptionValueConstraintUP<int> getNotDefault() override { return isNotDefaultRatio(); }
+
+virtual bool isDefault() const override { return defaultValue * otherValue == actualValue * defaultOtherValue; }
 
 void addConstraintIfNotDefault(AbstractWrappedConstraintUP c){
     addConstraint(If(isNotDefaultRatio()).then(unwrap<int>(c)));
@@ -2056,8 +2046,6 @@ bool _hard;
   // This is how options are accessed so if you add a new option you should add a getter
 public:
   bool encodeStrategy() const{ return _encode.actualValue;}
-  RandomStrategy randomStrategy() const {return _randomStrategy.actualValue; }
-  void setRandomStrategy(RandomStrategy newVal){ _randomStrategy.actualValue=newVal;}
   BadOption getBadOptionChoice() const { return _badOption.actualValue; }
   void setBadOptionChoice(BadOption newVal) { _badOption.actualValue = newVal; }
   vstring forcedOptions() const { return _forcedOptions.actualValue; }
@@ -2110,7 +2098,7 @@ public:
   int activationLimit() const { return _activationLimit.actualValue; }
   unsigned randomSeed() const { return _randomSeed.actualValue; }
   void setRandomSeed(unsigned seed) { _randomSeed.actualValue = seed; }
-  unsigned randomStrategySeed() const { return _randomStrategySeed.actualValue; }
+  const vstring& strategySamplerFilename() const { return _sampleStrategy.actualValue; }
   bool printClausifierPremises() const { return _printClausifierPremises.actualValue; }
 
   // IMPORTANT, if you add a showX command then include showAll
@@ -2506,7 +2494,6 @@ private:
   *
   */
 
-  ChoiceOptionValue<RandomStrategy> _randomStrategy;
   DecodeOptionValue _decode;
   BoolOptionValue _encode;
 
@@ -2681,7 +2668,8 @@ private:
   ChoiceOptionValue<QuestionAnsweringMode> _questionAnswering;
 
   UnsignedOptionValue _randomSeed;
-  UnsignedOptionValue _randomStrategySeed;
+
+  StringOptionValue _sampleStrategy;
 
   IntOptionValue _activationLimit;
 
