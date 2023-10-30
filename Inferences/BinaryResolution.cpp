@@ -181,12 +181,12 @@ Clause* BinaryResolution::generateClause(Clause* queryCl, Literal* queryLit, SLQ
   if (checker) {
     checker->resetDone();
     auto litS = qr.substitution->applyToQuery(queryLit);
-    if (checker->check(qr.clause,TermList(qr.literal),litS,nullptr,qr.substitution.ptr(),true,false)) {
+    if (checker->isReducible(qr.clause,TermList(qr.literal),litS,nullptr,qr.substitution.ptr(),true,false)) {
       env.statistics->skippedResolution++;
       return 0;
     }
 
-    if (checker->check(queryCl,TermList(queryLit),litS,nullptr,qr.substitution.ptr(),false,false)) {
+    if (checker->isReducible(queryCl,TermList(queryLit),litS,nullptr,qr.substitution.ptr(),false,false)) {
       env.statistics->skippedResolution++;
       return 0;
     }

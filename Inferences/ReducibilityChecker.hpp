@@ -24,12 +24,6 @@ namespace Inferences {
 
 using namespace Indexing;
 
-// struct VariantHash
-// {
-//   // static bool equals(T o1, T o2);
-//   static unsigned hash(Term* t);
-// };
-
 class ReducibilityChecker {
 private:
   DHSet<Term*> _reducible;
@@ -42,7 +36,6 @@ private:
 
   bool checkTerm(Term* t, Term* tS, Term* rwTermS, ResultSubstitution* subst, bool result, bool& variant);
   bool checkTermReducible(Term* tS, TermList* tgtTermS, bool greater);
-  bool checkLeftmostInnermost(Clause* cl, Term* rwTermS, ResultSubstitution* subst, bool result);
   bool checkSmaller(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, bool greater);
   bool checkSmallerSanity(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, vstringstream& exp);
 
@@ -52,7 +45,7 @@ public:
 
   ReducibilityChecker(DemodulationLHSIndex* index, const Ordering& ord, const Options& opt);
 
-  bool check(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, bool greater);
+  bool isReducible(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, bool greater);
   void reset() { _nonReducible.reset(); }
   void resetDone() { _done.reset(); }
   bool isNonReducible(Term* t) { return _nonReducible.contains(t); }  

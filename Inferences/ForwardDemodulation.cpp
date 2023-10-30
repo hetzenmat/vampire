@@ -28,12 +28,10 @@
 #include "Kernel/Ordering.hpp"
 #include "Kernel/Renaming.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/SubstHelper.hpp"
 #include "Kernel/Term.hpp"
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/ColorHelper.hpp"
 #include "Kernel/RobSubstitution.hpp"
-#include "Kernel/Matcher.hpp"
 
 #include "Indexing/Index.hpp"
 #include "Indexing/IndexManager.hpp"
@@ -53,25 +51,6 @@ using namespace Lib;
 using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
-
-struct Binder {
-  Binder(Substitution& subst) : subst(subst) {}
-
-  bool bind(unsigned var, TermList term)
-  {
-    TermList t;
-    if (subst.findBinding(var, t)) {
-      return t == term;
-    }
-    subst.bind(var,term);
-    return true;
-  }
-
-  void reset() { subst.reset(); }
-  void specVar(unsigned var, TermList term) { ASSERTION_VIOLATION; }
-
-  Substitution& subst;
-};
 
 void ForwardDemodulation::attach(SaturationAlgorithm* salg)
 {
@@ -270,6 +249,7 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
         ASS_EQ(next,cLen);
 
         env.statistics->forwardDemodulations++;
+
         premises = pvi( getSingletonIterator(qr.clause));
         replacement = res;
         return true;

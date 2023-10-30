@@ -77,126 +77,23 @@ void getLHSIterator(Literal* lit, ResultSubstitution* subst, bool result, const 
 ReducibilityChecker::ReducibilityChecker(DemodulationLHSIndex* index, const Ordering& ord, const Options& opt)
 : _reducible(), _nonReducible(), _index(index), _ord(ord), _opt(opt) {}
 
-bool ReducibilityChecker::check(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, bool greater)
+bool ReducibilityChecker::isReducible(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, bool greater)
 {
-  TIME_TRACE("ReducibilityChecker::check");
-  switch (_opt.reducibilityCheck()) {
-    case Options::ReducibilityCheck::OFF:
-      return false;
-    case Options::ReducibilityCheck::LEFTMOST_INNERMOST:
-      return checkLeftmostInnermost(cl, rwTermS, subst, result);
-    case Options::ReducibilityCheck::SMALLER: {
-      auto res = checkSmaller(cl, rwTerm, rwTermS, tgtTermS, subst, result, greater);
+  TIME_TRACE("ReducibilityChecker::isReducible");
+  if (_opt.reducibilityCheck()) {
+    auto res = checkSmaller(cl, rwTerm, rwTermS, tgtTermS, subst, result, greater);
 #if VDEBUG
-      vstringstream str;
-      if (res != checkSmallerSanity(cl, rwTerm, rwTermS, tgtTermS, subst, result, str)) {
-        cout << "cl " << *cl << " rwTerm " << rwTerm << " rwTermS " << *rwTermS << (tgtTermS ? " tgtTermS " : "") << (tgtTermS ? tgtTermS->toString() : "") << endl;
-        cout << str.str() << endl;
-        ASSERTION_VIOLATION;
-      }
+    vstringstream str;
+    if (res != checkSmallerSanity(cl, rwTerm, rwTermS, tgtTermS, subst, result, str)) {
+      cout << "cl " << *cl << " rwTerm " << rwTerm << " rwTermS " << *rwTermS << (tgtTermS ? " tgtTermS " : "") << (tgtTermS ? tgtTermS->toString() : "") << endl;
+      cout << str.str() << endl;
+      ASSERTION_VIOLATION;
+    }
 #endif
-      return res;
-    }
-  }
-  ASSERTION_VIOLATION;
-}
-
-bool ReducibilityChecker::checkLeftmostInnermost(Clause* cl, Term* rwTermS, ResultSubstitution* subst, bool result)
-{
-  Stack<pair<TermList,TermList>> sides;
-  for (unsigned i = 0; i < cl->numSelected(); i++) {
-    sides.reset();
-    getLHSIterator((*cl)[i], subst, result, _ord, sides);
-
-    for (auto kv : sides) {
-      auto side = kv.second;
-      if (side.isVar()) {
-        continue;
-      }
-      if (subst->isRenamingOn2(kv.first, result)) {
-        if (!rwTermS->isLiteral() && kv.second.containsSubterm(TermList(rwTermS))) {
-          return false;
-        }
-        continue;
-      }
-      PolishSubtermIterator nvi(side.term(), &_nonReducible); // we won't get side itself this way, but we don't need it
-      while (nvi.hasNext()) {
-        auto st = nvi.next();
-        if (st.isVar() || _nonReducible.contains(st.term())) {
-          continue;
-        }
-        if (st.term() == rwTermS) {
-          // reached rwTerm without finding a reducible term
-          return false;
-        }
-        if (_reducible.find(st.term())) {
-          return true;
-        }
-        // if (cl->rewrites().find(st.term())) {
-        //   TIME_TRACE("reducible by rule");
-        //   return true;
-        // }
-        if (checkTermReducible(st.term(), nullptr, false)) {
-          _reducible.insert(st.term());
-          return true;
-        }
-        _nonReducible.insert(st.term());
-      }
-      if (side.term() == rwTermS) {
-        return false;
-      }
-    }
+    return res;
   }
   return false;
 }
-
-// inline unsigned termFunctorHash(Term* t, unsigned hash_begin) {
-//   unsigned func = t->functor();
-//   // std::cout << "will hash funtor " << func << std::endl;
-//   return DefaultHash::hash(func, hash_begin);
-// }
-
-// unsigned VariantHash::hash(Term* t)
-// {
-//   static DHMap<unsigned, unsigned char> varCnts;
-//   varCnts.reset();
-
-//   unsigned hash = 2166136261u;
-//   hash = termFunctorHash(t,hash);
-
-//   SubtermIterator sti(t);
-//   while(sti.hasNext()) {
-//     TermList tl = sti.next();
-
-//     if (tl.isVar()) {
-//       const unsigned varHash = 1u;
-
-//       unsigned char* pcnt;
-//       if (varCnts.getValuePtr(tl.var(),pcnt)) {
-//         *pcnt = 1;
-//       } else {
-//         (*pcnt)++;
-//       }
-//       hash = DefaultHash::hash(varHash, hash);
-//     } else {
-//       hash = termFunctorHash(tl.term(),hash);
-//     }
-//   }
-
-//   if (varCnts.size() > 0) {
-//     static Stack<unsigned char> varCntHistogram;
-//     varCntHistogram.reset();
-//     DHMap<unsigned, unsigned char>::Iterator it(varCnts);
-//     while (it.hasNext()) {
-//       varCntHistogram.push(it.next());
-//     }
-
-//     std::sort(varCntHistogram.begin(),varCntHistogram.end());
-//     hash = DefaultHash::hash(varCntHistogram, hash);
-//   }
-
-//   return hash;
-// }
 
 class NonTypeIterator
   : public IteratorCore<std::pair<TermList,TermList>>

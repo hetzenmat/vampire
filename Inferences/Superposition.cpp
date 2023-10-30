@@ -410,12 +410,12 @@ Clause* Superposition::performSuperposition(
 
   if (checker) {
     checker->resetDone();
-    if (checker->check(eqClause,eqLHS,rwTermS.term(),&tgtTermS,subst.ptr(),eqIsResult,comp==Ordering::LESS)) {
+    if (checker->isReducible(eqClause,eqLHS,rwTermS.term(),&tgtTermS,subst.ptr(),eqIsResult,comp==Ordering::LESS)) {
       env.statistics->skippedSuperposition++;
       return 0;
     }
 
-    if (checker->check(rwClause,rwTerm,rwTermS.term(),&tgtTermS,subst.ptr(),!eqIsResult,comp==Ordering::LESS)) {
+    if (checker->isReducible(rwClause,rwTerm,rwTermS.term(),&tgtTermS,subst.ptr(),!eqIsResult,comp==Ordering::LESS)) {
       env.statistics->skippedSuperposition++;
       return 0;
     }
