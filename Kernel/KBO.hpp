@@ -158,12 +158,14 @@ public:
 
   using PrecedenceOrdering::compare;
   Result compare(TermList tl1, TermList tl2) const override;
+  bool isGreater(TermList tl1, TermList tl2) const override;
 
   KboWeightMap<FuncSigTraits> _funcWeights;
 protected:
   Result comparePredicates(Literal* l1, Literal* l2) const override;
 
   class State;
+  class State2;
 
   // int functionSymbolWeight(unsigned fun) const;
   int symbolWeight(Term* t) const;
@@ -185,6 +187,7 @@ private:
    * State used for comparing terms and literals
    */
   mutable State* _state;
+  mutable State2* _state2;
 };
 
 }

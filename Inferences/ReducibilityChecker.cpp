@@ -158,6 +158,10 @@ void NonTypeIterator::right()
 
 bool ReducibilityChecker::checkSmaller(Clause* cl, TermList rwTerm, Term* rwTermS, TermList* tgtTermS, ResultSubstitution* subst, bool result, bool greater)
 {
+  // if (subst->isRenamingOn2(rwTerm, result)) {
+  //   TIME_TRACE("renaming");
+  //   return checkTermReducible(rwTermS, tgtTermS, greater);
+  // }
   // rwTerm itself will be checked at the end, potentially expensive
   bool checkRwTerm = !_done.contains(rwTermS); // rwTermS is inserted into _done below
   NonTypeIterator stit(rwTerm,TermList(rwTermS),_done,false);
@@ -367,10 +371,6 @@ bool ReducibilityChecker::checkSmallerSanity(Clause* cl, TermList rwTerm, Term* 
   return false;
 }
 
-inline bool cannotBeGreater(Term* t1, Term* t2) {
-  return t1->numVarOccs() < t2->numVarOccs() || (~t1->varmap() & t2->varmap()) || t1->weight() < t2->weight();
-}
-
 bool ReducibilityChecker::checkTerm(Term* t, Term* tS, Term* rwTermS, ResultSubstitution* subst, bool result, bool& variant)
 {
   TIME_TRACE("checkTerm");
@@ -384,11 +384,7 @@ bool ReducibilityChecker::checkTerm(Term* t, Term* tS, Term* rwTermS, ResultSubs
   }
   if (!rwTermS->isLiteral()) {
     // check if rwTerm can be greater than st
-    if (cannotBeGreater(rwTermS, tS)) {
-      ASS_NEQ(_ord.compare(TermList(rwTermS),TermList(tS)), Ordering::GREATER);
-      return false;
-    }
-    if (_ord.compare(TermList(rwTermS),TermList(tS)) != Ordering::GREATER) {
+    if (!_ord.isGreater(TermList(rwTermS),TermList(tS))) {
       return false;
     }
   }
@@ -440,22 +436,18 @@ bool ReducibilityChecker::checkTermReducible(Term* tS, TermList* tgtTermS, bool 
     }
 
     if (tgtTermS) {
-      if (tgtTermS->isTerm() && rhsS.isTerm() && cannotBeGreater(tgtTermS->term(),rhsS.term())) {
-        ASS_NEQ(_ord.compare(*tgtTermS,TermList(tS)), Ordering::GREATER);
-        continue;
-      }
-      if (_ord.compare(*tgtTermS,rhsS) != Ordering::GREATER) {
+      if (!_ord.isGreater(*tgtTermS,rhsS)) {
         continue;
       }
     }
 
     if (!preordered) {
       if (tgtTermS) {
-        if (!greater && _ord.compare(TermList(tS),rhsS)!=Ordering::GREATER) {
+        if (!greater && !_ord.isGreater(TermList(tS),rhsS)) {
           continue;
         }
       } else {
-        if (_ord.compare(TermList(tS),rhsS)!=Ordering::GREATER) {
+        if (!_ord.isGreater(TermList(tS),rhsS)) {
           continue;
         }
       }
