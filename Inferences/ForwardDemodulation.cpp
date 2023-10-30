@@ -82,7 +82,11 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
   //the heaviest first...
 
   static DHSet<TermList> attempted;
-  attempted.reset();
+  static unsigned cacheTimestamp = 0;
+  if (cacheTimestamp != _index->insertionTimestamp()) {
+    attempted.reset();
+    cacheTimestamp = _index->insertionTimestamp();
+  }
 
   unsigned cLen=cl->length();
   for(unsigned li=0;li<cLen;li++) {
@@ -90,9 +94,7 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
     if (lit->isAnswerLiteral()) {
       continue;
     }
-    typename std::conditional<!combinatorySupSupport,
-      NonVariableNonTypeIterator,
-      FirstOrderSubtermIt>::type it(lit);
+    TracedNonVariableNonTypeIterator<combinatorySupSupport> it(lit);
     while(it.hasNext()) {
       TypedTermList trm = it.next();
       if(!attempted.insert(trm)) {
@@ -113,10 +115,8 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
         toplevelCheck &= lit->isPositive() && (cLen == 1);
       }
 
-      if (_salg->getReducibilityChecker() && _salg->getReducibilityChecker()->isNonReducible(trm.term())) {
-        TIME_TRACE("non reducible cache");
-        // it.right();
-        continue;
+      if (toplevelCheck) {
+        attempted.remove(trm);
       }
 
       TermQueryResultIterator git=_index->getGeneralizations(trm, true);
@@ -232,6 +232,10 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
         if(EqHelper::isEqTautology(resLit)) {
           env.statistics->forwardDemodulationsToEqTaut++;
           premises = pvi( getSingletonIterator(qr.clause));
+          for (const auto& t : it.getTrace()) {
+            attempted.remove(TermList(t));
+          }
+          attempted.remove(trm);
           return true;
         }
 
@@ -252,6 +256,10 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
 
         premises = pvi( getSingletonIterator(qr.clause));
         replacement = res;
+        for (const auto& t : it.getTrace()) {
+          attempted.remove(TermList(t));
+        }
+        attempted.remove(trm);
         return true;
       }
     }
