@@ -996,41 +996,49 @@ int KBO::symbolWeight(Term* t) const
 
 void KBO::computeWeight(Term* t) const
 {
-  // TIME_TRACE("computeWeight");
   if (t->kboWeight()!=-1) {
     return;
   }
-  static Stack<pair<Term*,unsigned>> values(8);
-  values.push(make_pair(t,symbolWeight(t)));
-
-  static Stack<TermList*> stack(8);
-  stack.push(t->args());
+  struct Todo {
+    Term* t;
+    unsigned w;
+    TermList* args;
+  };
+  static Stack<Todo> stack(8);
+  stack.push(Todo {
+    .t = t,
+    .w = (unsigned)symbolWeight(t),
+    .args = t->args(),
+  });
 
   while (stack.isNonEmpty()) {
     auto& curr = stack.top();
-    if (curr->isEmpty()) {
+    if (curr.args->isEmpty()) {
       stack.pop();
-      auto kv = values.pop();
-      if (values.isNonEmpty()) {
-        values.top().second += kv.second;
+      if (stack.isNonEmpty()) {
+        stack.top().w += curr.w;
       }
-      kv.first->setKboWeight(kv.second);
+      curr.t->setKboWeight(curr.w);
       continue;
     }
-    if (curr->isVar()) {
-      values.top().second += _funcWeights._specialWeights._variableWeight;
+    auto arg = curr.args;
+    // update this here so reallocation won't affect it
+    curr.args = curr.args->next();
+    if (arg->isVar()) {
+      stack.top().w += _funcWeights._specialWeights._variableWeight;
     } else {
-      auto w = curr->term()->kboWeight();
+      auto w = arg->term()->kboWeight();
       if (w!=-1) {
-        values.top().second += w;
+        stack.top().w += w;
       } else {
-        values.push(make_pair(curr->term(),symbolWeight(curr->term())));
-        stack.push(curr->term()->args());
+        stack.push(Todo{
+          .t = arg->term(),
+          .w = (unsigned)symbolWeight(arg->term()),
+          .args = arg->term()->args()
+        });
       }
     }
-    curr = curr->next();
   }
-  ASS(values.isEmpty());
   ASS(stack.isEmpty());
   ASS_NEQ(t->kboWeight(),-1);
 }

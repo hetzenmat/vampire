@@ -582,7 +582,7 @@ TEST_FUN(kbo_isGreater_test16) {
   DECL_FUNC(f, {srt, srt, srt}, srt)
   DECL_VAR(u, 3)
 
-  auto ord = kbo(1, 1, weights(make_pair(f,1u)), weights(), true /*improvedGreater*/);
+  auto ord = kbo_greater(weights(make_pair(f,1u)), weights());
   ASS(ord.isGreater(
     f(f(y,x,z),u,f(f(u,z,y),x,f(x,f(y,x,z),z))),
     f(x,f(y,x,z),f(f(y,x,z),u,f(f(u,z,y),x,z)))));
