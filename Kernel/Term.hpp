@@ -590,6 +590,16 @@ public:
     return _maxRedLen;    
   }
 
+  int kboWeight() const
+  {
+    return _kboWeight;
+  }
+
+  void setKboWeight(int w)
+  {
+    _kboWeight = w;
+  }
+
   /** Mark term as shared */
   void markShared()
   {
@@ -803,6 +813,8 @@ protected:
   unsigned _isTwoVarEquality : 1;
   /** Weight of the symbol */
   unsigned _weight;
+  /** Cached weight of the term for KBO, otherwise -1 and invalid. */
+  int _kboWeight;
   /** length of maximum reduction length */
   int _maxRedLen;
   union {
