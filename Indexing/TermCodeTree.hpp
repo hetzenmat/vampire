@@ -48,7 +48,7 @@ public:
   struct TermInfo
   {
     TermInfo(TermList t, Literal* lit, Clause* cls)
-    : t(t), lit(lit), cls(cls) {}
+    : t(t), lit(lit), cls(cls), varMap() {}
 
     inline bool operator==(const TermInfo& o)
     { return cls==o.cls && t==o.t && lit==o.lit; }
@@ -61,6 +61,7 @@ public:
     TermList t;
     Literal* lit;
     Clause* cls;
+    VarMap varMap;
   };
 
 

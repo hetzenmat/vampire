@@ -54,6 +54,7 @@ void TermCodeTree::insert(TermInfo* ti)
   TermList t=ti->t;
   if (t.isVar()) {
     code.push(CodeOp::getTermOp(ASSIGN_VAR,0));
+    ALWAYS(ti->varMap.insert(t.var(),0));
   }
   else {
     ASS(t.isTerm());
@@ -61,6 +62,7 @@ void TermCodeTree::insert(TermInfo* ti)
     static CompileContext cctx;
     cctx.init();
     compileTerm(t.term(), code, cctx, false);
+    ti->varMap.loadFromMap(cctx.varMap);
     cctx.deinit(this);
   }
 
