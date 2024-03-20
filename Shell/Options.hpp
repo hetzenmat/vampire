@@ -2003,6 +2003,9 @@ public:
   const vstring& strategySamplerFilename() const { return _sampleStrategy.actualValue; }
   bool printClausifierPremises() const { return _printClausifierPremises.actualValue; }
 
+  bool showPassiveTraffic() const { return _showPassiveTraffic.actualValue; }
+  unsigned numClauseFeatures() const { return _numClauseFeatures.actualValue; }
+
   // IMPORTANT, if you add a showX command then include showAll
   bool showAll() const { return _showAll.actualValue; }
   bool showActive() const { return showAll() || _showActive.actualValue; }
@@ -2615,6 +2618,10 @@ private:
   BoolOptionValue _showFMBsortInfo;
   BoolOptionValue _showInduction;
   BoolOptionValue _showSimplOrdering;
+
+  BoolOptionValue _showPassiveTraffic;
+  UnsignedOptionValue _numClauseFeatures;
+
 #if VZ3
   BoolOptionValue _showZ3;
   StringOptionValue _exportAvatarProblem;
