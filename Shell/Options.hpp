@@ -2006,6 +2006,11 @@ public:
   bool showPassiveTraffic() const { return _showPassiveTraffic.actualValue; }
   unsigned numClauseFeatures() const { return _numClauseFeatures.actualValue; }
 
+  const vstring& neuralPassiveClauseContainer() const { return _neuralPassiveClauseContainer.actualValue; }
+  float npccTemperature() const { return _npccTemperature.actualValue; }
+  const vstring& neuralPassiveClauseContainerTweaks() const { return _neuralPassiveClauseContainerTweaks.actualValue; }
+  unsigned reshuffleAt() const { return _reshuffleAt.actualValue; }
+
   // IMPORTANT, if you add a showX command then include showAll
   bool showAll() const { return _showAll.actualValue; }
   bool showActive() const { return showAll() || _showActive.actualValue; }
@@ -2621,6 +2626,11 @@ private:
 
   BoolOptionValue _showPassiveTraffic;
   UnsignedOptionValue _numClauseFeatures;
+
+  StringOptionValue _neuralPassiveClauseContainer;
+  FloatOptionValue _npccTemperature;
+  StringOptionValue _neuralPassiveClauseContainerTweaks;
+  UnsignedOptionValue _reshuffleAt;
 
 #if VZ3
   BoolOptionValue _showZ3;
