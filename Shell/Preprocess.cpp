@@ -22,7 +22,7 @@
 #include "Kernel/Problem.hpp"
 
 #include "GoalGuessing.hpp"
-#include "AnswerExtractor.hpp"
+#include "AnswerLiteralManager.hpp"
 #include "CNF.hpp"
 #include "NewCNF.hpp"
 #include "DistinctGroupExpansion.hpp"
@@ -107,7 +107,7 @@ void Preprocess::preprocess(Problem& prb)
 
   if (_options.shuffleInput()) {
     TIME_TRACE(TimeTrace::SHUFFLING);
-    env.statistics->phase=Statistics::SHUFFLING;    
+    env.statistics->phase=Statistics::SHUFFLING;
 
     if (env.options->showPreprocessing())
       std::cout << "shuffling1" << std::endl;
@@ -126,7 +126,7 @@ void Preprocess::preprocess(Problem& prb)
   if (prb.hasInterpretedOperations() || env.signature->hasTermAlgebras()){
     // Normalizer is needed, because the TheoryAxioms code assumes Normalized problem
     InterpretedNormalizer().apply(prb);
-   
+
     // Add theory axioms if needed
     if( _options.theoryAxioms() != Options::TheoryAxiomLevel::OFF){
       env.statistics->phase=Statistics::INCLUDING_THEORY_AXIOMS;
