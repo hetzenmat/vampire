@@ -852,6 +852,8 @@ vstring Kernel::ruleName(InferenceRule rule)
     return "finite model not found : exhaustively excluded all possible domain size assignments";
   case InferenceRule::ARITHMETIC_SUBTERM_GENERALIZATION:
     return "arithmetic subterm generalization";
+  case InferenceRule::GOAL_REWRITING:
+    return "goal rewriting";
   case InferenceRule::STRUCT_INDUCTION_AXIOM_ONE:
     return "structural induction hypothesis (one)";
   case InferenceRule::STRUCT_INDUCTION_AXIOM_TWO:

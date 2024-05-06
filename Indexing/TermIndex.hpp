@@ -119,6 +119,27 @@ private:
   const Options& _opt;
 };
 
+class GoalRewritingLHSIndex
+: public TermIndex<TermLiteralClause>
+{
+public:
+  GoalRewritingLHSIndex(TermIndexingStructure<TermLiteralClause>* is, const Ordering& ord, const Options& opt) : TermIndex(is), _ord(ord), _opt(opt) {}
+protected:
+  void handleClause(Clause* c, bool adding) override;
+  const Ordering& _ord;
+  const Options& _opt;
+};
+
+class GoalRewritingSubtermIndex
+: public TermIndex<TermLiteralClause>
+{
+public:
+  GoalRewritingSubtermIndex(TermIndexingStructure<TermLiteralClause>* is, const Options& opt) : TermIndex(is), _opt(opt) {};
+protected:
+  void handleClause(Clause* c, bool adding) override;
+  const Options& _opt;
+};
+
 /**
  * Term index for induction
  */

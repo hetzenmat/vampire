@@ -17,6 +17,7 @@
 #include "Lib/DHMap.hpp"
 
 #include "Inferences/InductionHelper.hpp"
+#include "Inferences/GoalRewriting.hpp"
 
 #include "Kernel/ApplicativeHelper.hpp"
 #include "Kernel/Clause.hpp"
@@ -75,6 +76,10 @@ void DemodulationSubtermIndexImpl<combinatorySupSupport>::handleClause(Clause* c
 
   static DHSet<Term*> inserted;
 
+  if (c->goalRewritingDepth()) {
+    return;
+  }
+
   unsigned cLen=c->length();
   for (unsigned i=0; i<cLen; i++) {
     // it is true (as stated below) that inserting only once per clause would be sufficient
@@ -114,7 +119,7 @@ template class DemodulationSubtermIndexImpl<true>;
 
 void DemodulationLHSIndex::handleClause(Clause* c, bool adding)
 {
-  if (c->length()!=1) {
+  if (c->length()!=1 || c->goalRewritingDepth()) {
     return;
   }
 
@@ -125,6 +130,49 @@ void DemodulationLHSIndex::handleClause(Clause* c, bool adding)
                     _opt.forwardDemodulation()== Options::Demodulation::PREORDERED, _ord);
   while (lhsi.hasNext()) {
     _is->handle(TermLiteralClause{ lhsi.next(), lit, c }, adding);
+  }
+}
+
+void GoalRewritingLHSIndex::handleClause(Clause* c, bool adding)
+{
+  if (c->length()!=1 || c->goalRewritingDepth()>=_opt.maxGoalRewritingDepth()) {
+    return;
+  }
+
+  Literal* lit=(*c)[0];
+  if (!lit->isEquality() || lit->isNegative()) {
+    return;
+  }
+  for (unsigned i = 0; i <= 1; i++) {
+    auto lhs = lit->termArg(i);
+    auto rhs = lit->termArg(1-i);
+    if (lhs.containsAllVariablesOf(rhs)) {
+      _is->handle(TermLiteralClause{ TypedTermList(lhs, SortHelper::getEqualityArgumentSort(lit)), lit, c }, adding);
+    }
+  }
+}
+
+void GoalRewritingSubtermIndex::handleClause(Clause* c, bool adding)
+{
+  if (c->length()!=1 || c->goalRewritingDepth()>=_opt.maxGoalRewritingDepth()) {
+    return;
+  }
+
+  Literal* lit=(*c)[0];
+
+  if (!lit->isEquality() || lit->isPositive() || !lit->ground()) {
+    return;
+  }
+
+  DHSet<Term*> inserted;
+  NonVariableNonTypeIterator it(lit);
+  while (it.hasNext()) {
+    Term* t = it.next();
+    if (!inserted.insert(t)) {
+      it.right();
+      continue;
+    }
+    _is->handle(TermLiteralClause{ TypedTermList(t), lit, c }, adding);
   }
 }
 

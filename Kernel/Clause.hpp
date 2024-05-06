@@ -350,6 +350,9 @@ public:
 
   bool computable();
 
+  unsigned goalRewritingDepth() const { return _grwDepth; }
+  void setGoalRewritingDepth(unsigned depth) { _grwDepth = depth; }
+
 protected:
   /** number of literals */
   unsigned _length : 20;
@@ -380,6 +383,8 @@ protected:
   unsigned _reductionTimestamp;
   /** a map that translates Literal* to its index in the clause */
   InverseLookup<Literal>* _literalPositions;
+  /** goal rewriting depth */
+  unsigned _grwDepth;
 
   int _numActiveSplits;
 

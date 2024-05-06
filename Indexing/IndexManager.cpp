@@ -195,6 +195,16 @@ Index* IndexManager::create(IndexType t)
     isGenerating = false;
     break;
 
+  case GOAL_REWRITING_LHS_INDEX:
+    res=new GoalRewritingLHSIndex(new CodeTreeTIS(), _alg->getOrdering(), _alg->getOptions());
+    isGenerating = true;
+    break;
+
+  case GOAL_REWRITING_SUBTERM_INDEX:
+    res=new GoalRewritingSubtermIndex(new TermSubstitutionTree(), _alg->getOptions());
+    isGenerating = true;
+    break;
+
   case FW_SUBSUMPTION_CODE_TREE:
     res = new CodeTreeSubsumptionIndex();
     isGenerating = false;

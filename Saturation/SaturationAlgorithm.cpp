@@ -67,6 +67,7 @@
 #include "Inferences/ForwardSubsumptionAndResolution.hpp"
 #include "Inferences/InvalidAnswerLiteralRemoval.hpp"
 #include "Inferences/ForwardSubsumptionDemodulation.hpp"
+#include "Inferences/GoalRewriting.hpp"
 #include "Inferences/GlobalSubsumption.hpp"
 #include "Inferences/InnerRewriting.hpp"
 #include "Inferences/TermAlgebraReasoning.hpp"
@@ -1500,6 +1501,9 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
   //TODO here induction is last, is that right?
   if(opt.induction()!=Options::Induction::NONE){
     gie->addFront(new Induction());
+  }
+  if (opt.goalRewriting()) {
+    gie->addFront(new GoalRewriting());
   }
 
   if(opt.instantiation()!=Options::Instantiation::OFF){

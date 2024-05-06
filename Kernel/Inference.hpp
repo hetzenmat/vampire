@@ -300,6 +300,8 @@ enum class InferenceRule : unsigned char {
   FOOL_PARAMODULATION,
   /** unit resulting resolution */
   UNIT_RESULTING_RESOLUTION,
+  /** goal rewriting inference */
+  GOAL_REWRITING,
   /* Induction hyperresolution */
   INDUCTION_HYPERRESOLUTION,
   /* Generalized induction hyperresolution */

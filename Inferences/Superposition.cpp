@@ -316,6 +316,10 @@ Clause* Superposition::performSuperposition(
   auto subst = ResultSubstitution::fromSubstitution(&unifier->subs(), QUERY_BANK, RESULT_BANK);
   TermList eqLHSsort = SortHelper::getEqualityArgumentSort(eqLit); 
 
+  // do not perform superposition on or with goals that we have rewritten
+  if (rwClause->goalRewritingDepth() || eqClause->goalRewritingDepth()) {
+    return 0;
+  }
 
   if(eqLHS.isVar()) {
     if(!checkSuperpositionFromVariable(eqClause, eqLit, eqLHS)) {

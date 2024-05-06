@@ -232,6 +232,9 @@ bool ForwardSubsumptionAndResolution::perform(Clause *cl, Clause *&replacement, 
     while (rit.hasNext()) {
       Clause *premise = rit.next().data->clause;
       if (ColorHelper::compatible(cl->color(), premise->color())) {
+        if (cl->goalRewritingDepth()<premise->goalRewritingDepth()) {
+          continue;
+        }
         premises = pvi(getSingletonIterator(premise));
         env.statistics->forwardSubsumed++;
         result = true;

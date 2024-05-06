@@ -117,6 +117,8 @@ public:
   unsigned theoryInstSimpLostSolution;
   /** number of theoryInstSimp application where an empty substitution was applied */
   unsigned theoryInstSimpEmptySubstitution;
+  /** number of goal rewritings (i.e. rewritings on conjectures) */
+  unsigned goalRewritings;
   /** number of induction applications **/
   unsigned maxInductionDepth;
   unsigned structInduction;

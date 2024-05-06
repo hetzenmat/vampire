@@ -398,6 +398,7 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/ForwardSubsumptionDemodulation.cpp
     Inferences/FunctionDefinitionRewriting.cpp
     Inferences/GlobalSubsumption.cpp
+    Inferences/GoalRewriting.cpp
     Inferences/InnerRewriting.cpp
     Inferences/EquationalTautologyRemoval.cpp
     Inferences/Induction.cpp
@@ -436,6 +437,7 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/ForwardSubsumptionAndResolution.hpp
     Inferences/FunctionDefinitionRewriting.hpp
     Inferences/GlobalSubsumption.hpp
+    Inferences/GoalRewriting.hpp
     Inferences/InnerRewriting.hpp
     Inferences/EquationalTautologyRemoval.hpp
     Inferences/InductionHelper.hpp

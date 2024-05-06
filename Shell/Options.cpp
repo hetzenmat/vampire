@@ -1441,6 +1441,17 @@ void Options::init()
     _nonUnitInduction.reliesOn(_induction.is(notEqual(Induction::NONE)));
     _lookup.insert(&_nonUnitInduction);
 
+    _goalRewriting = BoolOptionValue("goal_rewriting","grw",false);
+    _goalRewriting.description = "Paramodulate goals with unit equalities possibly in the upward direction (w.r.t. the ordering)";
+    _goalRewriting.tag(OptionTag::INFERENCES);
+    _lookup.insert(&_goalRewriting);
+
+    _maxGoalRewritingDepth = UnsignedOptionValue("max_goal_rewriting_depth","mgrwd",3);
+    _maxGoalRewritingDepth.description = "Set maximum goal rewriting depth";
+    _maxGoalRewritingDepth.tag(OptionTag::INFERENCES);
+    _maxGoalRewritingDepth.reliesOn(_goalRewriting.is(equal(true)));
+    _lookup.insert(&_maxGoalRewritingDepth);
+
     _inductionOnActiveOccurrences = BoolOptionValue("induction_on_active_occurrences","indao",false);
     _inductionOnActiveOccurrences.description = "Only use induction terms from active occurrences, generalize over active occurrences";
     _inductionOnActiveOccurrences.tag(OptionTag::INDUCTION);
