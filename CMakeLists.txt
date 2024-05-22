@@ -348,6 +348,7 @@ set(VAMPIRE_INDEXING_SOURCES
     Indexing/CodeTree.cpp
     Indexing/CodeTreeInterfaces.cpp
     Indexing/GroundingIndex.cpp
+    Indexing/UnitHashingIndex.cpp
     Indexing/Index.cpp
     Indexing/IndexManager.cpp
     Indexing/InductionFormulaIndex.cpp
@@ -364,6 +365,7 @@ set(VAMPIRE_INDEXING_SOURCES
     Indexing/CodeTree.hpp
     Indexing/CodeTreeInterfaces.hpp
     Indexing/GroundingIndex.hpp
+    Indexing/UnitHashingIndex.hpp
     Indexing/Index.hpp
     Indexing/IndexManager.hpp
     Indexing/InductionFormulaIndex.hpp
@@ -400,6 +402,7 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/ForwardLiteralRewriting.cpp
     Inferences/ForwardSubsumptionAndResolution.cpp
     Inferences/ForwardSubsumptionDemodulation.cpp
+    Inferences/ForwardIdentitybasedUnitSubsumption.cpp
     Inferences/FunctionDefinitionRewriting.cpp
     Inferences/GlobalSubsumption.cpp
     Inferences/InnerRewriting.cpp
@@ -438,7 +441,9 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/ForwardDemodulation.hpp
     Inferences/ForwardLiteralRewriting.hpp
     Inferences/ForwardSubsumptionAndResolution.hpp
+    Inferences/ForwardSubsumptionDemodulation.hpp
     Inferences/FunctionDefinitionRewriting.hpp
+    Inferences/ForwardIdentitybasedUnitSubsumption.hpp
     Inferences/GlobalSubsumption.hpp
     Inferences/InnerRewriting.hpp
     Inferences/EquationalTautologyRemoval.hpp

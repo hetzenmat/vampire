@@ -1550,6 +1550,16 @@ void Options::init()
     _demodulationPrecompiledComparison.onlyUsefulWith(Or(_forwardDemodulation.is(notEqual(Demodulation::OFF)),_backwardDemodulation.is(notEqual(Demodulation::OFF))));
     _demodulationPrecompiledComparison.addProblemConstraint(hasEquality());
 
+    _demodulationOnlyEquational = BoolOptionValue("demodulation_only_equational","doe",false);
+    _demodulationOnlyEquational.description=
+       "Disables demodulation of non-equational literals. A helper option for simulating the effect of Waldmeister's `Enlarging the Hypothesis` trick.";
+    _lookup.insert(&_demodulationOnlyEquational);
+    _demodulationOnlyEquational.setExperimental();
+    _demodulationOnlyEquational.tag(OptionTag::INFERENCES);
+    _demodulationOnlyEquational.onlyUsefulWith(ProperSaturationAlgorithm());
+    _demodulationOnlyEquational.onlyUsefulWith(Or(_forwardDemodulation.is(notEqual(Demodulation::OFF)),_backwardDemodulation.is(notEqual(Demodulation::OFF))));
+    _demodulationOnlyEquational.addProblemConstraint(hasEquality());
+
     _extensionalityAllowPosEq = BoolOptionValue( "extensionality_allow_pos_eq","erape",false);
     _extensionalityAllowPosEq.description="If extensionality resolution equals filter, this dictates"
       " whether we allow other positive equalities when recognising extensionality clauses";
@@ -1658,8 +1668,22 @@ void Options::init()
     _lookup.insert(&_forwardSubsumptionResolution);
     _forwardSubsumptionResolution.tag(OptionTag::INFERENCES);
     _forwardSubsumptionResolution.addHardConstraint(If(equal(true)).then(_forwardSubsumption.is(equal(true))));
-
     _forwardSubsumptionResolution.onlyUsefulWith(ProperSaturationAlgorithm());
+
+    _forwardSubsumptionOnlyEquational = BoolOptionValue("forward_subsumption_only_equational","fsoe",false);
+    _forwardSubsumptionOnlyEquational.description=
+       "Disables forward subsumption of non-equational literals. Meant to be used on UEQ problems in tandem with -doe and -fibus. "
+       "A helper option for simulating the effect of Waldmeister's `Enlarging the Hypothesis` trick.";
+    _lookup.insert(&_forwardSubsumptionOnlyEquational);
+    _forwardSubsumptionOnlyEquational.setExperimental();
+    _forwardSubsumptionOnlyEquational.tag(OptionTag::INFERENCES);
+    _forwardSubsumptionOnlyEquational.onlyUsefulWith(_forwardSubsumption.is(equal(true)));
+
+    _forwardIbUSubsumption = BoolOptionValue("forward_identity_based_unit_subsumption","fibus",false);
+    _forwardIbUSubsumption.description="Perform cheap forward subsumption (resolution) for unit clauses based on term-idendity hash-table lookup. "
+       "A helper option for simulating the effect of Waldmeister's `Enlarging the Hypothesis` trick.";
+    _lookup.insert(&_forwardIbUSubsumption);
+    _forwardIbUSubsumption.tag(OptionTag::INFERENCES);
 
     _forwardSubsumptionDemodulation = BoolOptionValue("forward_subsumption_demodulation", "fsd", false);
     _forwardSubsumptionDemodulation.description = "Perform forward subsumption demodulation.";

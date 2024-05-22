@@ -2092,6 +2092,7 @@ public:
   Demodulation backwardDemodulation() const { return _backwardDemodulation.actualValue; }
   DemodulationRedundancyCheck demodulationRedundancyCheck() const { return _demodulationRedundancyCheck.actualValue; }
   bool demodulationPrecompiledComparison() const { return _demodulationPrecompiledComparison.actualValue; }
+  bool demodulationOnlyEquational() const { return _demodulationOnlyEquational.actualValue; }
 
   //void setBackwardDemodulation(Demodulation newVal) { _backwardDemodulation = newVal; }
   Subsumption backwardSubsumption() const { return _backwardSubsumption.actualValue; }
@@ -2100,6 +2101,8 @@ public:
   bool backwardSubsumptionDemodulation() const { return _backwardSubsumptionDemodulation.actualValue; }
   unsigned backwardSubsumptionDemodulationMaxMatches() const { return _backwardSubsumptionDemodulationMaxMatches.actualValue; }
   bool forwardSubsumption() const { return _forwardSubsumption.actualValue; }
+  bool forwardSubsumptionOnlyEquational() const { return _forwardSubsumptionOnlyEquational.actualValue; }
+  bool forwardIbUSubsumption() const { return _forwardIbUSubsumption.actualValue; }
   bool forwardLiteralRewriting() const { return _forwardLiteralRewriting.actualValue; }
   int lrsFirstTimeCheck() const { return _lrsFirstTimeCheck.actualValue; }
   int lrsWeightLimitOnly() const { return _lrsWeightLimitOnly.actualValue; }
@@ -2454,6 +2457,7 @@ private:
 
   ChoiceOptionValue<DemodulationRedundancyCheck> _demodulationRedundancyCheck;
   BoolOptionValue _demodulationPrecompiledComparison;
+  BoolOptionValue _demodulationOnlyEquational;
 
   ChoiceOptionValue<EqualityProxy> _equalityProxy;
   BoolOptionValue _useMonoEqualityProxy;
@@ -2489,7 +2493,9 @@ private:
   BoolOptionValue _forwardLiteralRewriting;
   BoolOptionValue _forwardSubsumption;
   BoolOptionValue _forwardSubsumptionResolution;
+  BoolOptionValue _forwardSubsumptionOnlyEquational;
   BoolOptionValue _forwardSubsumptionDemodulation;
+  BoolOptionValue _forwardIbUSubsumption;
   UnsignedOptionValue _forwardSubsumptionDemodulationMaxMatches;
   ChoiceOptionValue<FunctionDefinitionElimination> _functionDefinitionElimination;
   UnsignedOptionValue _functionDefinitionIntroduction;

@@ -229,6 +229,7 @@ public:
   unsigned equationalTautologies;
   /** number of forward subsumed clauses */
   unsigned forwardSubsumed;
+  unsigned forwardIbuSubsumed;
   /** number of backward subsumed clauses */
   unsigned backwardSubsumed;
 

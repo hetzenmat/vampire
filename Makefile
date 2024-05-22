@@ -233,6 +233,7 @@ VI_OBJ = Indexing/AcyclicityIndex.o\
          Indexing/CodeTreeInterfaces.o\
          Indexing/SubstitutionCoverTree.o\
          Indexing/GroundingIndex.o\
+         Indexing/UnitHashingIndex.o\
          Indexing/Index.o\
          Indexing/IndexManager.o\
          Indexing/InductionFormulaIndex.o\
@@ -270,6 +271,7 @@ VINF_OBJ=Inferences/BackwardDemodulation.o\
          Inferences/ForwardSubsumptionAndResolution.o\
          Inferences/SubsumptionDemodulationHelper.o\
          Inferences/ForwardSubsumptionDemodulation.o\
+         Inferences/ForwardIdentitybasedUnitSubsumption.o\
          Inferences/GlobalSubsumption.o\
          Inferences/InnerRewriting.o\
          Inferences/EquationalTautologyRemoval.o\
