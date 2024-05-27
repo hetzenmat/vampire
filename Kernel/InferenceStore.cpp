@@ -91,6 +91,14 @@ void InferenceStore::recordIntroducedSplitName(Unit* u, vstring name)
 }
 
 /**
+ * Record an assiciation between a skolem symbol and (the variable it replaces, in which formula)
+ */
+void InferenceStore::recordSkolemsOrigin(unsigned skSymb, unsigned var, Unit* unit)
+{
+  ALWAYS(_skolemsOrigin.insert(skSymb,std::make_pair(var,unit)));
+}
+
+/**
  * Return @b inner quantified over variables in @b vars
  *
  * It is caller's responsibility to ensure that variables in @b vars are unique.

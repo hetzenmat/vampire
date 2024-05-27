@@ -497,6 +497,10 @@ Formula* Skolem::skolemise (Formula* f)
             <<" in "<<f->toString()<<" in formula "<<_beingSkolemised->toString() << endl;
         }
 
+        if (!skolemisingTypeVar && !_appify) { // good-old first-order skolemization
+          InferenceStore::instance()->recordSkolemsOrigin(sym,v,_beingSkolemised);
+        }
+
         if (env.options->showNonconstantSkolemFunctionTrace() && arity!=0) {
           ostream& out = std::cout;
             out <<"Nonconstant skolem function introduced: "

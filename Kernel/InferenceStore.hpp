@@ -72,10 +72,20 @@ public:
   void recordSplittingNameLiteral(Unit* us, Literal* lit);
   void recordIntroducedSymbol(Unit* u, SymbolType st, unsigned number);
   void recordIntroducedSplitName(Unit* u, vstring name);
+  void recordSkolemsOrigin(unsigned skSymb, unsigned var, Unit* unit);
 
   void outputUnsatCore(std::ostream& out, Unit* refutation);
   void outputProof(std::ostream& out, Unit* refutation);
   void outputProof(std::ostream& out, UnitList* units);
+
+  bool isRecordedSkolemSymb(unsigned skSymb) {
+    std::pair<unsigned,Unit*> dummy;
+    return _skolemsOrigin.find(skSymb,dummy);
+  };
+
+  const std::pair<unsigned,Unit*>& getRecordedSkolemsOrigin(unsigned skSymb) {
+    return _skolemsOrigin.get(skSymb);
+  }
 
 private:
   struct ProofPrinter;
@@ -95,7 +105,7 @@ private:
   typedef Stack<SymbolId> SymbolStack;
   DHMap<unsigned,SymbolStack> _introducedSymbols;
   DHMap<unsigned,vstring> _introducedSplitNames;
-
+  DHMap<unsigned,std::pair<unsigned,Unit*>> _skolemsOrigin;
 };
 
 };
