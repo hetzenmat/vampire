@@ -304,6 +304,7 @@ public:
   enum class ProofExtra : unsigned int {
     OFF,
     FREE,
+    UNIFIER,
     FULL
   };
   enum class FMBWidgetOrders : unsigned int {
@@ -424,6 +425,10 @@ public:
     SMTCOMP_2018,
     SNAKE_TPTP_UNS,
     SNAKE_TPTP_SAT,
+#if VHOL
+    SNAKE_TPTP_HOL,
+    SNAKE_SLH,
+#endif
     STRUCT_INDUCTION,
     STRUCT_INDUCTION_TIP
   };
@@ -732,6 +737,7 @@ public:
     WARNING = 1,
   };
 
+#if VHOL
   enum class FunctionExtensionality : unsigned int {
     OFF = 0,
     AXIOM = 1,
@@ -743,16 +749,32 @@ public:
     LAZY_GEN = 1,
     LAZY_SIMP = 2,
     LAZY_SIMP_NOT_GEN = 3,
-    LAZY_SIMP_NOT_GEN_BOOL_EQ_OFF = 4,
-    LAZY_SIMP_NOT_GEN_BOOL_EQ_GEN = 5,
-    OFF = 6
+    LAZY_SIMP_PI_SIGMA_GEN = 4,
+    LAZY_SIMP_NOT_GEN_BOOL_EQ_OFF = 5,
+    LAZY_SIMP_NOT_GEN_BOOL_EQ_GEN = 6,
+    CONJ_EAGER = 7,
+    OFF = 8
   };
 
   enum class PISet : unsigned int {
     ALL = 0,
     ALL_EXCEPT_NOT_EQ = 1,
+    NOT = 2,
+    NOT_EQ_NOT_EQ = 3,
     FALSE_TRUE_NOT = 2,
-    FALSE_TRUE_NOT_EQ_NOT_EQ = 3
+    FALSE_TRUE_NOT_EQ_NOT_EQ = 3, // TODO MH
+    PRAGMATIC = 4,
+    AND = 5,
+    OR = 6,
+    EQUALS = 7,
+    PI_SIGMA = 8
+  };
+
+  enum class HPrinting : unsigned int {
+    RAW = 0,
+    DB_INDICES = 1,
+    PRETTY = 2,
+    TPTP = 3
   };
 
   enum class Narrow : unsigned int {
@@ -761,6 +783,7 @@ public:
     SKI = 2,
     OFF = 3
   };
+#endif
 
 
     //==========================================================
@@ -1990,7 +2013,6 @@ public:
   void setNormalize(bool normalize) { _normalize.actualValue = normalize; }
   GoalGuess guessTheGoal() const { return _guessTheGoal.actualValue; }
   unsigned gtgLimit() const { return _guessTheGoalLimit.actualValue; }
-  void setMaxXX(unsigned max) { _maximumXXNarrows.actualValue = max; }
 
   void setNaming(int n){ _naming.actualValue = n;} //TODO: ensure global constraints
   vstring include() const { return _include.actualValue; }
@@ -2134,6 +2156,16 @@ public:
   Lib::vvector<float> theorySplitQueueCutoffs() const;
   int theorySplitQueueExpectedRatioDenom() const { return _theorySplitQueueExpectedRatioDenom.actualValue; }
   bool theorySplitQueueLayeredArrangement() const { return _theorySplitQueueLayeredArrangement.actualValue; }
+
+#if VHOL
+  bool hoFeaturesSplitQueues() const { return _hoFeaturesSplitQueues.actualValue; }
+  unsigned hoFeaturesLambdaWeight() const { return _hoFeaturesLambdaWeight.actualValue; }
+  unsigned hoFeaturesAppVarWeight() const { return _hoFeaturesAppVarWeight.actualValue; }
+  Lib::vvector<int> hoFeaturesSplitQueueRatios() const;
+  Lib::vvector<float> hoFeaturesSplitQueueCutoffs() const;
+  bool hoFeaturesSplitQueueLayeredArrangement() const { return _hoFeaturesSplitQueueLayeredArrangement.actualValue; }
+#endif
+
   bool useAvatarSplitQueues() const { return _useAvatarSplitQueues.actualValue; }
   Lib::vvector<int> avatarSplitQueueRatios() const;
   Lib::vvector<float> avatarSplitQueueCutoffs() const;
@@ -2275,35 +2307,50 @@ public:
   ArithmeticSimplificationMode cancellation() const { return _highSchool.actualValue ? ArithmeticSimplificationMode::CAUTIOUS : _cancellation.actualValue; }
   ArithmeticSimplificationMode arithmeticSubtermGeneralizations() const { return  _highSchool.actualValue ? ArithmeticSimplificationMode::CAUTIOUS : _arithmeticSubtermGeneralizations.actualValue; }
 
-  //Higher-order Options
+  // Higher-order Options
 
-  bool addCombAxioms() const { return _addCombAxioms.actualValue; }
+  // TODO MH
+  void setMaxXX(unsigned max) { throw "TODO MH"; }
+  bool addCombAxioms() const { throw "TODO MH"; }
+  bool combinatorySup() const { throw "TODO MH"; }
+  bool complexVarCondition() const { throw "TODO MH"; }
+  bool lambdaFreeHol() const { throw "TODO MH"; }
+  int maxXXNarrows() const { throw "TODO MH"; }
+  bool prioritiseClausesProducedByLongReduction() const { throw "TODO MH"; }
+  Narrow narrow() const { throw "TODO MH"; }
+
+
+
+#if VHOL
   bool addProxyAxioms() const { return _addProxyAxioms.actualValue; }
-  bool combinatorySup() const { return _combinatorySuperposition.actualValue; }
   bool choiceAxiom() const { return _choiceAxiom.actualValue; }
   bool injectivityReasoning() const { return _injectivity.actualValue; }
   bool pragmatic() const { return _pragmatic.actualValue; }
   bool choiceReasoning() const { return _choiceReasoning.actualValue; }
-  bool prioritiseClausesProducedByLongReduction() const { return _priortyToLongReducts.actualValue; }
-  int maxXXNarrows() const { return _maximumXXNarrows.actualValue; }
+  // bool prioritiseClausesProducedByLongReduction() const { return _priortyToLongReducts.actualValue; }
   FunctionExtensionality functionExtensionality() const { return _functionExtensionality.actualValue; }
   CNFOnTheFly cnfOnTheFly() const { return _clausificationOnTheFly.actualValue; }
   PISet piSet() const { return _piSet.actualValue; }
-  Narrow narrow() const { return _narrow.actualValue; }
   bool equalityToEquivalence () const { return _equalityToEquivalence.actualValue; }
   bool complexBooleanReasoning () const { return _complexBooleanReasoning.actualValue; }
   bool booleanEqTrick() const { return _booleanEqTrick.actualValue; }
   bool casesSimp() const { return _casesSimp.actualValue; }
   bool cases() const { return _cases.actualValue; }
   bool newTautologyDel() const { return _newTautologyDel.actualValue; }
-  bool lambdaFreeHol() const { return _lambdaFreeHol.actualValue; }
-  bool complexVarCondition() const { return _complexVarCondition.actualValue; }
-  // For unit testing
-  void useCombSup() { 
-    _combinatorySuperposition.actualValue = true;
-    _complexVarCondition.actualValue = true; 
-  }
+  bool positiveExtensionality() const { return _positiveExt.actualValue; }
+  // bool lambdaFreeHol() const { return _lambdaFreeHol.actualValue; }
+  bool iffXorRewriter() const { return _iffXorRewriter.actualValue; }
+  // TODO doesn't do anyhting currently
+  // bool complexVarCondition() const { return _complexVarCondition.actualValue; }
+  HPrinting holPrinting() const { return _holPrinting.actualValue; }
+  void setHolPrinting(HPrinting setting) { _holPrinting.actualValue = setting; }
+  bool heuristicInstantiation() const { return _heuristicInstantiation.actualValue; }
+  bool applicativeUnify() const { return _applicativeUnify.actualValue; }
+  unsigned higherOrderUnifDepth() const { return _higherOrderUnifDepth.actualValue; }
+  unsigned takeNUnifiersOnly() const { return _takeNUnifiersOnly.actualValue; }
+#endif
 
+  // For unit testing
 private:
     
     /**
@@ -2416,6 +2463,14 @@ private:
   StringOptionValue _theorySplitQueueCutoffs;
   IntOptionValue _theorySplitQueueExpectedRatioDenom;
   BoolOptionValue _theorySplitQueueLayeredArrangement;
+#if VHOL
+  BoolOptionValue _hoFeaturesSplitQueues;
+  UnsignedOptionValue _hoFeaturesLambdaWeight;
+  UnsignedOptionValue _hoFeaturesAppVarWeight;
+  StringOptionValue _hoFeaturesSplitQueueRatios;
+  StringOptionValue _hoFeaturesSplitQueueCutoffs;
+  BoolOptionValue _hoFeaturesSplitQueueLayeredArrangement;
+#endif
   BoolOptionValue _useAvatarSplitQueues;
   StringOptionValue _avatarSplitQueueRatios;
   StringOptionValue _avatarSplitQueueCutoffs;
@@ -2713,29 +2768,34 @@ private:
   ChoiceOptionValue<ArithmeticSimplificationMode> _arithmeticSubtermGeneralizations;
 
  
+#if VHOL
   //Higher-order options
-  BoolOptionValue _addCombAxioms;
   BoolOptionValue _addProxyAxioms;
-  BoolOptionValue _combinatorySuperposition;
   BoolOptionValue _choiceAxiom;
   BoolOptionValue _injectivity;
   BoolOptionValue _pragmatic;
   BoolOptionValue _choiceReasoning;
-  BoolOptionValue _priortyToLongReducts;
-  IntOptionValue  _maximumXXNarrows;
+  // BoolOptionValue _priortyToLongReducts;
   ChoiceOptionValue<FunctionExtensionality> _functionExtensionality;
   ChoiceOptionValue<CNFOnTheFly> _clausificationOnTheFly;
   ChoiceOptionValue<PISet> _piSet;
-  ChoiceOptionValue<Narrow> _narrow;
   BoolOptionValue _equalityToEquivalence;
   BoolOptionValue _complexBooleanReasoning;
   BoolOptionValue _booleanEqTrick;
   BoolOptionValue _superposition;
+  BoolOptionValue _heuristicInstantiation;
+  BoolOptionValue _applicativeUnify;
   BoolOptionValue _casesSimp;
   BoolOptionValue _cases;
   BoolOptionValue _newTautologyDel;
+  BoolOptionValue _positiveExt;
   BoolOptionValue _lambdaFreeHol;
-  BoolOptionValue _complexVarCondition;
+  BoolOptionValue _iffXorRewriter;
+  // BoolOptionValue _complexVarCondition;
+  ChoiceOptionValue<HPrinting> _holPrinting;
+  UnsignedOptionValue _higherOrderUnifDepth;
+  UnsignedOptionValue _takeNUnifiersOnly;
+#endif
 
 }; // class Options
 
