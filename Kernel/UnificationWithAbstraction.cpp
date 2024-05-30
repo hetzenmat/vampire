@@ -128,7 +128,7 @@ Option<AbstractionOracle::AbstractionResult> funcExt(
     AbstractingUnifier* au, 
     TermSpec const& t1, TermSpec const& t2)
 {
-  ASS(t1.isTerm() || t2.isTerm())
+  ASS(t1.isTerm() || t2.isTerm());
 
   auto isApp = [](auto& t) { return env.signature->isAppFun(t.functor()); };
   if ( (t1.isTerm() && t1.isSort()) 
@@ -168,7 +168,7 @@ Option<AbstractionOracle::AbstractionResult> funcExt(
 Option<AbstractionOracle::AbstractionResult> AbstractionOracle::tryAbstract(AbstractingUnifier* au, TermSpec const& t1, TermSpec const& t2) const
 {
   using Uwa = Shell::Options::UnificationWithAbstraction;
-  ASS(_mode != Uwa::OFF)
+  ASS(_mode != Uwa::OFF);
 
   auto intSort = []() { return TermSpec(IntTraits::sort(), 0); };
 
@@ -430,7 +430,7 @@ bool AbstractingUnifier::unify(TermSpec t1, TermSpec t2, bool& progress)
           return false;
 
         } else {
-          ASS(absRes->is<AbstractionOracle::EqualIf>())
+          ASS(absRes->is<AbstractionOracle::EqualIf>());
           auto& conditions = absRes->unwrap<AbstractionOracle::EqualIf>();
           auto deepEqCheck = [](UnificationConstraint& c, TermSpec const& lhs, TermSpec const& rhs) 
           { 

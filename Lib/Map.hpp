@@ -121,8 +121,8 @@ public:
     /** initialize value underlying the wrapper type */
     void init(Key key, Val val, unsigned code)
     {
-      ASS_REP(this->code == 0, this->code)
-      ASS(code != 0)
+      ASS_REP(this->code == 0, this->code);
+      ASS(code != 0);
       ::new(&_key  ) Key(std::move(key));
       ::new(&_value) Val(std::move(val));
       this->code = code;
@@ -304,7 +304,7 @@ public:
    */
   inline Entry* firstEntryForCode(unsigned code) const
   {
-    ASS(_entries)
+    ASS(_entries);
     return _entries + (code % _capacity);
   } // Map::firstEntryForCode
 

@@ -455,11 +455,11 @@ public:
     } else if (lhs.isSome() > rhs.isSome()) {
       return false;
     } else if (lhs.isNone()) {
-      ASS(rhs.isNone()) 
+      ASS(rhs.isNone());
       return false;
     } else {
-      ASS(rhs.isSome()) 
-      ASS(lhs.isSome()) 
+      ASS(rhs.isSome());
+      ASS(lhs.isSome());
       return lhs.unwrap() < rhs.unwrap();
     }
   }

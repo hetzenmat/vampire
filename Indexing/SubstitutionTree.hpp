@@ -1304,8 +1304,8 @@ public:
             continue;
           }
         } while(_leafData.isNone());
-        ASS(_leafData.isSome())
-        ASS(_bdStack.size() != 0)
+        ASS(_leafData.isSome());
+        ASS(_bdStack.size() != 0);
         return true;
       }
 

@@ -74,8 +74,8 @@ TEST_FUN(check_spec) {
         long long int Q = q.toInner();
         long long int R = r.toInner();
 
-        ASS_EQ(Q * J + R, I)
-        ASS(0 <= R && R < std::abs(J))
+        ASS_EQ(Q * J + R, I);
+        ASS(0 <= R && R < std::abs(J));
       }
       if (i == std::numeric_limits<int>::max()) {
         break;
@@ -117,10 +117,10 @@ void checkQuotientE(Const i, Const j) {
 
     DEBUG(" quotientE(", i, ", ", j, ")\t= ", q);
     DEBUG("remainderE(", i, ", ", j, ")\t= ", r);
-    ASS_EQ(q * j + r, i)
-    ASS(Const(0) <= r && r < j.abs())
+    ASS_EQ(q * j + r, i);
+    ASS(Const(0) <= r && r < j.abs());
   } catch (DivByZeroException&) {
-    ASS_EQ(j,Const(0))
+    ASS_EQ(j,Const(0));
   }
 }
 

@@ -134,10 +134,10 @@ template<class C> BalanceIter<C>::BalanceIter(const Balancer<C>& balancer, bool 
   , _balancer(balancer)
 {
   if (end) {
-    DEBUG("end")
+    DEBUG("end");
   } else {
     DEBUG("begin(", balancer._lit.toString(), ")");
-    ASS(balancer._lit.isEquality())
+    ASS(balancer._lit.isEquality());
     findNextVar();
   }
 }
@@ -272,7 +272,7 @@ TermList BalanceIter<C>::lhs() const
    
 template<class C> 
 TermList BalanceIter<C>::buildRhs() const { 
-  ASS(_balancer._lit.numTermArguments() == 2 && _litIndex < 2)
+  ASS(_balancer._lit.numTermArguments() == 2 && _litIndex < 2);
   TermList rhs = _balancer._lit[1 - _litIndex];
   for (auto n : _path) {
     auto ctxt = InversionContext(n.term(), n.index(), rhs);

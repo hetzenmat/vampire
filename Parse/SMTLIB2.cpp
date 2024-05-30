@@ -1942,7 +1942,7 @@ void SMTLIB2::parseAnnotatedTerm(LExpr* exp)
   LispListReader lRdr(exp->list);
 
   // the exclamation atom
-  ALWAYS(lRdr.readAtom() == EXCLAMATION)
+  ALWAYS(lRdr.readAtom() == EXCLAMATION);
 
   LExpr* toParse = 0;
   if(lRdr.peekAtNext()->isAtom()){ 

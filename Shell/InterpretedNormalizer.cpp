@@ -288,7 +288,7 @@ private:
     }
     BinaryMinusTranslator* transl = new BinaryMinusTranslator(bMinus, plus, uMinus);
     unsigned func = transl->srcFunc();
-    ASS(!_fnTransfs[func])
+    ASS(!_fnTransfs[func]);
     _fnTransfs[func] = transl;
   }
 
@@ -302,7 +302,7 @@ private:
     }
     SuccessorTranslator* transl = new SuccessorTranslator();
     unsigned func = transl->srcFunc();
-    ASS(!_fnTransfs[func])
+    ASS(!_fnTransfs[func]);
     _fnTransfs[func] = transl;
   }
 
@@ -316,7 +316,7 @@ private:
     }
     RoundingFunctionTranslator* transl = new RoundingFunctionTranslator(origF,newF,roundF);
     unsigned func = transl->srcFunc();
-    ASS(!_fnTransfs[func])
+    ASS(!_fnTransfs[func]);
     _fnTransfs[func] = transl;
   }
 
@@ -332,7 +332,7 @@ private:
     }
     IneqTranslator* transl = new IneqTranslator(from, to, swapArguments, reversePolarity);
     unsigned pred = transl->srcPred();
-    ASS(!_ineqTransls[pred])
+    ASS(!_ineqTransls[pred]);
     _ineqTransls[pred] = transl;
   }
 

@@ -63,7 +63,7 @@ struct DefaultComparator
   >::type 
   compare(T const& a, T const& b)
   {
-    ASS(a < b || b < a || a == b)
+    ASS(a < b || b < a || a == b);
     return a < b ? LESS 
          : b < a ? GREATER 
          : EQUAL;

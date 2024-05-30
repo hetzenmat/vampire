@@ -7,14 +7,10 @@
  * https://vprover.github.io/license.html
  * and in the source directory
  */
-/**
- * @file EqualityResolution.hpp
- * Defines class EqualityResolution.
- */
 
 
-#ifndef __ArgCong__
-#define __ArgCong__
+#ifndef VAMPIRE_INFERENCES_ARGCONG
+#define VAMPIRE_INFERENCES_ARGCONG
 
 #include "Forwards.hpp"
 
@@ -31,14 +27,13 @@ class ArgCong
 : public GeneratingInferenceEngine
 {
 public:
-  ClauseIterator generateClauses(Clause* premise);
+  ClauseIterator generateClauses(Clause* premise) override;
 private:
   struct ResultFn;
   struct IsPositiveEqualityFn;
-
 };
 
 
 };
 
-#endif /* __ArgCong__ */
+#endif /* VAMPIRE_INFERENCES_ARGCONG */

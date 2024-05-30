@@ -228,7 +228,7 @@ void RewriteRuleIndex::handleClause(Clause* c, bool adding)
       Clause* d;
       if(_counterparts.find(c, d)) {
 	Literal* dgr=getGreater(d);
-	ASS(MatchingUtils::isVariant(greater, dgr, true))
+	ASS(MatchingUtils::isVariant(greater, dgr, true));
 	handleEquivalence(c, greater, d, dgr, false);
       }
       else {

@@ -183,7 +183,7 @@ CancelAddResult<Number> cancelAdd(Polynom<Number> const& oldl, Polynom<Number> c
       newl.push(l);
       itl++;
     } else {
-      ASS(r.factors < l.factors)
+      ASS(r.factors < l.factors);
       newr.push(r);
       itr++;
     }

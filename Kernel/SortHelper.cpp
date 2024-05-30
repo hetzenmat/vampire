@@ -112,7 +112,7 @@ TermList SortHelper::getResultSort(const Term* t)
     !subst.isEmpty() ||
     (result.isTerm() && (result.term()->isSuper() || result.term()->ground())) ||
     sym->letBound()
-  )
+  );
   return SubstHelper::apply(result, subst);
 }
 

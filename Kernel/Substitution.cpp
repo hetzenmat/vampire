@@ -44,7 +44,7 @@ void Substitution::rebind(int v,Term* t)
  * Bind @b v to @b t.
  * @pre @b v must previously be unbound
  */
-void Substitution::bind(int v,TermList t)
+void Substitution::bind(unsigned v,TermList t)
 {
   ALWAYS(_map.insert(v, t));
 } // Substitution::bind

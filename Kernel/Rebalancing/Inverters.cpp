@@ -86,7 +86,7 @@ bool NumberTheoryInverter::canInvertTop(const InversionContext &ctxt) {
   CASE_DO_INVERT(IntegerConstantType, fun, expr)
 
 TermList NumberTheoryInverter::invertTop(const InversionContext &ctxt) {
-  ASS(canInvertTop(ctxt))
+  ASS(canInvertTop(ctxt));
   // DBG("inverting: ", ctxt.topTerm().toString())
   auto &t = ctxt.topTerm();
   auto index = ctxt.topIdx();
@@ -135,7 +135,7 @@ bool tryInvertDiv(const InversionContext &ctxt, TermList &out) {
 template<class NumTraits>
 TermList doInvertDiv(const InversionContext &ctxt) {
   TermList out;
-  ALWAYS(tryInvertDiv<NumTraits>(ctxt, out)) 
+  ALWAYS(tryInvertDiv<NumTraits>(ctxt, out));
   return out;
 }
 
@@ -169,7 +169,7 @@ bool tryInvertMulInt(const InversionContext &ctxt, TermList &out) {
 
 TermList doInvertMulInt(const InversionContext &ctxt) {
   TermList out;
-  ALWAYS(tryInvertMulInt(ctxt, out)) 
+  ALWAYS(tryInvertMulInt(ctxt, out));
   return out;
 }
 

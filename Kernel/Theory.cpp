@@ -1070,7 +1070,7 @@ bool Theory::isNonLinearOperation(Interpretation i)
 
 bool Theory::isPartiallyInterpretedFunction(Term* t) {
   auto f = t->functor();
-  ASS(!t->isLiteral())
+  ASS(!t->isLiteral());
   if(theory->isInterpretedFunction(f)) {
     switch (theory->interpretFunction(f)) {
       case Theory::INT_QUOTIENT_E:
@@ -1113,9 +1113,9 @@ bool Theory::isPartiallyInterpretedFunction(Term* t) {
 }
 
 bool Theory::partiallyDefinedFunctionUndefinedForArgs(Term* t) {
-  ASS(isPartiallyInterpretedFunction(t))
+  ASS(isPartiallyInterpretedFunction(t));
   auto f = t->functor();
-  ASS(!t->isLiteral())
+  ASS(!t->isLiteral());
   if(theory->isInterpretedFunction(f)) {
     switch (theory->interpretFunction(f)) {
       case Theory::INT_QUOTIENT_E:
@@ -1825,7 +1825,7 @@ Term* Theory::representIntegerConstant(vstring str)
 //      env.signature->addToDistinctGroup(fnNum, Signature::INTEGER_DISTINCT_GROUP);
 //    }
 //    else {
-//      ASS(env.signature->getFunction(fnNum))
+//      ASS(env.signature->getFunction(fnNum));
 //    }
   }
 }

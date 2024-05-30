@@ -73,8 +73,8 @@ public:
    */
   inline void insert(A key, B val)
   {
-    ASS(!find(key))
-    ASS(!find(val))
+    ASS(!find(key));
+    ASS(!find(val));
     From::insert(val, key);
     Into::insert(key, val);
   }

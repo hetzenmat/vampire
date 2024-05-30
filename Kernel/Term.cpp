@@ -145,7 +145,7 @@ void TermList::Top::output(std::ostream& out) const
   if (this->var()) {
     out << TermList::var(this->var());
   } else {
-    ASS(this->functor())
+    ASS(this->functor());
     out << *env.signature->getFunction(*this->functor());
   }
 }
@@ -294,7 +294,7 @@ unsigned Term::numTermArguments() const
   if(isSuper() || isSort())
     return 0;
   
-  ASS(_arity >= numTypeArguments())                  
+  ASS(_arity >= numTypeArguments());
   return _arity - numTypeArguments(); 
 }
 
@@ -820,8 +820,8 @@ Literal* Literal::complementaryLiteral(Literal* l)
 Term* Term::create(Term* t,TermList* args)
 {
   ASS_EQ(t->getPreDataSize(), 0);
-  ASS(!t->isLiteral())
-  ASS(!t->isSort())
+  ASS(!t->isLiteral());
+  ASS(!t->isSort());
   return Term::create(t->functor(), t->arity(), args);
 }
 
@@ -1369,9 +1369,9 @@ bool Literal::headersMatch(Literal* l1, Literal* l2, bool complementary)
 template<class GetArg>
 Literal* Literal::create(unsigned predicate, unsigned arity, bool polarity, bool commutative, GetArg getArg, Option<TermList> twoVarEqSort)
 {
-  ASS(!twoVarEqSort || (predicate == 0 && arity == 2 && getArg(0).isVar() && getArg(1).isVar()))
-  ASS(predicate != 0 || commutative)
-  ASS(!commutative || arity == 2)
+  ASS(!twoVarEqSort || (predicate == 0 && arity == 2 && getArg(0).isVar() && getArg(1).isVar()));
+  ASS(predicate != 0 || commutative);
+  ASS(!commutative || arity == 2);
   ASS_EQ(env.signature->predicateArity(predicate), arity);
 
   bool share = range(0, arity).all([&](auto i) { return argSafeToShare(getArg(i)); });
@@ -1404,7 +1404,7 @@ Literal* Literal::create(unsigned predicate, unsigned arity, bool polarity, bool
       else 
         env.sharing->computeAndSetSharedLiteralData(shared);
     }
-    ASS(!commutative || rightArgOrder(*shared->nthArgument(0), *shared->nthArgument(1)))
+    ASS(!commutative || rightArgOrder(*shared->nthArgument(0), *shared->nthArgument(1)));
     return shared;
   } else {
     return allocLiteral();
@@ -1632,7 +1632,7 @@ bool Kernel::operator<(const TermList& lhs, const TermList& rhs)
   auto cmp = lhs.isTerm() - rhs.isTerm();
   if (cmp != 0) return cmp < 0;
   if (lhs.isTerm()) {
-    ASS(rhs.isTerm())
+    ASS(rhs.isTerm());
     return lhs.term()->getId() < rhs.term()->getId();
   } else if (lhs.isEmpty() || rhs.isEmpty()) {
     auto cmp = lhs.isEmpty() - rhs.isEmpty();
@@ -1640,8 +1640,8 @@ bool Kernel::operator<(const TermList& lhs, const TermList& rhs)
     else return false;
     
   } else {
-    ASS(lhs.isVar())
-    ASS(rhs.isVar())
+    ASS(lhs.isVar());
+    ASS(rhs.isVar());
     return lhs.var() < rhs.var();
   }
 }

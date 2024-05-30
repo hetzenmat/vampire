@@ -55,7 +55,7 @@ public:
   static bool isStructInductionTerm(Term* t);
   static bool isValidForDefaultBound(Term* t, Clause* c, const TermList& defaultBound) {
     ASS(defaultBound.isTerm());
-    ASS(c != nullptr)
+    ASS(c != nullptr);
     return t != defaultBound.term();
   }
   static bool isValidBound(Term* t, Clause* c, const TermLiteralClause& b) {

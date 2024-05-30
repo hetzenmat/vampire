@@ -111,7 +111,7 @@ SimplifyingGeneratingInference1::Result generalizeBottomUp(Clause* cl, EvalFn ev
         if (eval.eval.doOrderingCheck) {
 
           auto ord = Ordering::tryGetGlobalOrdering();
-          ASS(ord)
+          ASS(ord);
           auto cmp = ord->compare(generalizedLit, lit);
           switch(cmp) {
             case Ordering::LESS:
@@ -134,7 +134,7 @@ SimplifyingGeneratingInference1::Result generalizeBottomUp(Clause* cl, EvalFn ev
     })
     .template collect<Stack>();
 
-  ASS(anyChange)
+  ASS(anyChange);
   Inference inf(SimplifyingInference1(Kernel::InferenceRule::ARITHMETIC_SUBTERM_GENERALIZATION, cl));
   bool redundant = allLessEq && oneLess;
   env.statistics->asgCnt++;

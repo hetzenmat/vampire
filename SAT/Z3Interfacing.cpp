@@ -425,7 +425,7 @@ Term* Z3Interfacing::evaluateInModel(Term* trm)
           auto f = expr.decl();
           auto vfunc = _fromZ3.get(f);
           unsigned arity = f.arity();
-          ASS(arity == 0 || evaluatedArgs != nullptr)
+          ASS(arity == 0 || evaluatedArgs != nullptr);
           Stack<TermList> args(arity);
           for (unsigned i = 0; i < arity; i++) {
             if (evaluatedArgs[i].isNone()) {
@@ -848,7 +848,7 @@ Z3Interfacing::Representation Z3Interfacing::getRepresentation(Term* trm)
     .function(
       [&](TermList toEval, z3::expr* args) -> z3::expr
       {
-        ASS(toEval.isTerm())
+        ASS(toEval.isTerm());
         auto trm = toEval.term();
         bool isLit = trm->isLiteral();
 

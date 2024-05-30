@@ -25,7 +25,7 @@ using Balancer = Kernel::Rebalancing::Balancer<Kernel::Rebalancing::Inverters::N
 
 SimplifyingGeneratingInference1::Result GaussianVariableElimination::simplify(Clause* in, bool doCheckOrdering) 
 {
-  ASS(in)
+  ASS(in);
 
   auto& cl = *in;
   

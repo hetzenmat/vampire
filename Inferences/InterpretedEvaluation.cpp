@@ -118,7 +118,7 @@ Clause* InterpretedEvaluation::simplify(Clause* cl)
       return cl;
     }
 
-    ASS(sideConditions.isEmpty())
+    ASS(sideConditions.isEmpty());
     Stack<Literal*>::Iterator side(sideConditions);
     newLits.expand(clen+sideConditions.length());
     while(side.hasNext()){ newLits[next++]=side.next();}

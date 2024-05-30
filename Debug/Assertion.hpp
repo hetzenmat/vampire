@@ -61,11 +61,11 @@ template <typename T>
 } // namespace Debug
 
 #define ASS(Cond)                                            \
-  {                                                          \
+  do {                                                       \
     if (!(Cond)) {                                           \
       Debug::Assertion::violated(__FILE__, __LINE__, #Cond); \
     }                                                        \
-  }
+  } while (false)
 
 #define ASS_REP(Cond, ReportedVal)                                                      \
   {                                                                                     \

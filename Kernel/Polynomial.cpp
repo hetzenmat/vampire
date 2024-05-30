@@ -192,12 +192,12 @@ PolyNf::SubtermIter::SubtermIter(PolyNf p)
 
 PolyNf PolyNf::SubtermIter::next() 
 {
-  ASS(_stack.size() != 0)
+  ASS(_stack.size() != 0);
   while(_stack.top().hasNext()) {
-    ASS(_stack.size() != 0)
+    ASS(_stack.size() != 0);
     _stack.push(BottomUpChildIter<PolyNf>(_stack.top().next()));
   }
-  ASS(_stack.size() != 0)
+  ASS(_stack.size() != 0);
   return _stack.pop().self();
 }
 

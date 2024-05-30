@@ -879,7 +879,7 @@ TermList MonomFactors<Number>::denormalize(TermList* results)  const
   } else {
 
     auto powerTerm = [](TermList t, int pow) -> TermList {
-      ASS(pow > 0)
+      ASS(pow > 0);
       TermList out = t;
       for (int i = 1; i < pow; i++) {
         out = Number::mul(t,out);
@@ -1117,7 +1117,7 @@ Monom<Number>      & Polynom<Number>::summandAt(unsigned summand)
 template<class Number>
 void Polynom<Number>::integrity() const {
 #if VDEBUG
-  ASS(_summands.size() > 0)
+  ASS(_summands.size() > 0);
   if (_summands.size() > 0) {
     auto iter = this->_summands.begin();
     auto last = iter++;

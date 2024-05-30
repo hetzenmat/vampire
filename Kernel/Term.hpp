@@ -1093,9 +1093,9 @@ public:
     if (functor != lit->functor() || polarity != lit->polarity()) return false;
 
     if (commutative) {
-      ASS_EQ(arity, 2)
-      ASS(rightArgOrder(getArg(0), getArg(1)))
-      ASS(rightArgOrder(*lit->nthArgument(0), *lit->nthArgument(1)))
+      ASS_EQ(arity, 2);
+      ASS(rightArgOrder(getArg(0), getArg(1)));
+      ASS(rightArgOrder(*lit->nthArgument(0), *lit->nthArgument(1)));
 
       if (someIf(lit->isTwoVarEquality(), [&](){ return lit->twoVarEqSort(); }) != twoVarEqSort) {
         return false;
@@ -1103,7 +1103,7 @@ public:
       return std::make_tuple(*lit->nthArgument(0), *lit->nthArgument(1)) == std::make_tuple(getArg(0), getArg(1));
 
     } else {
-      ASS(twoVarEqSort.isNone())
+      ASS(twoVarEqSort.isNone());
       return range(0, arity).all([&](auto i) { return *lit->nthArgument(i) == getArg(i); });
     }
   }
@@ -1113,8 +1113,8 @@ public:
   template<class GetArg>
   static unsigned literalHash(unsigned functor, bool polarity, GetArg getArg, unsigned arity, Option<TermList> twoVarEqSort, bool commutative) {
     if (commutative) {
-      ASS_EQ(arity, 2)
-      ASS(rightArgOrder(getArg(0), getArg(1)))
+      ASS_EQ(arity, 2);
+      ASS(rightArgOrder(getArg(0), getArg(1)));
       return HashUtils::combine(
           DefaultHash::hash(polarity),
           DefaultHash::hash(functor),
@@ -1122,7 +1122,7 @@ public:
           getArg(0).defaultHash(),
           getArg(1).defaultHash());
     } else {
-      ASS(twoVarEqSort.isNone())
+      ASS(twoVarEqSort.isNone());
       return HashUtils::combine(
           DefaultHash::hash(polarity),
           Term::termHash(functor, getArg, arity));

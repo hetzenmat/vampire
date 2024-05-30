@@ -120,7 +120,7 @@ struct TermSpec {
     } else {
       if (t1.isTerm() != t2.isTerm()) return false;
       if (t1.isVar()) {
-        ASS(t2.isVar() && (t1.term.var() != t2.term.var() || t1.term.isSpecialVar() != t2.term.isSpecialVar()))
+        ASS(t2.isVar() && (t1.term.var() != t2.term.var() || t1.term.isSpecialVar() != t2.term.isSpecialVar()));
         return false;
       }
       return t1.functor() == t2.functor() 
@@ -155,7 +155,7 @@ struct TermSpec {
 
   unsigned groundWeight() const 
   {
-    ASS(definitelyGround())
+    ASS(definitelyGround());
     return this->term.weight();
   }
 
@@ -180,7 +180,7 @@ struct TermSpec {
             todo->loadFromIterator(lhs.allArgs().zip(rhs.allArgs()));
           }
         } else {
-          ASS(lhs.isVar() && rhs.isVar())
+          ASS(lhs.isVar() && rhs.isVar());
           auto v1 = lhs.varSpec();
           auto v2 = rhs.varSpec();
           if (v1 != v2) {

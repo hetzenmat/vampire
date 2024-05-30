@@ -228,7 +228,7 @@ public:
         if (e1 > e2) return 1;
       }
     }
-    ASS(!i2.hasNext())
+    ASS(!i2.hasNext());
     return 0;
   }
 
@@ -407,8 +407,8 @@ public:
    */
   C swapRemove(unsigned idx)
   {
-    ASS(idx < size())
-    ASS(size() > 0)
+    ASS(idx < size());
+    ASS(size() > 0);
     std::swap((*this)[idx], (*this)[size() - 1]);
     return pop();
   }

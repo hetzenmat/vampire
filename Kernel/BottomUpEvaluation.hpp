@@ -363,7 +363,7 @@ public:
         recResults->push(std::move(eval));
       }
     }
-    ASS(recState->isEmpty())
+    ASS(recState->isEmpty());
 
 
     ASS(recResults->size() == 1);

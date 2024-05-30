@@ -697,7 +697,7 @@ void PortfolioMode::runSlice(Options& strategyOpt)
   }
 
   // at this point, we should be go for launch
-  ASS(succeeded && outputResult)
+  ASS(succeeded && outputResult);
   if (outputAllowed() && env.options->multicore() != 1)
     addCommentSignForSZS(cout) << "First to succeed." << endl;
 

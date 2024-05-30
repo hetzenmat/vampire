@@ -58,7 +58,7 @@ public:
     auto iter = contents.begin();
     unsigned i = 0;
     while(iter != contents.end()) {
-      ASS(i < _capacity)
+      ASS(i < _capacity);
       _array[i] = std::move(*iter);
       iter++;
       i++;

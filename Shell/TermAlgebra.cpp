@@ -50,7 +50,7 @@ TermAlgebraConstructor::TermAlgebraConstructor(unsigned functor, unsigned discri
   ASS_REP(env.signature->getFunction(_functor)->termAlgebraCons(), env.signature->functionName(_functor));
   ASS_EQ(arity(), numTypeArguments()+destructors.size());
   for (auto d : destructors) {
-    ASS(env.signature->getFunction(d)->termAlgebraDest())
+    ASS(env.signature->getFunction(d)->termAlgebraDest());
   }
 #endif
 }

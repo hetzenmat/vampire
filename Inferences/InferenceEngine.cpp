@@ -593,7 +593,7 @@ SimplifyingGeneratingInference1::Result SimplifyingGeneratingLiteralSimplificati
         out.push(simplLit);
 
         if (doOrderingCheck) {
-          ASS(_ordering)
+          ASS(_ordering);
           auto cmp = _ordering->compare(simplLit, orig);
           switch(cmp) {
             case Ordering::Result::LESS:

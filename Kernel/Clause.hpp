@@ -100,10 +100,10 @@ public:
    * getLiteralPosition method), or during the literal selection (as the
    * _literalPositions object is updated in call to the setSelected method).
    */
-  Literal*& operator[] (int n)
+  Literal*& operator[] (std::size_t n)
   { return _literals[n]; }
   /** Return the (reference to) the nth literal */
-  Literal*const& operator[] (int n) const
+  Literal*const& operator[] (std::size_t n) const
   { return _literals[n]; }
 
   /** Return the length (number of literals) */

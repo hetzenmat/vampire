@@ -501,7 +501,7 @@ struct InductionContextFn
     if (indDepth) {
       auto res = VirtualIterator<InductionContext>::getEmpty();
       // TODO make this work for multiple induction terms
-      ASS(arg.first.size() >= 1)
+      ASS(arg.first.size() >= 1);
       if (arg.first.size() > 1) {
         return res;
       }

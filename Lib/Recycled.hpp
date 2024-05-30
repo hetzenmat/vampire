@@ -146,8 +146,8 @@ class Recycled
   }
   Recycled(Recycled const&) = delete;
   
-  T      & self()       { ASS(alive()) return IF_USE_PTRS(*, )_self; }
-  T const& self() const { ASS(alive()) return IF_USE_PTRS(*, )_self; }
+  T      & self()       { ASS(alive()); return IF_USE_PTRS(*, )_self; }
+  T const& self() const { ASS(alive()); return IF_USE_PTRS(*, )_self; }
   struct EmptyConstructMarker {};
 
   // Recycled(Self self)  : _self(std::move(self)), _reset(), _keep() {}

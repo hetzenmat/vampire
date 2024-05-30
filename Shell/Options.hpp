@@ -816,7 +816,7 @@ private:
     class OptionChoiceValues{
       void check_names_are_short() {
         for (auto x : _names) {
-          ASS(x.size() < 70) // or else cannot be printed on a line
+          ASS(x.size() < 70); // or else cannot be printed on a line
         }
       }
     public:
@@ -1796,7 +1796,7 @@ bool _hard;
 
     struct UsesEquality : OptionProblemConstraint{
       bool check(Property*p){
-        ASS(p)
+        ASS(p);
         return (p->equalityAtoms() != 0) ||
           // theories may introduce equality at various places of the pipeline!
           HasTheories::actualCheck(p);
@@ -1806,7 +1806,7 @@ bool _hard;
 
     struct HasHigherOrder : OptionProblemConstraint{
       bool check(Property*p){
-        ASS(p)
+        ASS(p);
         return (p->higherOrder());
       }
       vstring msg(){ return " only useful with higher-order problems"; }
@@ -1814,7 +1814,7 @@ bool _hard;
 
     struct OnlyFirstOrder : OptionProblemConstraint{
       bool check(Property*p){
-        ASS(p)
+        ASS(p);
         return (!p->higherOrder());
       }
       vstring msg(){ return " not compatible with higher-order problems"; }

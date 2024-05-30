@@ -335,7 +335,7 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
       break;
     }
 
-    ASS(!mismatch)
+    ASS(!mismatch);
   }
 
   if(mismatch) {

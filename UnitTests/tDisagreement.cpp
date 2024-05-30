@@ -39,7 +39,7 @@ TEST_FUN(dis1)
   TermList st1=diff.first;
   TermList st2=diff.second;
 
-  ASS(st1 == x.sugaredExpr())
-  ASS(st2 == y.sugaredExpr())
-  ASS(!dsit.hasNext())
+  ASS(st1 == x.sugaredExpr());
+  ASS(st2 == y.sugaredExpr());
+  ASS(!dsit.hasNext());
 }

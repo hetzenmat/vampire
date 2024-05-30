@@ -43,7 +43,7 @@ public:
   Substitution() {}
 
   void bind(int v,Term* t);
-  void bind(int v,TermList t);
+  void bind(unsigned v,TermList t);
   void rebind(int v, Term* t);
   void rebind(int v, TermList t);
   bool findBinding(int var, TermList& res) const;

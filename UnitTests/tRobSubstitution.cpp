@@ -16,7 +16,7 @@ using namespace Kernel;
 
 void check(TermList t1, TermList t2) {
   RobSubstitution subs;
-  ASS(subs.match(t1, 0, t2, 1))
+  ASS(subs.match(t1, 0, t2, 1));
 }
 
 TEST_FUN(test_match1) {

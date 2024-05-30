@@ -626,8 +626,8 @@ PrecedenceOrdering::PrecedenceOrdering(const DArray<int>& funcPrec,
 {
   ASS_EQ(env.signature->predicates(), _predicates);
   ASS_EQ(env.signature->functions(), _functions);
-  ASS(isPermutation(_functionPrecedences))
-  ASS(isPermutation(_predicatePrecedences))
+  ASS(isPermutation(_functionPrecedences));
+  ASS(isPermutation(_predicatePrecedences));
 }
 
 /**

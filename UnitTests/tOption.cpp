@@ -22,17 +22,17 @@ using namespace Lib;
 TEST_FUN(examples__isNone) {
   auto opt = Option<int>();
   // with isNone/isSome we can check whether the option contains a value
-  ASS( opt.isNone())
-  ASS(!opt.isSome())
+  ASS( opt.isNone());
+  ASS(!opt.isSome());
 }
 
 TEST_FUN(examples__isSome) {
   auto opt = Option<int>(1);
   // with isNone/isSome we can check whether the option contains a value
-  ASS( opt.isSome())
-  ASS(!opt.isNone())
+  ASS( opt.isSome());
+  ASS(!opt.isNone());
   // with unwrap we can get the value
-  ASS_EQ(opt.unwrap(), 1)
+  ASS_EQ(opt.unwrap(), 1);
 }
 
 TEST_FUN(examples__match) {

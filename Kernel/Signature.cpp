@@ -129,7 +129,7 @@ void Signature::Symbol::destroyTypeConSymbol()
 void Signature::Symbol::addToDistinctGroup(unsigned group,unsigned this_number)
 {
   ASS_EQ(arity(), 0);
-  ASS(!List<unsigned>::member(group, _distinctGroups))
+  ASS(!List<unsigned>::member(group, _distinctGroups));
 
   List<unsigned>::push(group, _distinctGroups);
   env.signature->_distinctGroupsAddedTo=true;
@@ -765,7 +765,7 @@ void Signature::incrementFormulaCount(Term* t){
 void Signature::decrementFormulaCount(Term* t){
   ASS(SortHelper::getResultSort(t) == AtomicSort::boolSort());
 
-  ASS(_formulaCounts.find(t))
+  ASS(_formulaCounts.find(t));
   int count = _formulaCounts.get(t);
   if(count != -1){
     _formulaCounts.set(t, count - 1);

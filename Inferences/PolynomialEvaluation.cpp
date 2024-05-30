@@ -302,7 +302,7 @@ Monom<Number> simplifyMonom(Monom<Number> const& in, PolyNf* simplifiedArgs)
   using MonomFactors = MonomFactors<Number>;
 
   auto pow = [](Numeral c, int power) -> Numeral {
-    ASS(power > 0)
+    ASS(power > 0);
     auto out = c;
     while (--power > 0) {
       out = out * c;

@@ -90,8 +90,8 @@ NormalizationResult normalizeAdd(NormalizationResult& lhs, NormalizationResult& 
   using Polynom = Polynom<NumTraits>;
   using Monom = Monom<NumTraits>;
   using MonomFactors = MonomFactors<NumTraits>;
-  ASS(lhs.is<Polynom>() || lhs.is<MonomFactors>())
-  ASS(rhs.is<Polynom>() || rhs.is<MonomFactors>())
+  ASS(lhs.is<Polynom>() || lhs.is<MonomFactors>());
+  ASS(rhs.is<Polynom>() || rhs.is<MonomFactors>());
 
   if (lhs.is<MonomFactors>() && rhs.is<Polynom>())  {
     auto& l = lhs.unwrap<MonomFactors>();
@@ -119,8 +119,8 @@ NormalizationResult normalizeAdd(NormalizationResult& lhs, NormalizationResult& 
     return NormalizationResult(Polynom(std::move(summands)));
 
   } else{
-    ASS(lhs.is<Polynom>())
-    ASS(rhs.is<Polynom>())
+    ASS(lhs.is<Polynom>());
+    ASS(rhs.is<Polynom>());
     auto& l = lhs.unwrap<Polynom>();
     auto& r = rhs.unwrap<Polynom>();
 
@@ -137,8 +137,8 @@ NormalizationResult normalizeMul(NormalizationResult& lhs, NormalizationResult& 
   using Polynom = Polynom<NumTraits>;
   using MonomFactors = MonomFactors<NumTraits>;
   using MonomFactor = MonomFactor<NumTraits>;
-  ASS(lhs.is<Polynom>() || lhs.is<MonomFactors>())
-  ASS(rhs.is<Polynom>() || rhs.is<MonomFactors>())
+  ASS(lhs.is<Polynom>() || lhs.is<MonomFactors>());
+  ASS(rhs.is<Polynom>() || rhs.is<MonomFactors>());
 
   if (lhs.is<MonomFactors>() && rhs.is<Polynom>())  {
     auto& l = lhs.unwrap<MonomFactors>();
@@ -170,8 +170,8 @@ NormalizationResult normalizeMul(NormalizationResult& lhs, NormalizationResult& 
     return std::move(lhs);
 
   } else{
-    ASS(lhs.is<Polynom>())
-    ASS(rhs.is<Polynom>())
+    ASS(lhs.is<Polynom>());
+    ASS(rhs.is<Polynom>());
     auto l = RenderPolyNf{}(std::move(lhs.unwrap<Polynom>()));
     auto r = RenderPolyNf{}(std::move(rhs.unwrap<Polynom>()));
 

@@ -189,7 +189,7 @@ public:
 
   OWN_ELEMENT_TYPE next()
   {
-    ASS(!_break)
+    ASS(!_break);
     ALWAYS(hasNext());
     ASS(_next.isSome());
     OWN_ELEMENT_TYPE out = move_if_value<OWN_ELEMENT_TYPE>(_next.unwrap());

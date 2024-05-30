@@ -538,7 +538,7 @@ void SynthesisManager::onNewClause(Clause* cl)
     return;
   }
 
-  ASS(cl->hasAnswerLiteral())
+  ASS(cl->hasAnswerLiteral());
 
   Literal* lit = cl->getAnswerLiteral();
   if (!lit->computableOrVar())
