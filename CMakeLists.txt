@@ -336,6 +336,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Inferences/CasesSimp.hpp
     Inferences/Cases.cpp
     Inferences/Cases.hpp
+    Inferences/PositiveExt.hpp
+    Inferences/PositiveExt.cpp
     Shell/LambdaElimination.cpp
     Shell/LambdaElimination.hpp
     )
@@ -467,6 +469,8 @@ set(VAMPIRE_INFERENCE_SOURCES
     Inferences/PolynomialEvaluation.cpp
     Inferences/Cancellation.hpp
     Inferences/Cancellation.cpp
+    Inferences/PositiveExt.hpp
+    Inferences/PositiveExt.cpp
     )
 source_group(inference_source_files FILES ${VAMPIRE_INFERENCE_SOURCES})
 

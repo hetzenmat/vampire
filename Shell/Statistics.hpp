@@ -150,6 +150,7 @@ public:
   unsigned backwardSubVarSup;
   unsigned selfSubVarSup;
   unsigned negativeExtensionality;
+  unsigned positiveExtensionality;
   unsigned primitiveInstantiations;
   unsigned choiceInstances;
   unsigned proxyEliminations;

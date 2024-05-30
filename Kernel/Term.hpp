@@ -46,7 +46,11 @@
 #include "Lib/Recycled.hpp"
 
 // the number of bits used for "TermList::_info::distinctVars"
+#if VHOL
+#define TERM_DIST_VAR_BITS 18
+#else
 #define TERM_DIST_VAR_BITS 21
+#endif
 // maximum number that fits in a TERM_DIST_VAR_BITS-bit unsigned integer
 #define TERM_DIST_VAR_UNKNOWN ((1 << TERM_DIST_VAR_BITS)-1)
 
@@ -93,6 +97,18 @@ enum ArgumentOrderVals {
   AO_EQUAL=5,
   AO_INCOMPARABLE=6,
 };
+
+// TODO change to enum class
+enum VarBank {
+  DEFAULT_BANK=0,
+  QUERY_BANK=1,
+  NORM_RESULT_BANK=2,
+  RESULT_BANK=3,
+  FRESH_BANK=4,
+  OUTPUT_BANK=5
+};
+
+class RobSubstitutionTL; // forward declaration
 
 /**
  * Class containing either a pointer to a compound term or
@@ -235,6 +251,41 @@ public:
   bool ground() const;
   bool isSafe() const;
 
+#if VHOL
+  bool isLambdaTerm() const;
+  bool isEtaExpandedVar(TermList& var) const;
+  bool isRedex();
+  bool isNot() const;
+  bool isSigma() const;
+  bool isPi() const;
+  bool isIff() const;
+  bool isAnd() const;
+  bool isOr() const;
+  bool isXOr() const;
+  bool isImp() const;
+  bool isEquals() const;
+  bool isPlaceholder() const;
+  bool isChoice() const;
+  bool containsLooseIndex() const;
+  // used in clause selection
+  // nuber of applied variables and lambdas in the term
+  unsigned numOfAppVarsAndLambdas() const;
+  Option<unsigned> deBruijnIndex() const;
+  TermList lhs() const;
+  TermList rhs() const;
+  TermList lambdaBody() const;
+  TermList head();
+  TermList domain();
+  TermList result();
+  TermList finalResult();
+  // return the weak head normal form of the term
+  TermList whnfDeref(RobSubstitutionTL* sub);
+  TermList betaNF();
+  TermList etaNF();
+  TermList betaEtaNF();
+#endif
+
+
 #if VDEBUG
   void assertValid() const;
 #endif
@@ -306,7 +357,17 @@ private:
     SORT_BITS_END = SORT_BITS_START + 1,
     HAS_TERM_VAR_BITS_START = SORT_BITS_END,
     HAS_TERM_VAR_BITS_END = HAS_TERM_VAR_BITS_START + 1,
-    ORDER_BITS_START = HAS_TERM_VAR_BITS_END,
+#if VHOL
+    HAS_DB_INDEX_BITS_START = HAS_TERM_VAR_BITS_END,
+    HAS_DB_INDEX_BITS_END = HAS_DB_INDEX_BITS_START + 1,
+    HAS_REDEX_BITS_START = HAS_DB_INDEX_BITS_END,
+    HAS_REDEX_BITS_END = HAS_REDEX_BITS_START + 1,
+    HAS_LAMBDA_BITS_START = HAS_REDEX_BITS_END,
+    HAS_LAMBDA_BITS_END = HAS_LAMBDA_BITS_START + 1,
+    ORDER_BITS_START = HAS_LAMBDA_BITS_END,
+#else
+      ORDER_BITS_START = HAS_TERM_VAR_BITS_END,
+#endif
     ORDER_BITS_END = ORDER_BITS_START + 3,
     DISTINCT_VAR_BITS_START = ORDER_BITS_END,
     DISTINCT_VAR_BITS_END = DISTINCT_VAR_BITS_START + TERM_DIST_VAR_BITS,
@@ -330,6 +391,11 @@ private:
   BITFIELD64_GET_AND_SET(bool, literal, Literal, LITERAL)
   BITFIELD64_GET_AND_SET(bool, sort, Sort, SORT)
   BITFIELD64_GET_AND_SET(bool, hasTermVar, HasTermVar, HAS_TERM_VAR)
+#if VHOL
+  BITFIELD64_GET_AND_SET(bool, hasDBIndex, HasDBIndex, HAS_DB_INDEX)
+  BITFIELD64_GET_AND_SET(bool, hasRedex, HasRedex, HAS_REDEX)
+  BITFIELD64_GET_AND_SET(bool, hasLambda, HasLambda, HAS_LAMBDA)
+#endif
   BITFIELD64_GET_AND_SET(unsigned, order, Order, ORDER)
   BITFIELD64_GET_AND_SET(uint32_t, distinctVars, DistinctVars, DISTINCT_VAR)
   BITFIELD64_GET_AND_SET(uint32_t, id, Id, ID)
@@ -401,6 +467,7 @@ public:
         TermList binding;
         TermList sort;
       } _letTupleData;
+#if VHOL
       struct {
         TermList lambdaExp;
         VList* _vars;
@@ -408,6 +475,7 @@ public:
         TermList sort; 
         TermList expSort;//TODO is this needed?
       } _lambdaData;
+#endif
       struct {
         TermList sort;
         TermList matchedSort;
@@ -424,16 +492,20 @@ public:
       ASS_REP(specialFunctor() == SpecialFunctor::LET || specialFunctor() == SpecialFunctor::LET_TUPLE, specialFunctor());
       return specialFunctor() == SpecialFunctor::LET ? _letData.functor : _letTupleData.functor;
     }
+#if VHOL
     VList* getLambdaVars() const { ASS_EQ(specialFunctor(), SpecialFunctor::LAMBDA); return _lambdaData._vars; }
     SList* getLambdaVarSorts() const { ASS_EQ(specialFunctor(), SpecialFunctor::LAMBDA); return _lambdaData._sorts; }
     TermList getLambdaExp() const { ASS_EQ(specialFunctor(), SpecialFunctor::LAMBDA); return _lambdaData.lambdaExp; }
+#endif
     VList* getVariables() const { ASS_EQ(specialFunctor(), SpecialFunctor::LET); return _letData.variables; }
     VList* getTupleSymbols() const { return _letTupleData.symbols; }
     TermList getBinding() const {
       ASS_REP(specialFunctor() == SpecialFunctor::LET || specialFunctor() == SpecialFunctor::LET_TUPLE, specialFunctor());
       return TermList(specialFunctor() == SpecialFunctor::LET ? _letData.binding : _letTupleData.binding);
     }
+#if VHOL
     TermList getLambdaExpSort() const { ASS_EQ(specialFunctor(), SpecialFunctor::LAMBDA); return _lambdaData.expSort; }
+#endif
     TermList getSort() const {
       switch (specialFunctor()) {
         case SpecialFunctor::ITE:
@@ -505,6 +577,10 @@ public:
   { return toSpecialFunctor(functor()); }
   vstring toString(bool topLevel = true) const;
   friend std::ostream& operator<<(std::ostream& out, Kernel::Term const& tl);
+#if VHOL
+  // auxiliary function to print lambda specials
+  vstring lambdaToString(const SpecialTermData* sd, bool pretty = false) const;
+#endif
   static vstring variableToString(unsigned var);
   static vstring variableToString(TermList var);
 
