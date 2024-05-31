@@ -57,8 +57,16 @@ public:
   Term* transform(Term* term) override;
 protected:
   virtual TermList transformSubterm(TermList trm) = 0;
+
+  virtual void onTermEntry(Term*){}
+  virtual void onTermExit(Term*){}
+
   Formula* transform(Formula* f) override;
   TermList transform(TermList ts) override;
+
+  virtual bool exploreSubterms(TermList orig, TermList newTerm);
+
+  bool _transformSorts = true;
 };
 
 /**

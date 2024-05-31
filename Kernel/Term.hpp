@@ -138,6 +138,12 @@ public:
     }
   }
 
+  TermList(unsigned var, VarBank bank)
+  {
+    // special variables never need to be on a bank
+    makeVar(var, bank);
+  }
+
   /** the tag */
   inline TermTag tag() const { return static_cast<TermTag>(_tag()); }
   /** the term list is empty */
@@ -161,7 +167,7 @@ public:
 
   /** return the variable number */
   inline unsigned var() const
-  { ASS(isVar()); return _content / 4; }
+  { ASS(isVar()); return _content / 4; } // TODO MH: figure out different term representation used in ahmed-new-hol
   /** the term contains reference to Term class */
   inline bool isTerm() const
   { return tag() == REF; }
