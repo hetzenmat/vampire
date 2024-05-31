@@ -162,7 +162,8 @@ class Signature
     /** proxy type */
     Proxy _prox;
     /** combinator type */
-    Combinator _comb;
+    Combinator _comb; // TODO MH Remove
+    int _dbIndex; // TODO MH maybe unsigned?
 
   public:
     /** standard constructor */
@@ -279,6 +280,13 @@ class Signature
 
     inline void setProxy(Proxy prox){ _prox = prox; }
     inline Proxy proxy(){ return _prox; }
+
+#if VHOL
+    inline void setDBIndex(int index) { _dbIndex = index; }
+    inline Option<unsigned> dbIndex() const {
+      return _dbIndex > -1 ? Option<unsigned>(static_cast<unsigned>(_dbIndex)) : Option<unsigned>();
+    }
+#endif
 
     inline void setComb(Combinator comb){ _comb = comb; }
     inline Combinator combinator(){ return _comb; }
@@ -439,8 +447,12 @@ class Signature
   unsigned addNameFunction(unsigned arity);
   void addEquality();
   unsigned getApp();
+  unsigned getLam();
   unsigned getDiff();
   unsigned getChoice();
+  unsigned getDeBruijnIndex(int index);
+  unsigned getPlaceholder();
+
   /**
    * For a function f with result type t, this introduces a predicate
    * $def_f with the type t x t. This is used to track expressions of
@@ -543,12 +555,20 @@ class Signature
     _choiceSymbols.insert(fun);
   }
 
+  void addInstantiation(TermList inst) {
+    _instantiations.insert(inst);
+  }
+
   bool isChoiceOperator(unsigned fun){
     return _choiceSymbols.contains(fun);
   }
 
   DHSet<unsigned>* getChoiceOperators(){
     return &_choiceSymbols;
+  }
+
+  DHSet<TermList>* getInstantiations(){
+    return &_instantiations;
   }
 
   /** return the number of functions */
@@ -626,6 +646,10 @@ class Signature
   
   bool isAppFun(unsigned fun) const{
     return (fun == _appFun && _appFun != UINT_MAX);
+  }
+
+  bool isLamFun(unsigned fun) const {
+    return (fun == _lamFun && _lamFun != UINT_MAX);
   }
 
   bool isFnDefPred(unsigned p) const{
@@ -762,7 +786,7 @@ class Signature
     return tuple;    
   }  
 
-  unsigned getEqualityProxy(){
+  unsigned getEqualityProxy() {
     bool added = false;
     unsigned eqProxy = addFunction("vEQ",1, added);
     if(added){
@@ -926,7 +950,9 @@ private:
   /** Stack of type constructor symbols */  
   Stack<Symbol*> _typeCons;
 
+  // TODO these two don't belong in the signature
   DHSet<unsigned> _choiceSymbols;
+  DHSet<TermList> _instantiations;
   /**
    * Map from vstring "name_arity" to their numbers
    *
@@ -978,6 +1004,9 @@ private:
   unsigned _arrayCon;
   unsigned _arrowCon;
   unsigned _appFun;
+  unsigned _lamFun;
+  unsigned _choiceFun;
+  unsigned _placeholderFun;
   DHSet<unsigned> _fnDefPreds;
   DHMap<unsigned,unsigned> _boolDefPreds;
 

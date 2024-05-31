@@ -230,6 +230,9 @@ Signature::Signature ():
     _arrayCon(UINT_MAX),
     _arrowCon(UINT_MAX),
     _appFun(UINT_MAX),
+    _lamFun(UINT_MAX),
+    _choiceFun(UINT_MAX),
+    _placeholderFun(UINT_MAX),
     _termAlgebras()
 {
   ALWAYS(createDistinctGroup() == STRING_DISTINCT_GROUP);
@@ -683,6 +686,22 @@ unsigned Signature::getApp()
   return app;
 }
 
+unsigned Signature::getLam()
+{
+  bool added = false;
+  unsigned lam = addFunction("vLAM", 3, added);
+  if(added){
+    _lamFun = lam;
+    TermList tv1 = TermList(0, false);
+    TermList tv2 = TermList(1, false);
+    TermList arrowType = AtomicSort::arrowSort(tv1, tv2);
+    OperatorType* ot = OperatorType::getFunctionType({tv2}, arrowType, 2);
+    Symbol* sym = getFunction(lam);
+    sym->setType(ot);
+  }
+  return lam;
+}
+
 unsigned Signature::getDiff(){
   bool added = false;
   unsigned diff = addFunction("diff",2, added);      
@@ -735,7 +754,7 @@ unsigned Signature::getBoolDef(unsigned fn)
   return p;
 }
 
-unsigned Signature::getChoice(){
+unsigned Signature::getChoice() {
   bool added = false;
   unsigned choice = addFunction("vEPSILON",1, added);      
   if(added){
@@ -747,6 +766,33 @@ unsigned Signature::getChoice(){
     sym->setType(OperatorType::getConstantsType(result, 1));
   }
   return choice;
+}
+
+unsigned Signature::getDeBruijnIndex(int index)
+{
+  bool added = false;
+  unsigned fun = addFunction("db" + Int::toString(index), 1, added);
+  if(added) {
+    TermList alpha = TermList(0, false);
+    Symbol * sym = getFunction(fun);
+    sym->setType(OperatorType::getConstantsType(alpha, 1));
+    sym->setDBIndex(index);
+  }
+  return fun;
+}
+
+unsigned Signature::getPlaceholder()
+{
+  if(_placeholderFun != UINT_MAX) {
+    return _placeholderFun;
+  }
+
+  unsigned fun = addFreshFunction(1,"ph");
+  _placeholderFun = fun;
+  TermList alpha = TermList(0, false);
+  Symbol * sym = getFunction(fun);
+  sym->setType(OperatorType::getConstantsType(alpha, 1));
+  return fun;
 }
 
 void Signature::incrementFormulaCount(Term* t){
