@@ -855,8 +855,77 @@ public:
   bool isLiteral() const { return _args[0]._literal(); }
   /** True if the term is, in fact, a sort */
   bool isSort() const { return _args[0]._sort(); }
+
+#if VHOL
+
+  typedef Stack<std::pair<int, unsigned>> IndexVarStack;
+
+  vstring toString(bool topLevel, IndexVarStack& map) const;
   /** true if the term is an application */
   bool isApplication() const;
+  /** true if the term is a lambda term */
+  bool isLambdaTerm() const;
+  /** true if the term is a redex */
+  bool isRedex();
+  /** true if the term is a negation of a Boolean term*/
+  bool isNot() const;
+
+  bool isSigma() const;
+  bool isPi() const;
+  bool isIff() const;
+  bool isAnd() const;
+  bool isOr() const;
+  bool isXOr() const;
+  bool isImp() const;
+  bool isEquals() const;
+  bool isPlaceholder() const;
+  bool isChoice() const;
+  /** true if term is a sort which is a arrow sort */
+  bool isArrowSort() const;
+
+  void setHasRedex(bool b)
+  {
+    CALL("setHasRedex");
+    ASS(shared() && !isSort());
+    _args[0]._info.hasRedex = b;
+  }
+  /** true if term contains redex */
+  bool hasRedex() const
+  {
+    ASS(_args[0]._info.shared);
+    return _args[0]._info.hasRedex;
+  }
+  /** returns the head of an applicative term */
+  TermList head();
+  /** returns empty option if not a De Bruijn index and index otherwise */
+  Option<unsigned> deBruijnIndex() const;
+
+  void setHasDBIndex(bool b)
+  {
+    CALL("setHasDBIndex");
+    ASS(shared() && !isSort());
+    _args[0]._info.hasDBIndex = b;
+  }
+  /** returns true if term contains De Bruijn index */
+  bool hasDBIndex() const
+  {
+    ASS(_args[0]._info.shared);
+    return _args[0]._info.hasDBIndex;
+  }
+
+  void setHasLambda(bool b)
+  {
+    CALL("setHasLambda");
+    ASS(shared() && !isSort());
+    _args[0]._info.hasLambda = b;
+  }
+  /** true if term contains redex */
+  bool hasLambda() const
+  {
+    ASS(_args[0]._info.shared);
+    return _args[0]._info.hasLambda;
+  }
+#endif
 
   /** Return an index of the argument to which @b arg points */
   unsigned getArgumentIndex(TermList* arg)
@@ -1110,13 +1179,13 @@ public:
   { return functor() == 0; }
 
   Literal();
-  explicit Literal(const Literal& l) throw();
+  explicit Literal(const Literal& l) noexcept;
 
   /**
    * Create a literal.
    * @since 16/05/2007 Manchester
    */
-  Literal(unsigned functor,unsigned arity,bool polarity,bool commutative) throw()
+  Literal(unsigned functor,unsigned arity,bool polarity,bool commutative) noexcept
   {
     _functor = functor;
     _arity = arity;
@@ -1212,6 +1281,13 @@ public:
   static Literal* positiveLiteral(Literal* l) {
     return l->isPositive() ? l : complementaryLiteral(l);
   }
+
+#if VHOL
+  bool isFlexFlex() const;
+  bool isFlexRigid() const;
+  bool isRigidRigid() const;
+  unsigned numOfAppVarsAndLambdas() const;
+#endif
 
   /** true if positive */
   bool isPositive() const
