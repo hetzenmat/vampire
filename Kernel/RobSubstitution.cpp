@@ -37,48 +37,46 @@ using namespace std;
 using namespace Lib;
 
 std::ostream& operator<<(std::ostream& out, TermSpec const& self)
-{ return out << self.term << "/" << self.index; }
+{ return out << self.term << "/" << self.bank; }
 
 
 
 TermList TermSpec::toTerm(RobSubstitution& s) const
-{ return s.apply(this->term, this->index); }
+{ return s.apply(this->term, this->bank); }
 
 /**
  * Unify @b t1 and @b t2, and return true iff it was successful.
  */
-bool RobSubstitution::unify(TermList t1,int index1, TermList t2, int index2)
-{ return unify(TermSpec(t1,index1), TermSpec(t2,index2)); }
+bool RobSubstitution::unify(TermList t1, VarBank bank1, TermList t2, VarBank bank2)
+{ return unify(TermSpec(t1, bank1), TermSpec(t2, bank2)); }
+
+bool RobSubstitution::match(TermList base, VarBank baseBank, TermList instance, VarBank instanceBank)
+{ return match(TermSpec(base, baseBank), TermSpec(instance, instanceBank)); }
 
 /**
  * Unify arguments of @b t1 and @b t2, and return true iff it was successful.
  *
  * @b t1 and @b t2 can be either terms or literals.
  */
-bool RobSubstitution::unifyArgs(Term* t1,int index1, Term* t2, int index2)
+bool RobSubstitution::unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2)
 {
   ASS_EQ(t1->functor(),t2->functor());
-  return unify(TermSpec(TermList(t1),index1), TermSpec(TermList(t2),index2));
+  return unify(TermSpec(TermList(t1), bank1), TermSpec(TermList(t2), bank2));
 }
 
-bool RobSubstitution::match(TermList base,int baseIndex,
-	TermList instance, int instanceIndex)
-{
-  return match(TermSpec(base,baseIndex), TermSpec(instance,instanceIndex));
-}
+
 /**
  * Match arguments of @b t1 and @b t2, and return true iff it was successful.
  *
  * @b t1 and @b t2 can be either terms or literals.
  */
-bool RobSubstitution::matchArgs(Term* base,int baseIndex,
-	Term* instance, int instanceIndex)
+bool RobSubstitution::matchArgs(Term* base, VarBank baseBank, Term* instance, VarBank instanceBank)
 {
   ASS_EQ(base->functor(),instance->functor());
 
   TermList baseTL(base);
   TermList instanceTL(instance);
-  return match(TermSpec(baseTL,baseIndex), TermSpec(instanceTL,instanceIndex));
+  return match(TermSpec(baseTL, baseBank), TermSpec(instanceTL, instanceBank));
 }
 
 /**
@@ -90,13 +88,13 @@ bool RobSubstitution::matchArgs(Term* base,int baseIndex,
  * @warning All variables, that occured in some term that was matched or unified
  * in @b normalIndex, must be also present in the @b normalizer.
  */
-void RobSubstitution::denormalize(const Renaming& normalizer, int normalIndex, int denormalizedIndex)
+void RobSubstitution::denormalize(const Renaming& normalizer, VarBank normalBank, VarBank denormalizedBank)
 {
   VirtualIterator<Renaming::Item> nit=normalizer.items();
   while(nit.hasNext()) {
     Renaming::Item itm=nit.next();
-    VarSpec normal(itm.second, normalIndex);
-    VarSpec denormalized(itm.first, denormalizedIndex);
+    VarSpec normal(itm.second, normalBank);
+    VarSpec denormalized(itm.first, denormalizedBank);
     ASS(!_bindings.find(denormalized));
     bindVar(denormalized,normal);
   }
@@ -122,7 +120,7 @@ bool RobSubstitution::isUnbound(VarSpec v) const
  */
 TermList::Top RobSubstitution::getSpecialVarTop(unsigned specialVar) const
 {
-  VarSpec v(specialVar, SPECIAL_INDEX);
+  VarSpec v(specialVar, VarBank::SPECIAL_BANK);
   for(;;) {
     auto binding = _bindings.find(v);
     if(binding.isNone()) {
@@ -203,9 +201,9 @@ VarSpec RobSubstitution::introGlueVar(TermSpec forTerm)
 
   auto old = _gluedTerms.find(forTerm);
   if (old) {
-    return VarSpec(*old, GLUE_INDEX);
+    return VarSpec(*old, VarBank::GLUE_BANK);
   } else {
-    auto v = VarSpec(_nextGlueAvailable++, GLUE_INDEX);
+    auto v = VarSpec(_nextGlueAvailable++, VarBank::GLUE_BANK);
     _gluedTerms.insert(forTerm, v.var);
     if (bdIsRecording()) {
       bdAdd(BacktrackObject::fromClosure([this, forTerm](){
@@ -223,7 +221,7 @@ void RobSubstitution::bind(const VarSpec& v, TermSpec b)
   //Aux terms don't contain special variables, ergo
   //should be shared.
   //ASS(!b.term.isTerm() || b.index!=AUX_INDEX || b.term.term()->shared());
-  ASS_NEQ(v.index, UNBOUND_INDEX);
+  ASS_NEQ(v.bank, VarBank::UNBOUND_BANK);
 
   bind(_bindings, v, std::move(b));
 }
@@ -388,8 +386,8 @@ bool RobSubstitution::match(TermSpec base, TermSpec instance)
   TermSpec binding2;
 
   for (;;) {
-    TermSpec bts(*bt,base.index);
-    TermSpec its(*it,instance.index);
+    TermSpec bts(*bt,base.bank);
+    TermSpec its(*it,instance.bank);
 
     if (!bts.sameTermContent(its) && TermList::sameTopFunctor(bts.term,its.term)) {
       Term* s = bts.term.term();
@@ -401,33 +399,33 @@ bool RobSubstitution::match(TermSpec base, TermSpec instance)
     } else {
       if (! TermList::sameTopFunctor(bts.term,its.term)) {
 	if(bts.term.isSpecialVar()) {
-	  VarSpec bvs(bts.term.var(), SPECIAL_INDEX);
+	  VarSpec bvs(bts.term.var(), VarBank::SPECIAL_BANK);
 	  auto binding = _bindings.find(bvs);
 	  if(binding) {
             binding1 = *binding;
-	    ASS_EQ(binding1.index, base.index);
+	    ASS_EQ(binding1.bank, base.bank);
 	    bt=&binding1.term;
 	    continue;
 	  } else {
 	    bind(bvs,its);
 	  }
 	} else if(its.term.isSpecialVar()) {
-	  VarSpec ivs(its.term.var(), SPECIAL_INDEX);
+	  VarSpec ivs(its.term.var(), VarBank::SPECIAL_BANK);
 	  auto binding = _bindings.find(ivs);
 	  if(binding) {
       binding2 = *binding;
-	    ASS_EQ(binding2.index, instance.index);
+	    ASS_EQ(binding2.bank, instance.bank);
 	    it=&binding2.term;
 	    continue;
 	  } else {
 	    bind(ivs,bts);
 	  }
 	} else if(bts.term.isOrdinaryVar()) {
-	  VarSpec bvs(bts.term.var(), bts.index);
+	  VarSpec bvs(bts.term.var(), bts.bank);
 	  auto binding = _bindings.find(bvs);
 	  if(binding) {
       binding1 = *binding;
-	    ASS_EQ(binding1.index, instance.index);
+	    ASS_EQ(binding1.bank, instance.bank);
 	    if(!TermList::equals(binding1.term, its.term))
 	    {
 	      mismatch=true;
@@ -472,15 +470,15 @@ bool RobSubstitution::match(TermSpec base, TermSpec instance)
 }
 
 
-Stack<Literal*> RobSubstitution::apply(Stack<Literal*> cl, int index) const
+Stack<Literal*> RobSubstitution::apply(Stack<Literal*> cl, VarBank bank) const
 {
   for (unsigned i = 0; i < cl.size(); i++) {
-    cl[i] = apply(cl[i], index);
+    cl[i] = apply(cl[i], bank);
   }
   return cl;
 }
 
-Literal* RobSubstitution::apply(Literal* lit, int index) const
+Literal* RobSubstitution::apply(Literal* lit, VarBank bank) const
 {
   static DArray<TermList> ts(32);
 
@@ -492,17 +490,17 @@ Literal* RobSubstitution::apply(Literal* lit, int index) const
   ts.ensure(arity);
   int i = 0;
   for (TermList* args = lit->args(); ! args->isEmpty(); args = args->next()) {
-    ts[i++]=apply(*args,index);
+    ts[i++]=apply(*args, bank);
   }
   if(lit->isTwoVarEquality()){
-    TermList sort = apply(lit->twoVarEqSort(),index);
+    TermList sort = apply(lit->twoVarEqSort(), bank);
     return Literal::createEquality(lit->polarity(), ts[0], ts[1], sort);
   }
 
   return Literal::create(lit,ts.array());
 }
 
-TermList RobSubstitution::apply(TermList trm, int index) const
+TermList RobSubstitution::apply(TermList trm, VarBank bank) const
 {
   return BottomUpEvaluation<AutoDerefTermSpec, TermList>()
     .function([&](auto const& orig, TermList* args) -> TermList {
@@ -520,13 +518,13 @@ TermList RobSubstitution::apply(TermList trm, int index) const
                                           [&]() { return t.term.term; }); })
     .memo<decltype(_applyMemo)&>(_applyMemo)
     .context(AutoDerefTermSpec::Context { .subs = this, })
-    .apply(AutoDerefTermSpec(TermSpec(trm, index), this));
+    .apply(AutoDerefTermSpec(TermSpec(trm, bank), this));
 }
 
 TermList RobSubstitution::apply(TermSpec t) 
 { return t.toTerm(*this); }
 
-size_t RobSubstitution::getApplicationResultWeight(TermList trm, int index) const
+size_t RobSubstitution::getApplicationResultWeight(TermList trm, VarBank bank) const
 {
   return BottomUpEvaluation<AutoDerefTermSpec, size_t>()
     .function(
@@ -539,11 +537,11 @@ size_t RobSubstitution::getApplicationResultWeight(TermList trm, int index) cons
                                           [&]() -> size_t { return t.term.groundWeight(); }); })
     // .memo<decltype(_applyMemo)&>(_applyMemo)
     .context(AutoDerefTermSpec::Context { .subs = this, })
-    .apply(AutoDerefTermSpec(TermSpec(trm, index), this))
+    .apply(AutoDerefTermSpec(TermSpec(trm, bank), this))
     ;
 }
 
-size_t RobSubstitution::getApplicationResultWeight(Literal* lit, int index) const
+size_t RobSubstitution::getApplicationResultWeight(Literal* lit, VarBank bank) const
 {
   static DArray<TermList> ts(32);
 
@@ -553,7 +551,7 @@ size_t RobSubstitution::getApplicationResultWeight(Literal* lit, int index) cons
 
   size_t res = 1; //the predicate symbol weight
   for (TermList* args = lit->args(); ! args->isEmpty(); args = args->next()) {
-    size_t argWeight = getApplicationResultWeight(*args,index);
+    size_t argWeight = getApplicationResultWeight(*args, bank);
     res += argWeight;
   }
   return res;
@@ -608,6 +606,7 @@ struct RobSubstitution::AssocContext
 {
   AssocContext(Literal* l1, int l1Index, Literal* l2, int l2Index)
   : _l1(l1), _l1i(l1Index), _l2(l2), _l2i(l2Index) { ASS(!l1->isEquality()); ASS(!l2->isEquality()); } // only used for non-commutative, i.e. also non-equality, literals
+
   bool enter(RobSubstitution* subst)
   {
     subst->bdRecord(_bdata);
@@ -777,25 +776,24 @@ private:
 };
 
 struct RobSubstitution::MatchingFn {
-  static bool associateEqualitySorts(RobSubstitution* subst, Literal* l1, int l1Index,
-      Literal* l2, int l2Index) {
+  static bool associateEqualitySorts(RobSubstitution* subst, Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank) {
     /* Only in the case l1 is of the form X = Y ad l2 is of the form 
        t1 = t2 can the literals be matched without their sorts being matched */
     if(l1->isTwoVarEquality()){
       ASS(l2->isEquality());
       TermList sb = SortHelper::getEqualityArgumentSort(l1);
       TermList si = SortHelper::getEqualityArgumentSort(l2);
-      return subst->match(sb, l1Index, si, l2Index);
+      return subst->match(sb, l1Bank, si, l2Bank);
     }
     return true;
   }
-  static bool associate(RobSubstitution* subst, Literal* l1, int l1Index,
-	  Literal* l2, int l2Index)
-  { return subst->matchArgs(l1,l1Index,l2,l2Index); }
 
-  static bool associate(RobSubstitution* subst, TermList t1, int t1Index,
-	  TermList t2, int t2Index)
-  { return subst->match(t1,t1Index,t2,t2Index); }
+  static bool associate(RobSubstitution* subst, Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank)
+  { return subst->matchArgs(l1, l1Bank, l2, l2Bank); }
+
+  static bool associate(RobSubstitution* subst, TermList t1, VarBank t1Bank, TermList t2, VarBank t2Bank)
+  { return subst->match(t1,t1Bank,t2,t2Bank); }
+
 };
 
 struct RobSubstitution::UnificationFn {

@@ -105,7 +105,10 @@ enum VarBank : unsigned long {
   NORM_RESULT_BANK=2,
   RESULT_BANK=3,
   FRESH_BANK=4,
-  OUTPUT_BANK=5
+  OUTPUT_BANK=5,
+  GLUE_BANK=6,
+  SPECIAL_BANK=7,
+  UNBOUND_BANK=8
 };
 
 class RobSubstitutionTL; // forward declaration

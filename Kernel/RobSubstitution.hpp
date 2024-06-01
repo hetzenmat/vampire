@@ -44,34 +44,34 @@ namespace Kernel
 struct VarSpec
 {
   VarSpec() {}
-  VarSpec(unsigned var, int index) : var(var), index(index) {}
+  VarSpec(unsigned var, VarBank bank) : var(var), bank(bank) {}
 
   friend std::ostream& operator<<(std::ostream& out, VarSpec const& self);
 
   /** number of variable */
   unsigned var;
   /** index of variable bank */
-  int index;
+  VarBank bank;
 
-  auto asTuple() const { return std::tie(var, index); }
+  auto asTuple() const { return std::tie(var, bank); }
   IMPL_COMPARISONS_FROM_TUPLE(VarSpec)
 
-  unsigned defaultHash () const { return HashUtils::combine(var  , index); }
-  unsigned defaultHash2() const { return HashUtils::combine(index, var  ); }
+  unsigned defaultHash () const { return HashUtils::combine(var , bank); }
+  unsigned defaultHash2() const { return HashUtils::combine(bank, var  ); }
 };
 
 struct TermSpec {
   TermSpec() {}
 
-  TermSpec(TermList t, int i) : term(t), index(t.isSpecialVar() ? SPECIAL_INDEX : i) {}
-  TermSpec(VarSpec v) : term(TermList::var(v.var)), index(v.index) {}
+  TermSpec(TermList t, VarBank i) : term(t), bank(t.isSpecialVar() ? VarBank::SPECIAL_BANK : i) {}
+  TermSpec(VarSpec v) : term(TermList::var(v.var)), bank(v.bank) {}
 
-  auto asTuple() const -> decltype(auto) { return std::tie(term, index); }
+  auto asTuple() const -> decltype(auto) { return std::tie(term, bank); }
   IMPL_COMPARISONS_FROM_TUPLE(TermSpec)
   IMPL_HASH_FROM_TUPLE(TermSpec)
 
   TermList term;
-  int index;
+  VarBank bank;
   bool sameTermContent(const TermSpec& ts) const
   {
     bool termSameContent=term.sameContent(&ts.term);
@@ -86,7 +86,7 @@ struct TermSpec {
     if(!termSameContent) {
       return false;
     }
-    return index==ts.index || term.isSpecialVar() ||
+    return bank==ts.bank || term.isSpecialVar() ||
       (term.isTerm() && (
   (term.term()->shared() && term.term()->ground()) ||
    term.term()->arity()==0 ));
@@ -95,18 +95,18 @@ struct TermSpec {
   friend std::ostream& operator<<(std::ostream& out, TermSpec const& self);
 
   bool isVar() const { return term.isVar(); }
-  VarSpec varSpec() const { return VarSpec(term.var(), term.isSpecialVar() ? SPECIAL_INDEX : index); }
+  VarSpec varSpec() const { return VarSpec(term.var(), term.isSpecialVar() ? VarBank::SPECIAL_BANK : bank); }
   bool isTerm() const { return term.isTerm(); }
 
-  TermSpec termArgSort(unsigned i) const { return TermSpec(SortHelper::getTermArgSort(term.term(), i), index); }
+  TermSpec termArgSort(unsigned i) const { return TermSpec(SortHelper::getTermArgSort(term.term(), i), bank); }
 
   unsigned nTypeArgs() const { return term.term()->numTermArguments(); }
   unsigned nTermArgs() const { return term.term()->numTermArguments(); }
   unsigned nAllArgs() const { return term.term()->arity(); }
 
-  TermSpec termArg(unsigned i) const { return TermSpec(this->term.term()->termArg(i), this->index); }
-  TermSpec typeArg(unsigned i) const { return TermSpec(this->term.term()->typeArg(i), this->index); }
-  TermSpec anyArg (unsigned i) const { return TermSpec(*this->term.term()->nthArgument(i), this->index); }
+  TermSpec termArg(unsigned i) const { return TermSpec(this->term.term()->termArg(i), this->bank); }
+  TermSpec typeArg(unsigned i) const { return TermSpec(this->term.term()->typeArg(i), this->bank); }
+  TermSpec anyArg (unsigned i) const { return TermSpec(*this->term.term()->nthArgument(i), this->bank); }
 
   auto typeArgs() const { return range(0, nTypeArgs()).map([this](auto i) { return typeArg(i); }); }
   auto termArgs() const { return range(0, nTermArgs()).map([this](auto i) { return termArg(i); }); }
@@ -115,8 +115,8 @@ struct TermSpec {
   bool deepEqCheck(const TermSpec& t2) const {
     TermSpec const& t1 = *this;
     if (t1.term.sameContent(t2.term)) {
-      return t1.isVar() ? t1.index == t2.index 
-                        : (t1.index == t2.index || t1.term.term()->ground());
+      return t1.isVar() ? t1.bank == t2.bank
+                        : (t1.bank == t2.bank || t1.term.term()->ground());
     } else {
       if (t1.isTerm() != t2.isTerm()) return false;
       if (t1.isVar()) {
@@ -303,13 +303,13 @@ public:
 	  Literal* instance, int instanceIndex, bool complementary);
   SubstIterator unifiers(Literal* l1, int l1Index, Literal* l2, int l2Index, bool complementary);
 
-  bool unify(TermList t1,int index1, TermList t2, int index2);
-  bool match(TermList base,int baseIndex, TermList instance, int instanceIndex);
+  bool unify(TermList t1, VarBank bank1, TermList t2, VarBank bank2);
+  bool match(TermList base, VarBank baseBank, TermList instance, VarBank instanceBank);
 
-  bool unifyArgs(Term* t1,int index1, Term* t2, int index2);
-  bool matchArgs(Term* base,int baseIndex, Term* instance, int instanceIndex);
+  bool unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2);
+  bool matchArgs(Term* base, VarBank baseBank, Term* instance, VarBank instanceBank);
 
-  void denormalize(const Renaming& normalizer, int normalIndex, int denormalizedIndex);
+  void denormalize(const Renaming& normalizer, VarBank normalBank, VarBank denormalizedBank);
   bool isUnbound(VarSpec v) const;
 
   /** introduces a new "glue" variable, and binds it to forTerm. 
@@ -339,16 +339,16 @@ public:
   {
     TermSpec out;
     if (iterItems(args...).count() == 0) {
-      return TermSpec(TermList(Term::create(functor, 0, nullptr)), /* index */ 0);
+      return TermSpec(TermList(Term::create(functor, 0, nullptr)), VarBank::DEFAULT_BANK);
     }
-    auto firstIndex = iterItems(args...).tryNext().unwrap().index;
-    if (iterItems(args...).all([&](auto a) { return a.index == firstIndex; })) {
-      return TermSpec(TermList(Term::create(functor, {args.term...})), firstIndex);
+    auto firstBank = iterItems(args...).tryNext().unwrap().bank;
+    if (iterItems(args...).all([&](auto a) { return a.bank == firstBank; })) {
+      return TermSpec(TermList(Term::create(functor, {args.term...})), firstBank);
     } else {
       return TermSpec(TermList(Term::create(functor, { 
-              (args.index == GLUE_INDEX ? args.term 
-                                        : TermList::var(introGlueVar(args).var))... 
-              })), GLUE_INDEX);
+              (args.bank == VarBank::GLUE_BANK ? args.term
+                                               : TermList::var(introGlueVar(args).var))...
+              })), VarBank::GLUE_BANK);
     }
   }
 
@@ -371,20 +371,20 @@ public:
    * other methods. Also no special variables can occur in
    * binding term, as no occur-check is performed.
    */
-  void bindSpecialVar(unsigned var, TermList t, int index)
+  void bindSpecialVar(unsigned var, TermList t, VarBank bank)
   {
-    VarSpec vs(var, SPECIAL_INDEX);
+    VarSpec vs(var, VarBank::SPECIAL_BANK);
     ASS(!_bindings.find(vs));
-    bind(vs, TermSpec(t,index));
+    bind(vs, TermSpec(t, bank));
   }
 
   TermList::Top getSpecialVarTop(unsigned specialVar) const;
-  TermList apply(TermList t, int index) const;
-  Literal* apply(Literal* lit, int index) const;
-  TypedTermList apply(TypedTermList t, int index) const { return TypedTermList(apply(TermList(t), index), apply(t.sort(), index)); }
-  Stack<Literal*> apply(Stack<Literal*> cl, int index) const;
-  size_t getApplicationResultWeight(TermList t, int index) const;
-  size_t getApplicationResultWeight(Literal* lit, int index) const;
+  TermList apply(TermList t, VarBank bank) const;
+  Literal* apply(Literal* lit, VarBank bank) const;
+  TypedTermList apply(TypedTermList t, VarBank bank) const { return TypedTermList(apply(TermList(t), bank), apply(t.sort(), bank)); }
+  Stack<Literal*> apply(Stack<Literal*> cl, VarBank bank) const;
+  size_t getApplicationResultWeight(TermList t, VarBank bank) const;
+  size_t getApplicationResultWeight(Literal* lit, VarBank bank) const;
 
   bool isEmpty() const { return _bindings.size() == 0 && _outputVarBindings.size() == 0; }
 
@@ -393,10 +393,10 @@ public:
 
   friend std::ostream& operator<<(std::ostream& out, VarSpec const& self)
   {
-    if(self.index == SPECIAL_INDEX) {
+    if(self.bank == VarBank::SPECIAL_BANK) {
       return out << "S" << self.var;
     } else {
-      return out << "X" << self.var << "/" << self.index;
+      return out << "X" << self.var << "/" << self.bank;
     }
   }
 
