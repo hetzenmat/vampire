@@ -99,7 +99,7 @@ enum ArgumentOrderVals {
 };
 
 // TODO change to enum class
-enum VarBank {
+enum VarBank : unsigned long {
   DEFAULT_BANK=0,
   QUERY_BANK=1,
   NORM_RESULT_BANK=2,
@@ -128,7 +128,7 @@ public:
   /** creates a term list containing a variable. If @b special is true, then the variable
    * will be "special". Special variables are also variables, with a difference that a
    * special variables and ordinary variables have an empty intersection */
-  TermList(unsigned var, bool special)
+  TermList(unsigned var, bool special) // TODO MH: Remove
   {
     if (special) {
       makeSpecialVar(var);
@@ -167,7 +167,7 @@ public:
 
   /** return the variable number */
   inline unsigned var() const
-  { ASS(isVar()); return _content / 4; } // TODO MH: figure out different term representation used in ahmed-new-hol
+  { ASS(isVar()); return _var(); }
   /** the term contains reference to Term class */
   inline bool isTerm() const
   { return tag() == REF; }
@@ -191,18 +191,34 @@ public:
 
   vstring toString(bool topLevel = true) const;
 
+  inline VarBank bank() const
+  { return static_cast<VarBank>(_bank()); }
+
+  inline bool isOutputVar() const
+  { return isVar() && bank() == OUTPUT_BANK; }
+
+  inline bool onBank() const
+  { return isVar() && bank() != DEFAULT_BANK; }
+
   friend std::ostream& operator<<(std::ostream& out, Kernel::TermList const& tl);
+
+  inline void makeVar(TermTag tag, unsigned vnumber, VarBank bank)
+  {
+    _setTag(tag);
+    _setBank(bank);
+    _setVar(vnumber);
+  }
   /** make the term into an ordinary variable with a given number */
-  inline void makeVar(unsigned vnumber)
-  { _content = vnumber * 4 + ORD_VAR; }
+  inline void makeVar(unsigned vnumber, VarBank bank = DEFAULT_BANK)
+  { makeVar(ORD_VAR, vnumber, bank); }
   /** make the term into a special variable with a given number */
   inline void makeSpecialVar(unsigned vnumber)
-  { _content = vnumber * 4 + SPEC_VAR; }
+  { makeVar(SPEC_VAR, vnumber, DEFAULT_BANK); }
   /** create an term empty (so that isEmpty() returns true)
    *  (can just be the default constructor now)
    */
   inline static TermList empty()
-  { return TermList(); }
+  { return {}; }
   /** the top of a term is either a function symbol or a variable id. this class is model this */
   class Top {
     using Inner = Coproduct<unsigned, unsigned>;
@@ -289,6 +305,11 @@ public:
   TermList betaNF();
   TermList etaNF();
   TermList betaEtaNF();
+
+  TermList toBank(VarBank bank);
+  // Use with care! Make sure that it is a term before calling
+  // mainly here for compatibility with TermSpec in RobSubstitution
+  TermList nthArg(unsigned i) const;
 #endif
 
 
@@ -381,6 +402,19 @@ private:
     ID_BITS_END = ID_BITS_START + 32,
     TERM_BITS_START = 0,
     TERM_BITS_END = CHAR_BIT * sizeof(Term *);
+
+#if VHOL
+  static constexpr unsigned
+      BANK_BITS_START = TAG_BITS_END,
+      BANK_BITS_END = BANK_BITS_START + 30,
+      VAR_BITS_START = BANK_BITS_END,
+      VAR_BITS_END = VAR_BITS_START + 32;
+
+  static_assert(VAR_BITS_END == 64, "whole variable must fit 64 bits exactly");
+
+  BITFIELD64_GET_AND_SET(unsigned, bank, Bank, BANK)
+  BITFIELD64_GET_AND_SET(unsigned, var, Var, VAR)
+#endif
 
   // various properties we want to check
   static_assert(TAG_BITS_START == 0, "tag must be the least significant bits");
@@ -646,7 +680,14 @@ public:
     * non-emptiness
     * In the monomorphic case, the same as args()
     */
-  TermList* termArgs();
+  const TermList* termArgs() const
+  {
+    ASS(!isSort());
+
+    return _args + (_arity - numTypeArguments());
+  }
+
+  TermList* termArgs(){ return _args + (_arity - numTypeArguments()); }
 
   /** Return the 1st type argument for a polymorphic term.
     * returns a nullpointer if the term not polymorphic
@@ -725,7 +766,7 @@ public:
   {
     ASS(_args[0]._shared());
     return numVarOccs() == 0;
-  } // ground
+  }
 
   /** True if the term contains a term variable (type variables don't count)
    *  Only applicable to shared terms */
@@ -733,11 +774,11 @@ public:
   {
     ASS(shared());
     return _args[0]._hasTermVar();
-  } // ground
+  }
 
   /** True if the term is shared */
   bool shared() const
-  { return _args[0]._shared(); } // shared
+  { return _args[0]._shared(); }
 
   /**
    * True if the term's function/predicate symbol is commutative/symmetric.
@@ -746,7 +787,7 @@ public:
   bool commutative() const
   {
     return _args[0]._commutative();
-  } // commutative
+  }
 
   // destructively swap arguments of a (binary) commutative term
   // the term is assumed to be non-shared
@@ -756,8 +797,7 @@ public:
 
     TermList* ts1 = args();
     TermList* ts2 = ts1->next();
-    using std::swap;//ADL
-    swap(ts1->_content, ts2->_content);
+    std::swap(ts1->_content, ts2->_content);
   }
 
   /** Return the weight. Applicable only to shared terms */
@@ -815,7 +855,7 @@ public:
   void setMaxRedLen(int rl)
   {
     _maxRedLen = rl;
-  } // setWeight
+  }
 
   /** Set the number of variable _occurrences_ */
   void setNumVarOccs(unsigned v)
@@ -825,7 +865,7 @@ public:
       return;
     }
     _vars = v;
-  } // setVars
+  }
 
   void setHasTermVar(bool b)
   {
@@ -841,7 +881,7 @@ public:
       return _sort.isVar() ? 3 : 2 + _sort.term()->numVarOccs();
     }
     return _vars;
-  } // vars()
+  }
 
   /**
    * Return true iff the object is an equality between two variables.
@@ -891,15 +931,14 @@ public:
 
   void setHasRedex(bool b)
   {
-    CALL("setHasRedex");
     ASS(shared() && !isSort());
-    _args[0]._info.hasRedex = b;
+    _args[0]._setHasRedex(b);
   }
   /** true if term contains redex */
   bool hasRedex() const
   {
-    ASS(_args[0]._info.shared);
-    return _args[0]._info.hasRedex;
+    ASS(shared());
+    return _args[0]._hasRedex();
   }
   /** returns the head of an applicative term */
   TermList head();
@@ -908,28 +947,26 @@ public:
 
   void setHasDBIndex(bool b)
   {
-    CALL("setHasDBIndex");
     ASS(shared() && !isSort());
-    _args[0]._info.hasDBIndex = b;
+    _args[0]._setHasDBIndex(b);
   }
   /** returns true if term contains De Bruijn index */
   bool hasDBIndex() const
   {
-    ASS(_args[0]._info.shared);
-    return _args[0]._info.hasDBIndex;
+    ASS(shared());
+    return _args[0]._hasDBIndex();
   }
 
   void setHasLambda(bool b)
   {
-    CALL("setHasLambda");
     ASS(shared() && !isSort());
-    _args[0]._info.hasLambda = b;
+    _args[0]._setHasLambda(b);
   }
   /** true if term contains redex */
   bool hasLambda() const
   {
-    ASS(_args[0]._info.shared);
-    return _args[0]._info.hasLambda;
+    ASS(shared());
+    return _args[0]._hasLambda();
   }
 #endif
 
@@ -978,6 +1015,8 @@ public:
   bool containsSubterm(TermList v) const;
   bool containsAllVariablesOf(Term* t);
   size_t countSubtermOccurrences(TermList subterm);
+
+  Term* toBank(VarBank bank);
 
   /** Return true if term has no non-constant functions as subterms */
   bool isShallow() const;
@@ -1127,9 +1166,9 @@ class AtomicSort
 {
 public:
   AtomicSort();
-  explicit AtomicSort(const AtomicSort& t) throw();
+  explicit AtomicSort(const AtomicSort& t) noexcept;
 
-  AtomicSort(unsigned functor,unsigned arity) throw()
+  AtomicSort(unsigned functor,unsigned arity) noexcept
   {
     _functor = functor;
     _arity = arity;
@@ -1191,7 +1230,7 @@ public:
    * Create a literal.
    * @since 16/05/2007 Manchester
    */
-  Literal(unsigned functor,unsigned arity,bool polarity,bool commutative) noexcept
+  Literal(unsigned functor, unsigned arity, bool polarity, bool commutative) noexcept
   {
     _functor = functor;
     _arity = arity;
@@ -1312,6 +1351,8 @@ public:
   {
     return _args[0]._polarity();
   } // polarity
+
+  Literal* toBank(VarBank b);
 
   /**
    * Mark this object as an equality between two variables.

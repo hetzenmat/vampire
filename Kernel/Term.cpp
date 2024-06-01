@@ -449,13 +449,6 @@ unsigned Term::numTypeArguments() const {
       : env.signature->getFunction(_functor)->numTypeArguments();
 }
 
-TermList* Term::termArgs()
-{
-  ASS(!isSort());
-
-  return _args + (_arity - numTypeArguments());
-}
-
 const TermList* Term::typeArgs() const
 { return numTypeArguments() == 0 ? nullptr : args(); }
 
@@ -466,6 +459,28 @@ unsigned Term::numTermArguments() const
   
   ASS(_arity >= numTypeArguments());
   return _arity - numTypeArguments(); 
+}
+
+TermList TermList::toBank(VarBank b)
+{
+  if(isVar())
+    return TermList(_var(), b);
+
+  return TermList(term()->toBank(b));
+}
+
+TermList TermList::nthArg(unsigned i) const {
+  return *term()->nthArgument(i);
+}
+
+Term* Term::toBank(VarBank b)
+{
+  return ToBank(b).toBank(this);
+}
+
+Literal* Literal::toBank(VarBank b)
+{
+  return ToBank(b).toBank(this);
 }
 
 bool TermList::containsSubterm(TermList trm) const

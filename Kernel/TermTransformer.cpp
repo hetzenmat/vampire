@@ -14,7 +14,7 @@
 
 #include "SortHelper.hpp"
 #include "Term.hpp"
-
+#include "ApplicativeHelper.hpp"
 #include "TermTransformer.hpp"
 #include "FormulaTransformer.hpp"
 
@@ -341,6 +341,58 @@ Term* BottomUpTermTransformer::transform(Term* term)
   }
 }
 
+// default implementation, can override if required
+bool TermTransformer::exploreSubterms(TermList orig, TermList newTerm)
+{
+  ASS(newTerm.isTerm());
+
+  return orig == newTerm;
+}
+
+TermList SubtermReplacer::transformSubterm(TermList t)
+{
+  if(t == _what) {
+    if(_liftFreeIndices) {
+      return TermShifter().shift(_by, _shiftBy);
+    }
+    return _by;
+  }
+  return t;
+}
+
+void SubtermReplacer::onTermEntry(Term* t)
+{
+  if(t->isLambdaTerm()) _shiftBy++;
+}
+
+void SubtermReplacer::onTermExit(Term* t)
+{
+  if(t->isLambdaTerm()) _shiftBy--;
+}
+
+
+TypedTermList ToBank::toBank(TypedTermList term){
+  TermList sort = term.sort();
+
+  if(term.isTerm()) {
+    return { transform(TermList(term.term())).term() };
+  } else {
+    return { transformSubterm(TermList(term.term())),
+            sort.isVar() ? transformSubterm(sort) : transform(sort) };
+  }
+}
+
+TermList ToBank::transformSubterm(TermList t) {
+  if(t.isVar() && t.bank() != _bank){
+    return {t.var(), _bank};
+  }
+  return t;
+}
+
+bool ToBank::exploreSubterms(TermList orig, TermList newTerm) {
+  return !(newTerm.isTerm() && newTerm.term()->shared() && newTerm.term()->ground());
+}
+
 Formula* BottomUpTermTransformer::transform(Formula* f)
 {
   static BottomUpTermTransformerFormulaTransformer ttft(*this);
@@ -356,4 +408,4 @@ TermList BottomUpTermTransformer::transform(TermList ts)
   }
 }
 
-}
+} // namespace Kernel

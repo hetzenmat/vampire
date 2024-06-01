@@ -16,7 +16,8 @@
 #define __TermTransformer__
 
 #include "Forwards.hpp"
-
+#include "Term.hpp"
+#include "TypedTermList.hpp"
 
 
 namespace Kernel {
@@ -54,6 +55,8 @@ protected:
 class TermTransformer : public TermTransformerCommon {
 public:
   virtual ~TermTransformer() {}
+  TermTransformer() = default;
+  explicit TermTransformer(bool transformSorts) : _transformSorts(transformSorts) {}
   Term* transform(Term* term) override;
 protected:
   virtual TermList transformSubterm(TermList trm) = 0;
@@ -67,6 +70,45 @@ protected:
   virtual bool exploreSubterms(TermList orig, TermList newTerm);
 
   bool _transformSorts = true;
+};
+
+class SubtermReplacer : public TermTransformer {
+public:
+  SubtermReplacer(TermList what, TermList by, bool liftFree = false)
+      : TermTransformer(false), _what(what), _by(by), _liftFreeIndices(liftFree), _shiftBy(0)
+  {
+    ASS(what.isVar() || by.isVar() || SortHelper::getResultSort(what.term()) == SortHelper::getResultSort(by.term()));
+  }
+
+  TermList transformSubterm(TermList t) override;
+
+#if VHOL
+  void onTermEntry(Term* t) override;
+  void onTermExit(Term* t) override;
+#endif
+
+private:
+  TermList _what;
+  TermList _by;
+#if VHOL
+  bool _liftFreeIndices; // true if need to lift free indices in _what
+  int _shiftBy; // the amount to shift a free index by
+#endif
+};
+
+class ToBank : public TermTransformer
+{
+public:
+  explicit ToBank(VarBank bank) : _bank(bank) {}
+
+  Term*         toBank(Term* t) { return transform(t); }
+  Literal*      toBank(Literal* lit) { return transformLiteral(lit); }
+  TypedTermList toBank(TypedTermList term);
+
+  TermList transformSubterm(TermList t) override;
+  bool exploreSubterms(TermList orig, TermList newTerm) override;
+private:
+  VarBank _bank;
 };
 
 /**
@@ -88,7 +130,6 @@ protected:
   TermList transform(TermList ts) override;
 };
 
-
-}
+} // namespace Kernel
 
 #endif // __TermTransformer__
