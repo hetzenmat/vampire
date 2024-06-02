@@ -199,17 +199,37 @@ static_assert(std::is_trivially_copyable_v<TermSpec>, "TermSpec is trivially cop
 /** A wrapper around TermSpec that automatically dereferences the TermSpec with respect to some RobSubstition when 
  * used with BottomUpEvaluation.  This means for example if we evaluate some TermSpec * `g(X, Y)` in a context 
  * `{ X -> a, Y -> f(X) }` it behaves as if we would evaluate `g(a,f(a))`.  */
+template<class TermSpecOrList, class VarBankOrInt>
 struct AutoDerefTermSpec
 {
-  TermSpec term;
+  using RobSubst = RobSubstitution<TermSpecOrList,VarBankOrInt>;
 
-  AutoDerefTermSpec(TermSpec const& t, RobSubstitution const* s);
-  explicit AutoDerefTermSpec(AutoDerefTermSpec const& other) : term(other.term) {}
+  TermSpecOrList term;
+  VarBankOrInt bank;
+  RobSubst const* subs;
+
+  AutoDerefTermSpec(TermSpecOrList const& t, RobSubst const* s, VarBankOrInt b)
+      : subs(s), bank(b) {
+    if (t.isOrdinaryVar() && !t.onBank())
+      term = s->derefBound(TermSpecOrList(t.var(), b));
+    else
+      term = s->derefBound(t);
+  }
+
+  AutoDerefTermSpec clone() const { return { term, subs, bank }; }
+
+  explicit AutoDerefTermSpec(AutoDerefTermSpec const& other) : term(other.term), subs(other.subs), bank(other.bank) {}
+
   AutoDerefTermSpec(AutoDerefTermSpec && other) = default;
-  friend std::ostream& operator<<(std::ostream& out, AutoDerefTermSpec const& self);
 
-  struct Context 
-  { RobSubstitution const* subs; };
+  friend std::ostream& operator<<(std::ostream& out, AutoDerefTermSpec<TermSpecOrList, VarBankOrInt> const& self)
+  { return out << self.term << "@" << *self.subs; }
+
+  struct Context
+  {
+    Context(RobSubst const* s) : subs(s) {}
+    RobSubst const* subs;
+  };
 };
 
 /* a Memo to be used with BottomUpEvaluation and AutoDerefTermSpec that only memorizes the result for non-variable subterms. */
@@ -397,22 +417,59 @@ public:
    */
   void setOutputIndex(VarBankOrInt idx) { _outputIndex = idx; }
 
-  bool unify(TermSpecOrList t1, TermSpecOrList t2
+  bool unify(  TermSpecOrList t1
+             , TermSpecOrList t2
 #if VHOL
              , bool applicativeUnify = false
 #endif
              );
 
+  bool match(TermSpecOrList base, TermSpecOrList instance, VarBankOrInt baseBank);
+
+  void denormalize(const Renaming& normalizer, VarBankOrInt normalBank, VarBankOrInt denormalizedBank);
+
+  bool isUnbound(unsigned var, VarBankOrInt bank) const
+  {
+    return isUnbound(TermSpecOrList(var, bank));
+  }
+
+  void reset()
+  {
+    _bindings.reset();
+    _outputVarBindings.reset();
+    _startedBindingOutputVars = false;
+    _nextGlueAvailable=0;
+    _gluedTerms.reset();
+    _applyMemo.reset();
+
+    _bank.reset();
+    _constr->reset();
+    _nextUnboundAvailable=0;
+    resetOutputIndex();
+  }
+
+  Recycled<LiteralStack> constraints()
+  { return _constr->literals(*this); }
+
+  bool keepRecycled() const { return _bank.keepRecycled(); }
+
+  TermList::Top getSpecialVarTop(unsigned specialVar) const;
+  Literal* apply(Literal* lit, VarBankOrInt bank) const;
+  Stack<Literal*> apply(Stack<Literal*> cl, VarBankOrInt bank) const;
+  size_t getApplicationResultWeight(Literal* lit, VarBankOrInt bank) const;
+  size_t getApplicationResultWeight(TermSpecOrList t, VarBankOrInt bank) const;
+  TermList apply(TermSpecOrList t, VarBankOrInt bank) const;
+
   SubstIterator matches(Literal* base, VarBank baseBank, Literal* instance, VarBank instanceBank, bool complementary);
   SubstIterator unifiers(Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank, bool complementary);
 
 
-  bool match(TermList base, VarBank baseBank, TermList instance, VarBank instanceBank);
+
+
 
   bool unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2);
   bool matchArgs(Term* base, VarBank baseBank, Term* instance, VarBank instanceBank);
 
-  void denormalize(const Renaming& normalizer, VarBank normalBank, VarBank denormalizedBank);
   bool isUnbound(VarSpec v) const;
 
   /** introduces a new "glue" variable, and binds it to forTerm. 
@@ -455,17 +512,8 @@ public:
     }
   }
 
-  void reset()
-  {
-    _bindings.reset();
-    _outputVarBindings.reset();
-    _startedBindingOutputVars = false;
-    _nextUnboundAvailable=0;
-    _nextGlueAvailable=0;
-    _gluedTerms.reset();
-    _applyMemo.reset();
-  }
-  bool keepRecycled() const { return _bindings.keepRecycled() || _outputVarBindings.keepRecycled(); }
+
+  // bool keepRecycled() const { return _bindings.keepRecycled() || _outputVarBindings.keepRecycled(); }
 
   /**
    * Bind special variable to a specified term
@@ -481,7 +529,7 @@ public:
     bind(vs, TermSpec(t, bank));
   }
 
-  TermList::Top getSpecialVarTop(unsigned specialVar) const;
+
   TermList apply(TermList t, VarBank bank) const;
   Literal* apply(Literal* lit, VarBank bank) const;
   TypedTermList apply(TypedTermList t, VarBank bank) const { return TypedTermList(apply(TermList(t), bank), apply(t.sort(), bank)); }
@@ -508,8 +556,13 @@ public:
   RobSubstitution& operator=(RobSubstitution&& obj) = default;
   TermSpec const& derefBound(TermSpec const& v) const;
   unsigned findOrIntroduceOutputVariable(VarSpec v) const;
+
+  virtual void resetOutputIndex() = 0;
 protected:
   VarBankOrInt _outputIndex;
+  typedef DHMap<TermSpecOrList,TermSpecOrList> BankType;
+  BankType _bank;
+  Recycled<ConstraintStack> _constr;
 private:
   TermList apply(TermSpec);
   RobSubstitution(const RobSubstitution& obj) = delete;

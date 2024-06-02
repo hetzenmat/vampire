@@ -60,6 +60,12 @@ template <typename T>
 } // namespace Assertion
 } // namespace Debug
 
+#if VHOL
+#define IF_VHOL(t) t
+#else
+#define IF_VHOL(t)
+#endif
+
 #define ASS(Cond)                                            \
   do {                                                       \
     if (!(Cond)) {                                           \
