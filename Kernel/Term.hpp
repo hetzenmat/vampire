@@ -450,6 +450,7 @@ private:
   friend class Literal;
   friend class AtomicSort;
 }; // class TermList
+static_assert(std::is_trivially_copyable_v<TermList>, "TermList is trivially copyable");
 static_assert(sizeof(TermList) == 8, "size of TermList must be exactly 64 bits");
 
 //special functor values

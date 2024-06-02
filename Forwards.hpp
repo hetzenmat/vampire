@@ -99,9 +99,10 @@ class Problem;
 class Renaming;
 class Substitution;
 
-class RobSubstitution;
-typedef VirtualIterator<RobSubstitution*> SubstIterator;
-typedef Lib::SmartPtr<RobSubstitution> RobSubstitutionSP;
+
+class RobSubstitutionTL;
+typedef VirtualIterator<RobSubstitutionTL*> SubstIterator;
+typedef Lib::SmartPtr<RobSubstitutionTL> RobSubstitutionSP;
 
 class Matcher;
 typedef VirtualIterator<Matcher*> MatchIterator;

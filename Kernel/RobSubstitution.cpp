@@ -41,16 +41,15 @@ std::ostream& operator<<(std::ostream& out, TermSpec const& self)
 
 
 
-TermList TermSpec::toTerm(RobSubstitution& s) const
-{ return s.apply(this->term, this->bank); }
-
 /**
  * Unify @b t1 and @b t2, and return true iff it was successful.
  */
-bool RobSubstitution::unify(TermList t1, VarBank bank1, TermList t2, VarBank bank2)
+template<class T, class V>
+bool RobSubstitution<T,V>::unify(TermList t1, VarBank bank1, TermList t2, VarBank bank2)
 { return unify(TermSpec(t1, bank1), TermSpec(t2, bank2)); }
 
-bool RobSubstitution::match(TermList base, VarBank baseBank, TermList instance, VarBank instanceBank)
+template<class T, class V>
+bool RobSubstitution<T,V>::match(TermList base, VarBank baseBank, TermList instance, VarBank instanceBank)
 { return match(TermSpec(base, baseBank), TermSpec(instance, instanceBank)); }
 
 /**
@@ -58,7 +57,8 @@ bool RobSubstitution::match(TermList base, VarBank baseBank, TermList instance, 
  *
  * @b t1 and @b t2 can be either terms or literals.
  */
-bool RobSubstitution::unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2)
+template<class T, class V>
+bool RobSubstitution<T,V>::unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2)
 {
   ASS_EQ(t1->functor(),t2->functor());
   return unify(TermSpec(TermList(t1), bank1), TermSpec(TermList(t2), bank2));
@@ -70,7 +70,8 @@ bool RobSubstitution::unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2
  *
  * @b t1 and @b t2 can be either terms or literals.
  */
-bool RobSubstitution::matchArgs(Term* base, VarBank baseBank, Term* instance, VarBank instanceBank)
+template<class T, class V>
+bool RobSubstitution<T,V>::matchArgs(Term* base, VarBank baseBank, Term* instance, VarBank instanceBank)
 {
   ASS_EQ(base->functor(),instance->functor());
 
@@ -564,11 +565,9 @@ size_t RobSubstitution::getApplicationResultWeight(Literal* lit, VarBank bank) c
  * For guides on use of the iterator, see the documentation of
  * RobSubstitution::AssocIterator.
  */
-SubstIterator RobSubstitution::matches(Literal* base, int baseIndex,
-	Literal* instance, int instanceIndex, bool complementary)
+SubstIterator RobSubstitution::matches(Literal* base, VarBank baseBank, Literal* instance, VarBank instanceBank, bool complementary)
 {
-  return getAssocIterator<MatchingFn>(this, base, baseIndex,
-	  instance, instanceIndex, complementary);
+  return getAssocIterator<MatchingFn>(this, base, baseBank, instance, instanceBank, complementary);
 }
 
 /**
@@ -577,16 +576,13 @@ SubstIterator RobSubstitution::matches(Literal* base, int baseIndex,
  * For guides on use of the iterator, see the documentation of
  * RobSubstitution::AssocIterator.
  */
-SubstIterator RobSubstitution::unifiers(Literal* l1, int l1Index,
-	Literal* l2, int l2Index, bool complementary)
+SubstIterator RobSubstitution::unifiers(Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank, bool complementary)
 {
-  return getAssocIterator<UnificationFn>(this, l1, l1Index,
-	  l2, l2Index, complementary);
+  return getAssocIterator<UnificationFn>(this, l1, l1Bank, l2, l2Bank, complementary);
 }
 
 template<class Fn>
-SubstIterator RobSubstitution::getAssocIterator(RobSubstitution* subst,
-	  Literal* l1, int l1Index, Literal* l2, int l2Index, bool complementary)
+SubstIterator RobSubstitution::getAssocIterator(RobSubstitution* subst, Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank, bool complementary)
 {
   if( !Literal::headersMatch(l1,l2,complementary) ) {
     return SubstIterator::getEmpty();
@@ -594,23 +590,27 @@ SubstIterator RobSubstitution::getAssocIterator(RobSubstitution* subst,
 
   if( !l1->commutative() ) {
     return pvi( getContextualIterator(getSingletonIterator(subst),
-	    AssocContext<Fn>(l1, l1Index, l2, l2Index)) );
+	    AssocContext<Fn>(l1, l1Bank, l2, l2Bank)) );
   } else {
     return vi(
-	    new AssocIterator<Fn>(subst, l1, l1Index, l2, l2Index));
+	    new AssocIterator<Fn>(subst, l1, l1Bank, l2, l2Bank));
   }
 }
 
 template<class Fn>
 struct RobSubstitution::AssocContext
 {
-  AssocContext(Literal* l1, int l1Index, Literal* l2, int l2Index)
-  : _l1(l1), _l1i(l1Index), _l2(l2), _l2i(l2Index) { ASS(!l1->isEquality()); ASS(!l2->isEquality()); } // only used for non-commutative, i.e. also non-equality, literals
+  AssocContext(Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank)
+  : _l1(l1), _l1Bank(l1Bank), _l2(l2), _l2Bank(l2Bank)
+  {
+    ASS(!l1->isEquality());
+    ASS(!l2->isEquality());
+  } // only used for non-commutative, i.e. also non-equality, literals
 
   bool enter(RobSubstitution* subst)
   {
     subst->bdRecord(_bdata);
-    bool res=Fn::associate(subst, _l1, _l1i, _l2, _l2i);
+    bool res=Fn::associate(subst, _l1, _l1Bank, _l2, _l2Bank);
     if(!res) {
       subst->bdDone();
       ASS(_bdata.isEmpty());
@@ -624,9 +624,9 @@ struct RobSubstitution::AssocContext
   }
 private:
   Literal* _l1;
-  int _l1i;
+  VarBank _l1Bank;
   Literal* _l2;
-  int _l2i;
+  VarBank _l2Bank;
   BacktrackData _bdata;
 };
 
@@ -665,15 +665,15 @@ private:
 template<class Fn>
 class RobSubstitution::AssocIterator: public IteratorCore<RobSubstitution*> {
 public:
-  AssocIterator(RobSubstitution* subst, Literal* l1, int l1Index, Literal* l2,
-      int l2Index) :
-      _subst(subst), _l1(l1), _l1i(l1Index), _l2(l2), _l2i(l2Index),
-      _state(FIRST), _used(true) {
+  AssocIterator(RobSubstitution *subst, Literal *l1, VarBank l1Bank, Literal *l2, VarBank l2Bank)
+      : _subst(subst), _l1(l1), _l1Bank(l1Bank), _l2(l2), _l2Bank(l2Bank), _state(FIRST), _used(true)
+  {
     ASS_EQ(_l1->functor(), _l2->functor());
     ASS(_l1->commutative());
     ASS_EQ(_l1->arity(), 2);
   }
-  ~AssocIterator() {
+
+  ~AssocIterator() override {
     if (_state != FINISHED && _state != FIRST) {
       backtrack(_bdataMain);
       backtrack(_bdataEqAssoc);
@@ -681,7 +681,7 @@ public:
     ASS(_bdataMain.isEmpty());
     ASS(_bdataEqAssoc.isEmpty());
   }
-  bool hasNext() {
+  bool hasNext() override {
     if (_state == FINISHED) {
       return false;
     }
@@ -694,7 +694,7 @@ public:
       backtrack(_bdataMain);
     } else {
       _subst->bdRecord(_bdataEqAssoc);
-      if (!Fn::associateEqualitySorts(_subst, _l1, _l1i, _l2, _l2i)) {
+      if (!Fn::associateEqualitySorts(_subst, _l1, _l1Bank, _l2, _l2Bank)) {
         backtrack(_bdataEqAssoc); // this might not be necessary
         _state = FINISHED;
         return false;
@@ -705,7 +705,7 @@ public:
 
     switch (_state) {
     case NEXT_STRAIGHT:
-      if (Fn::associate(_subst, _l1, _l1i, _l2, _l2i)) {
+      if (Fn::associate(_subst, _l1, _l1Bank, _l2, _l2Bank)) {
         _state = NEXT_REVERSED;
         break;
       }
@@ -715,8 +715,8 @@ public:
       TermList t12 = *_l1->nthArgument(1);
       TermList t21 = *_l2->nthArgument(0);
       TermList t22 = *_l2->nthArgument(1);
-      if (Fn::associate(_subst, t11, _l1i, t22, _l2i)) {
-        if (Fn::associate(_subst, t12, _l1i, t21, _l2i)) {
+      if (Fn::associate(_subst, t11, _l1Bank, t22, _l2Bank)) {
+        if (Fn::associate(_subst, t12, _l1Bank, t21, _l2Bank)) {
           _state = NEXT_CLEANUP;
           break;
         }
@@ -760,9 +760,9 @@ private:
 
   RobSubstitution* _subst;
   Literal* _l1;
-  int _l1i;
+  VarBank _l1Bank;
   Literal* _l2;
-  int _l2i;
+  VarBank _l2Bank;
   BacktrackData _bdataMain;
   BacktrackData _bdataEqAssoc;
 
@@ -798,24 +798,21 @@ struct RobSubstitution::MatchingFn {
 
 struct RobSubstitution::UnificationFn {
 
-  static bool associateEqualitySorts(RobSubstitution* subst, Literal* l1, int l1Index,
-      Literal* l2, int l2Index) {
+  static bool associateEqualitySorts(RobSubstitution* subst, Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank) {
     if(l1->isEquality()) {
       ASS(l2->isEquality());
       TermList s1 = SortHelper::getEqualityArgumentSort(l1);
       TermList s2 = SortHelper::getEqualityArgumentSort(l2);
-      return subst->unify(s1, l1Index, s2, l2Index);
+      return subst->unify(s1, l1Bank, s2, l2Bank);
     }
     return true;
   }
 
-  static bool associate(RobSubstitution* subst, Literal* l1, int l1Index,
-	  Literal* l2, int l2Index)
-  { return subst->unifyArgs(l1,l1Index,l2,l2Index); }
+  static bool associate(RobSubstitution* subst, Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank)
+  { return subst->unifyArgs(l1, l1Bank, l2, l2Bank); }
 
-  static bool associate(RobSubstitution* subst, TermList t1, int t1Index,
-	  TermList t2, int t2Index)
-  { return subst->unify(t1,t1Index,t2,t2Index); }
+  static bool associate(RobSubstitution* subst, TermList t1, VarBank t1Bank, TermList t2, VarBank t2Bank)
+  { return subst->unify(t1, t1Bank, t2, t2Bank); }
 };
 
 std::ostream& operator<<(std::ostream& out, AutoDerefTermSpec const& self)

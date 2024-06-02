@@ -41,6 +41,10 @@ const int SPECIAL_INDEX=-2;
 const int UNBOUND_INDEX=-1;
 namespace Kernel
 {
+
+template<class TermSpecOrList, class VarBankOrInt>
+class RobSubstitution;
+
 struct VarSpec
 {
   VarSpec() {}
@@ -132,8 +136,6 @@ struct TermSpec {
   TermList::Top top() const { return this->term.top(); }
   unsigned functor() const { return term.term()->functor(); }
 
-  TermList toTerm(Kernel::RobSubstitution& s) const;
-
   bool isSort() const
   { return this->term.term()->isSort(); }
 
@@ -192,6 +194,7 @@ struct TermSpec {
     return 0;
   }
 };
+static_assert(std::is_trivially_copyable_v<TermSpec>, "TermSpec is trivially copyable");
 
 /** A wrapper around TermSpec that automatically dereferences the TermSpec with respect to some RobSubstition when 
  * used with BottomUpEvaluation.  This means for example if we evaluate some TermSpec * `g(X, Y)` in a context 
@@ -245,11 +248,16 @@ public:
   void reset() { _memo.reset(); }
 };
 
+template<class T, class... Other>
+constexpr bool allow_types = (std::is_same_v<T, Other> || ...);
+
+template<class TermSpecOrList, class VarBankOrInt>
 class UnificationConstraint
 {
-  TermSpec _t1;
-  TermSpec _t2;
-  TermSpec _sort;
+  static_assert(allow_types<TermSpecOrList, TermSpec, TermList>, "Only allow TermSpec and TermList");
+
+  using RobSubst = RobSubstitution<TermSpecOrList,VarBankOrInt>;
+
 public:
   UnificationConstraint() {}
   USE_ALLOCATOR(UnificationConstraint)
@@ -257,30 +265,104 @@ public:
   IMPL_COMPARISONS_FROM_TUPLE(UnificationConstraint);
   IMPL_HASH_FROM_TUPLE(UnificationConstraint);
 
-  UnificationConstraint(TermSpec t1, TermSpec t2, TermSpec sort)
-  : _t1(std::move(t1)), _t2(std::move(t2)), _sort(std::move(sort))
+  UnificationConstraint(TermSpecOrList t1, TermSpecOrList t2, TermSpec sort)
+  : _t1(t1), _t2(t2), _sort(sort)
   {}
 
-  Option<Literal*> toLiteral(RobSubstitution& s);
+  Option<Literal*> toLiteral(RobSubst& s) {
+    auto t1 = s.apply(_t1);
+    auto t2 = s.apply(_t2);
+    auto sort = _sort.toTerm(s);
+    return t1 == t2
+        ? Option<Literal*>()
+        : Option<Literal*>(Literal::createEquality(false, t1, t2, sort));
+  }
 
-  TermSpec const& lhs() const { return _t1; }
-  TermSpec const& rhs() const { return _t2; }
+  TermSpecOrList const& lhs() const { return _t1; }
+  TermSpecOrList const& rhs() const { return _t2; }
 
-  friend std::ostream& operator<<(std::ostream& out, UnificationConstraint const& self)
+  friend std::ostream& operator<<(std::ostream& out, UnificationConstraint<TermSpecOrList, VarBankOrInt> const& self)
   { return out << self._t1 << " ?= " << self._t2; }
+
+private:
+  TermSpecOrList _t1;
+  TermSpecOrList _t2;
+  TermSpec _sort;
+};
+
+template<class TermSpecOrList, class VarBankOrInt>
+class UnificationConstraintStack
+{
+  using Constraint = UnificationConstraint<TermSpecOrList,VarBankOrInt>;
+  using RobSubst = RobSubstitution<TermSpecOrList,VarBankOrInt>;
+
+  Stack<Constraint> _cont;
+public:
+  USE_ALLOCATOR(UnificationConstraintStack)
+  UnificationConstraintStack() : _cont() {}
+  UnificationConstraintStack(UnificationConstraintStack&&) = default;
+  UnificationConstraintStack& operator=(UnificationConstraintStack&&) = default;
+
+  auto iter() const
+  { return iterTraits(_cont.iter()); }
+
+  Recycled<Stack<Literal*>> literals(RobSubst& s) {
+    Recycled<Stack<Literal*>> out;
+    out->reserve(_cont.size());
+    out->loadFromIterator(literalIter(s));
+    return out;
+  }
+
+  // returns the maximum number of constraints of this stack. this is not equal to the actual number of constraints it will hold, as constraints
+  // might become trivial (i.e. of the form t != t) after applying the substitution, so they will be filtered out when calling literals(RobSubstitution&)
+  unsigned maxNumberOfConstraints() { return _cont.size(); }
+
+  auto literalIter(RobSubst& s)
+  { return iterTraits(_cont.iter())
+        .filterMap([&](auto& c) { return c.toLiteral(s); }); }
+
+  friend std::ostream& operator<<(std::ostream& out, UnificationConstraintStack const& self)
+  { return out << self._cont; }
+
+  void reset() { _cont.reset(); }
+  bool keepRecycled() const { return _cont.keepRecycled() > 0; }
+
+  bool isEmpty() const
+  { return _cont.isEmpty(); }
+
+  void add(Constraint c, Option<BacktrackData&> bd) {
+    // DEBUG("introduced constraint: ", c)
+    _cont.push(c);
+    if (bd) {
+      bd->addClosure([this]() { _cont.pop(); });
+    }
+  }
+
+  Constraint pop(Option<BacktrackData&> bd) {
+    auto old = _cont.pop();
+    if (bd) {
+      bd->addClosure([this, old]() mutable { _cont.push(std::move(old)); });
+    }
+    return old;
+  }
 };
 
 using namespace Lib;
 
 class AbstractingUnifier;
-class UnificationConstraint;
+// class UnificationConstraint;
 
+template<class TermSpecOrList, class VarBankOrInt>
 class RobSubstitution
 :public Backtrackable
 {
   friend class AbstractingUnifier;
-  friend class UnificationConstraint;
- 
+  friend class UnificationConstraint<TermSpecOrList, VarBankOrInt>;
+
+  using Constraint = UnificationConstraint<TermSpecOrList,VarBankOrInt>;
+  using ConstraintStack = UnificationConstraintStack<TermSpecOrList,VarBankOrInt>;
+  using RobSubst = RobSubstitution<TermSpecOrList,VarBankOrInt>;
+
   DHMap<VarSpec, TermSpec> _bindings;
   mutable DHMap<VarSpec, unsigned> _outputVarBindings;
   mutable bool _startedBindingOutputVars;
@@ -298,12 +380,33 @@ public:
     , _nextGlueAvailable(0) 
     , _gluedTerms() 
   {}
+  virtual ~RobSubstitution() = default;
 
-  SubstIterator matches(Literal* base, int baseIndex,
-	  Literal* instance, int instanceIndex, bool complementary);
-  SubstIterator unifiers(Literal* l1, int l1Index, Literal* l2, int l2Index, bool complementary);
+  /* When a `RobSubstitution` is applied to a Term by default the variables in the resulting
+   * Term will be in a new variable index, that starts mapping the first occurring
+   * variable in the output to X0, the second one to X1, ....
+   * In some cases this behaviour should be changed. For example if we a variables sigma such that
+   * `(s)sigma = t` using `RobSubstitution::match` we want that the variables are not assigned to a new
+   * index but to the same one as `t`. Therefore this function lets you set the output index of the
+   * substitution.
+   *
+   * Be aware that this is not possible when:
+   * - applying the substitution to variables that are not in the output index, that were not bound in the
+   *   substitution (i.e. part of generalization operations, etc.)
+   * - computing unifications
+   */
+  void setOutputIndex(VarBankOrInt idx) { _outputIndex = idx; }
 
-  bool unify(TermList t1, VarBank bank1, TermList t2, VarBank bank2);
+  bool unify(TermSpecOrList t1, TermSpecOrList t2
+#if VHOL
+             , bool applicativeUnify = false
+#endif
+             );
+
+  SubstIterator matches(Literal* base, VarBank baseBank, Literal* instance, VarBank instanceBank, bool complementary);
+  SubstIterator unifiers(Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank, bool complementary);
+
+
   bool match(TermList base, VarBank baseBank, TermList instance, VarBank instanceBank);
 
   bool unifyArgs(Term* t1, VarBank bank1, Term* t2, VarBank bank2);
@@ -405,6 +508,8 @@ public:
   RobSubstitution& operator=(RobSubstitution&& obj) = default;
   TermSpec const& derefBound(TermSpec const& v) const;
   unsigned findOrIntroduceOutputVariable(VarSpec v) const;
+protected:
+  VarBankOrInt _outputIndex;
 private:
   TermList apply(TermSpec);
   RobSubstitution(const RobSubstitution& obj) = delete;
@@ -422,8 +527,7 @@ private:
   { return out << "(" << self._bindings << ", " << self._outputVarBindings << ")"; }
 
   template<class Fn>
-  SubstIterator getAssocIterator(RobSubstitution* subst,
-    Literal* l1, int l1Index, Literal* l2, int l2Index, bool complementary);
+  SubstIterator getAssocIterator(RobSubstitution* subst, Literal* l1, VarBank l1Bank, Literal* l2, VarBank l2Bank, bool complementary);
 
   template<class Fn>
   struct AssocContext;

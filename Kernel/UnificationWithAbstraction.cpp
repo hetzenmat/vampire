@@ -147,8 +147,8 @@ Option<AbstractionOracle::AbstractionResult> funcExt(
         auto& arg1 = au->subs().derefBound(t1.termArg(1));
         auto& arg2 = au->subs().derefBound(t2.termArg(1));
         auto out = AbstractionOracle::EqualIf()
-              .unify (UnificationConstraint(t1.typeArg(0), t2.typeArg(0), TermSpec(AtomicSort::superSort(), 0)),
-                      UnificationConstraint(t1.typeArg(1), t2.typeArg(1), TermSpec(AtomicSort::superSort(), 0)),
+              .unify (UnificationConstraint(t1.typeArg(0), t2.typeArg(0), TermSpec(AtomicSort::superSort(), VarBank::DEFAULT_BANK)),
+                      UnificationConstraint(t1.typeArg(1), t2.typeArg(1), TermSpec(AtomicSort::superSort(), VarBank::DEFAULT_BANK)),
                       UnificationConstraint(t1.termArg(0), t2.termArg(0), t1.termArgSort(0)));
 
         auto argsEq = UnificationConstraint(arg1, arg2, t1.termArgSort(1));
@@ -170,7 +170,7 @@ Option<AbstractionOracle::AbstractionResult> AbstractionOracle::tryAbstract(Abst
   using Uwa = Shell::Options::UnificationWithAbstraction;
   ASS(_mode != Uwa::OFF);
 
-  auto intSort = []() { return TermSpec(IntTraits::sort(), 0); };
+  auto intSort = []() { return TermSpec(IntTraits::sort(), VarBank::DEFAULT_BANK); };
 
   if (_mode == Uwa::AC1 || _mode == Uwa::AC2) {
       if ( (t1.isTerm() && t1.isSort())
@@ -243,45 +243,6 @@ Option<AbstractionOracle::AbstractionResult> AbstractionOracle::tryAbstract(Abst
     });
   }
 }
-
-void UnificationConstraintStack::add(UnificationConstraint c, Option<BacktrackData&> bd)
-{ 
-  DEBUG("introduced constraint: ", c)
-  _cont.push(c);
-  if (bd) {
-    bd->addClosure([this]() { _cont.pop(); });
-  }
-}
-
-
-UnificationConstraint UnificationConstraintStack::pop(Option<BacktrackData&> bd)
-{ 
-  auto old = _cont.pop();
-  if (bd) {
-    bd->addClosure([this, old]() mutable { _cont.push(std::move(old)); });
-  }
-  return old;
-}
-
-Recycled<Stack<Literal*>> UnificationConstraintStack::literals(RobSubstitution& s)
-{ 
-  Recycled<Stack<Literal*>> out;
-  out->reserve(_cont.size());
-  out->loadFromIterator(literalIter(s));
-  return out;
-}
-
-
-Option<Literal*> UnificationConstraint::toLiteral(RobSubstitution& s)
-{ 
-  auto t1 = _t1.toTerm(s);
-  auto t2 = _t2.toTerm(s);
-  auto sort = _sort.toTerm(s);
-  return t1 == t2 
-    ? Option<Literal*>()
-    : Option<Literal*>(Literal::createEquality(false, t1, t2, sort));
-}
-
 
 }
 
