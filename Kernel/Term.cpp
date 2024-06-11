@@ -269,6 +269,172 @@ bool Term::isApplication() const {
   return !isSort() && !isLiteral() && env.signature->isAppFun(_functor);    
 }
 
+TermList TermList::lhs() const {
+  ASS(isApplication());
+  return *term()->nthArgument(2);
+}
+
+TermList TermList::rhs() const {
+  ASS(isApplication());
+  return *term()->nthArgument(3);
+}
+
+TermList TermList::lambdaBody() const {
+  ASS(isLambdaTerm());
+  return *term()->nthArgument(2);
+}
+
+TermList TermList::head() {
+  if(!isApplication() && !isLambdaTerm()){
+    return *this;
+  }
+  return term()->head();
+}
+
+TermList Term::head() {
+  TermList trm = TermList(this);
+  while(trm.isLambdaTerm()){
+    trm = trm.lambdaBody();
+  }
+  while(trm.isApplication()){
+    trm = trm.lhs();
+  }
+  return trm;
+}
+
+bool TermList::isLambdaTerm() const { return !isVar() && term()->isLambdaTerm(); }
+
+bool Term::isLambdaTerm() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->isLamFun(_functor); }
+
+bool TermList::isEtaExpandedVar(TermList& var) const { return ApplicativeHelper::isEtaExpandedVar(*this, var); }
+
+bool TermList::isRedex() { return isApplication() && lhs().isLambdaTerm(); }
+
+bool Term::isRedex() { return TermList(this).isRedex(); }
+
+bool TermList::isNot() const { return !isVar() && term()->isNot(); }
+
+bool Term::isNot() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::NOT; }
+
+bool TermList::isSigma() const { return !isVar() && term()->isSigma(); }
+
+bool Term::isSigma() const { return !isSort() && !isLiteral() && !isSpecial()  && env.signature->getFunction(_functor)->proxy() == Signature::SIGMA; }
+
+bool TermList::isPi() const { return !isVar() && term()->isPi(); }
+
+bool Term::isPi() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::PI; }
+
+bool TermList::isIff() const { return !isVar() && term()->isIff(); }
+
+bool Term::isIff() const { return !isSort() && !isLiteral() && !isSpecial()  && env.signature->getFunction(_functor)->proxy() == Signature::IFF; }
+
+bool TermList::isAnd() const { return !isVar() && term()->isAnd(); }
+
+bool Term::isAnd() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::AND; }
+
+bool TermList::isOr() const { return !isVar() && term()->isOr(); }
+
+bool Term::isOr() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::OR; }
+
+bool TermList::isXOr() const { return !isVar() && term()->isXOr(); }
+
+bool Term::isXOr() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::XOR; }
+
+bool TermList::isImp() const { return !isVar() && term()->isImp(); }
+
+bool Term::isImp() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::IMP; }
+
+bool TermList::isEquals() const { return !isVar() && term()->isEquals(); }
+
+bool Term::isEquals() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->getFunction(_functor)->proxy() == Signature::EQUALS; }
+
+bool TermList::isPlaceholder() const { return !isVar() && term()->isPlaceholder(); }
+
+bool Term::isPlaceholder() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->isPlaceholder(_functor); }
+
+bool TermList::isChoice() const { return !isVar() && term()->isChoice(); }
+
+bool Term::isChoice() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->isChoiceFun(_functor); }
+
+bool TermList::containsLooseIndex() const {
+  struct TermListWD {
+    TermList t;
+    unsigned depth;
+  };
+
+  Stack<TermListWD> toDo;
+  toDo.push( TermListWD { .t = *this, .depth = 0,  });
+
+  while(!toDo.isEmpty()){
+    auto item = toDo.pop();
+
+    if(item.t.isVar() || (item.t.term()->shared() && !item.t.term()->hasDBIndex())) {
+      continue;
+    }
+
+    unsigned dep = item.depth;
+    if(item.t.deBruijnIndex().isSome()){
+      unsigned idx = item.t.deBruijnIndex().unwrap();
+      if(idx >= dep)
+      { return true; }
+    }
+    if(item.t.isLambdaTerm()){
+      toDo.push(TermListWD { .t = item.t.lambdaBody(), .depth = dep + 1, } );
+    }
+    if(item.t.isApplication()){
+      toDo.push(TermListWD { .t = item.t.lhs(), .depth = dep, } );
+      toDo.push(TermListWD { .t = item.t.rhs(), .depth = dep, } );
+    }
+  }
+  return false;
+}
+
+unsigned TermList::numOfAppVarsAndLambdas() const {
+  if (isVar()) {
+    return 0;
+  }
+  const Term* t = term();
+
+  static DHMap<const Term*,unsigned> cache;
+
+  unsigned* cached;
+  if (!cache.getValuePtr(t,cached)) {
+    return *cached;
+  }
+
+  // it's OK that the entry in cache has already been created, will only possibly ask for proper subterms
+
+  unsigned res = 0;
+
+  if (isLambdaTerm()) {
+    res = env.options->hoFeaturesLambdaWeight() + lambdaBody().numOfAppVarsAndLambdas();
+  } else if (isApplication()) {
+    TermList head;
+    TermStack args;
+    ApplicativeHelper::getHeadAndArgs(t, head, args);
+    ASS(!head.isLambdaTerm()); // should be beta-reduced
+    if(head.isVar()) {
+      res += env.options->hoFeaturesAppVarWeight();
+    }
+    while(!args.isEmpty()){
+      res += args.pop().numOfAppVarsAndLambdas();
+    }
+  }
+
+  *cached = res;
+  return res;
+}
+
+Option<unsigned> TermList::deBruijnIndex() const {
+  if (isVar()) return {};
+  return term()->deBruijnIndex();
+}
+
+Option<unsigned> Term::deBruijnIndex() const {
+  if (isSort() || isLiteral() || isSpecial()) return {};
+  return env.signature->getFunction(_functor)->dbIndex();
+}
+
 unsigned Term::numTypeArguments() const {
   ASS(!isSort());
 
@@ -277,13 +443,6 @@ unsigned Term::numTypeArguments() const {
     : isLiteral()
       ? env.signature->getPredicate(_functor)->numTypeArguments()
       : env.signature->getFunction(_functor)->numTypeArguments();
-}
-
-TermList* Term::termArgs()
-{
-  ASS(!isSort());
-
-  return _args + (_arity - numTypeArguments());
 }
 
 const TermList* Term::typeArgs() const
@@ -296,6 +455,28 @@ unsigned Term::numTermArguments() const
   
   ASS(_arity >= numTypeArguments())                  
   return _arity - numTypeArguments(); 
+}
+
+TermList TermList::toBank(VarBank b)
+{
+  if(isVar())
+    return TermList(_var(), b);
+
+  return TermList(term()->toBank(b));
+}
+
+TermList TermList::nthArg(unsigned i) const {
+  return *term()->nthArgument(i);
+}
+
+Term* Term::toBank(VarBank b)
+{
+  return ToBank(b).toBank(this);
+}
+
+Literal* Literal::toBank(VarBank b)
+{
+  return ToBank(b).toBank(this);
 }
 
 bool TermList::containsSubterm(TermList trm) const
@@ -644,6 +825,18 @@ vstring TermList::toString(bool topLevel) const
   if (isVar()) {
     return Term::variableToString(*this);
   }
+
+#if VHOL
+  if(env.getMainProblem()->isHigherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
+    if(ApplicativeHelper::isTrue(*this)){
+      return "⊤";
+    }
+    if(ApplicativeHelper::isFalse(*this)){
+      return "⊥";
+    }
+  }
+#endif
+
   return term()->toString(topLevel);
 } // TermList::toString
 
@@ -659,6 +852,13 @@ vstring Term::toString(bool topLevel) const
   if(isSuper()){
     return "$tType";
   }
+
+#if VHOL
+  if(env.getMainProblem()->isHigherOrder() && env.options->holPrinting() != Options::HPrinting::RAW) {
+    IndexVarStack st;
+    return toString(true, st);
+  }
+#endif
 
   if(!isSpecial() && !isLiteral()){
     if(isSort() && static_cast<AtomicSort*>(const_cast<Term*>(this))->isArrowSort()){
@@ -682,6 +882,188 @@ vstring Term::toString(bool topLevel) const
   }
   return s;
 } // Term::toString
+
+#if VHOL
+
+vstring Term::lambdaToString(const SpecialTermData* sd, bool pretty) const
+{
+  CALL("Term::lambdaToString");
+
+  VList* vars = sd->getLambdaVars();
+  SList* sorts = sd->getLambdaVarSorts();
+  TermList lambdaExp = sd->getLambdaExp();
+
+  vstring varList = pretty ? "" : "[";
+
+  VList::Iterator vs(vars);
+  SList::Iterator ss(sorts);
+  TermList sort;
+  bool first = true;
+  while(vs.hasNext()) {
+    varList += first ? "" : ", ";
+    first = false;
+    varList += Term::variableToString(vs.next()) + " : ";
+    varList += ss.next().toString();
+  }
+  varList += pretty ? "" : "]";
+  vstring lambda = pretty ? "λ" : "^";
+  return "(" + lambda + varList + " : (" + lambdaExp.toString() + "))";
+}
+
+vstring Term::toString(bool topLevel, IndexVarStack& st) const
+{
+  CALL("Term::toString(bool, ...)");
+
+  auto termToStr = [](TermList t, bool top, IndexVarStack& st){
+    if (t.isVar()) {
+      return Term::variableToString(t);
+    }
+    return t.term()->toString(top, st);
+  };
+
+  auto incrementAll = [](IndexVarStack& st){
+    for(unsigned i=0; i < st.size(); i++){
+      st[i] = make_pair(++st[i].first, st[i].second);
+    }
+  };
+
+  auto findVar = [](int index, IndexVarStack& st, unsigned& var){
+    for(unsigned i=0; i < st.size(); i++){
+      if(st[i].first == index){
+        var = st[i].second;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  ASS(!isLiteral());
+
+  auto printSetting = env.options->holPrinting();
+  bool pretty = printSetting == Options::HPrinting::PRETTY;
+  bool db     = printSetting == Options::HPrinting::DB_INDICES;
+
+  vstring res;
+  if (isSpecial()){
+    const Term::SpecialTermData* sd = getSpecialData();
+    if (isFormula()) return sd->getFormula()->toString();
+    if (isLambda()) return lambdaToString(sd, pretty);
+
+    // currently HOL doesn't support any other specials
+    ASSERTION_VIOLATION;
+  }
+
+  if (isArrowSort()) {
+    ASS(arity() == 2);
+    TermList arg1 = *(nthArgument(0));
+    TermList arg2 = *(nthArgument(1));
+    vstring arrow = pretty ? " → " : " > ";
+    res += topLevel ? "" : "(";
+    res += termToStr(arg1,false,st) + arrow + termToStr(arg2,true,st);
+    res += topLevel ? "" : ")";
+    return res;
+  }
+  if (isSort()) {
+    auto sort = static_cast<const AtomicSort*>(this);
+    if(sort->isBoolSort() && pretty) return "ο";
+    if(sort->functor() == Signature::DEFAULT_SORT_CON && pretty) return "ι";
+    // any non-arrow sort
+    res = sort->typeConName();
+    if(pretty && arity()) res += "⟨";
+    for(unsigned i = 0; i < arity(); i++){
+      res += pretty && i != 0 ? ", " : "";
+      res += !pretty ? " @ " : "";
+      res += termToStr(*nthArgument(i),pretty,st);
+    }
+    if(pretty && arity()) res += "⟩";
+    return res;
+  }
+  if(isLambdaTerm()){
+    unsigned v = st.size() ? st.top().second + 1 : 0;
+    vstring bvar = (pretty ? "y" : "Y") + Int::toString(v);
+    bvar = pretty ?
+                  bvar + " : " + termToStr(*nthArgument(0),true,st) :
+                  "[" + bvar + " : " + termToStr(*nthArgument(0),true,st) + "]";
+    bvar = db ? "" : bvar;
+
+    IndexVarStack newSt(st);
+    incrementAll(newSt);
+    newSt.push(make_pair(0, v));
+
+    vstring sep = pretty || db ? ". " : ": ";
+    vstring lambda = pretty ? "λ" : "^";
+    vstring lbrac = pretty ? "" : "(";
+    vstring rbrac = pretty ? "" : ")";
+
+    res = "(" + lambda + bvar + sep +  lbrac + termToStr(*nthArgument(2),!pretty,newSt) + rbrac + ")";
+    return res;
+  }
+  if(deBruijnIndex().isSome() && !db){
+    unsigned var;
+    if(findVar(deBruijnIndex().unwrap(), st, var)){
+      return (pretty ? "y" : "Y") + Int::toString(var);
+    } else {
+      // loose bound index
+      return "db" + Int::toString(deBruijnIndex().unwrap());
+    }
+  }
+
+  TermList head;
+  TermStack args;
+  ApplicativeHelper::getHeadAndArgs(this, head, args);
+  bool hasArgs = args.size();
+
+  vstring headStr;
+  if(head.isVar() || (head.deBruijnIndex().isSome() && !db) || head.isLambdaTerm() || head.term()->isSpecial()){
+    headStr = termToStr(head,false,st);
+  }
+  else if(head.isNot()){ headStr = pretty ? "¬" : "~"; }
+  else if(head.isSigma()){ headStr = pretty ? "Σ" : "??"; }
+  else if(head.isPi()){ headStr = pretty ? "Π" : "!!"; }
+  else if(head.isAnd()){ headStr = pretty ? "∧" : "&"; }
+  else if(head.isOr()){ headStr = pretty ? "∨" : "|"; }
+  else if(head.isXOr()){ headStr = pretty ? "⊕" : "<~>"; }
+  else if(head.isImp()){ headStr = pretty ? "⇒" : "=>"; }
+  else if(head.isChoice()){ headStr = pretty ? "ε" : "@@+"; }
+  else if(head.isIff() || head.isEquals()){ headStr = pretty ? "≈" : "="; } // @=???
+  else if(ApplicativeHelper::isTrue(head)){ headStr = pretty ? "⊤" : "$true"; }
+  else if(ApplicativeHelper::isFalse(head)){ headStr = pretty ? "⊥" : "$false"; }
+  else {
+    headStr = head.term()->functionName();
+    if(head.deBruijnIndex().isSome()){
+      headStr = headStr + "_" + Int::toString(head.deBruijnIndex().unwrap());
+    }
+  }
+
+  if(head.isTerm() && !head.isEquals() && head.deBruijnIndex().isNone() &&
+      !head.isLambdaTerm() && head.term()->arity()){
+    Term* t = head.term();
+    if(pretty) headStr += "⟨";
+    for(unsigned i = 0; i < t->arity(); i++){
+      headStr += pretty && i != 0 ? ", " : "";
+      headStr += !pretty ? " @ " : "";
+      headStr += termToStr(*t->nthArgument(i),pretty,st);
+    }
+    if(pretty) headStr += "⟩";
+  }
+
+  res += (!topLevel && hasArgs) ? "(" : "";
+
+  if((head.isAnd() || head.isOr() || head.isIff() || head.isEquals() || head.isImp() || head.isXOr()) &&
+      args.size() == 2){
+    res += termToStr(args[1],false,st) + " " + headStr + " " + termToStr(args[0],false,st);
+  } else {
+    vstring app = pretty || head.isNot() ? " " : " @ ";
+    res += headStr;
+    while(!args.isEmpty()){
+      res += app + termToStr(args.pop(),false,st);
+    }
+  }
+  res += (!topLevel && hasArgs) ? ")" : "";
+  return res;
+}
+
+#endif
 
 /**
  * Return the result of conversion of a literal into a vstring.
@@ -1486,6 +1868,50 @@ Literal* Literal::create1(unsigned predicate, bool polarity, TermList arg)
 
 Literal* Literal::create2(unsigned predicate, bool polarity, TermList arg1, TermList arg2)
 { return Literal::create(predicate, polarity, { arg1, arg2 }); }
+
+#if VHOL
+
+bool Literal::isFlexFlex() const
+{
+  ASS(isEquality());
+
+  TermList lhs = *nthArgument(0);
+  TermList rhs = *nthArgument(1);
+  return !polarity() && lhs.head().isVar() && rhs.head().isVar();
+}
+
+bool Literal::isFlexRigid() const
+{
+  ASS(isEquality());
+
+  TermList lhs = *nthArgument(0);
+  TermList rhs = *nthArgument(1);
+  TermList lhsHead = lhs.head();
+  TermList rhsHead = rhs.head();
+
+  return (lhsHead.isVar() && !rhsHead.isVar()) ||
+      (rhsHead.isVar() && !lhsHead.isVar());
+}
+
+bool Literal::isRigidRigid() const
+{
+  ASS(isEquality());
+
+  TermList lhs = *nthArgument(0);
+  TermList rhs = *nthArgument(1);
+  return lhs.head().isTerm() && rhs.head().isTerm();
+}
+
+unsigned Literal::numOfAppVarsAndLambdas() const
+{
+  ASS(isEquality());
+
+  TermList lhs = *nthArgument(0);
+  TermList rhs = *nthArgument(1);
+  return lhs.numOfAppVarsAndLambdas() + rhs.numOfAppVarsAndLambdas();
+}
+
+#endif
 
 /** create a new term and copy from t the relevant part of t's content */
 Term::Term(const Term& t) throw()

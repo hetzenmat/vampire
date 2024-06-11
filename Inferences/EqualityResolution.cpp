@@ -32,6 +32,7 @@
 #include "Kernel/LiteralSelector.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOLUnification.hpp"
 
 #include "Saturation/SaturationAlgorithm.hpp"
 

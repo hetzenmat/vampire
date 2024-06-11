@@ -46,7 +46,7 @@
 #include "Lib/Recycled.hpp"
 
 // the number of bits used for "TermList::_info::distinctVars"
-#define TERM_DIST_VAR_BITS 21
+#define TERM_DIST_VAR_BITS 18
 // maximum number that fits in a TERM_DIST_VAR_BITS-bit unsigned integer
 #define TERM_DIST_VAR_UNKNOWN ((1 << TERM_DIST_VAR_BITS)-1)
 
@@ -93,6 +93,23 @@ enum ArgumentOrderVals {
   AO_EQUAL=5,
   AO_INCOMPARABLE=6,
 };
+
+/*
+// TODO change to enum class
+enum VarBank : unsigned long {
+  DEFAULT_BANK=0,
+  QUERY_BANK=1,
+  NORM_RESULT_BANK=2,
+  RESULT_BANK=3,
+  FRESH_BANK=4,
+  OUTPUT_BANK=5,
+  GLUE_BANK=6,
+  SPECIAL_BANK=7,
+  UNBOUND_BANK=8
+};
+*/
+
+class RobSubstitutionTL; // forward declaration
 
 /**
  * Class containing either a pointer to a compound term or
@@ -235,6 +252,44 @@ public:
   bool ground() const;
   bool isSafe() const;
 
+  bool isLambdaTerm() const;
+  bool isEtaExpandedVar(TermList& var) const;
+  bool isRedex();
+  bool isNot() const;
+  bool isSigma() const;
+  bool isPi() const;
+  bool isIff() const;
+  bool isAnd() const;
+  bool isOr() const;
+  bool isXOr() const;
+  bool isImp() const;
+  bool isEquals() const;
+  bool isPlaceholder() const;
+  bool isChoice() const;
+  bool containsLooseIndex() const;
+  // used in clause selection
+  // nuber of applied variables and lambdas in the term
+  unsigned numOfAppVarsAndLambdas() const;
+  Option<unsigned> deBruijnIndex() const;
+  TermList lhs() const;
+  TermList rhs() const;
+  TermList lambdaBody() const;
+  TermList head();
+  TermList domain();
+  TermList result();
+  TermList finalResult();
+  // return the weak head normal form of the term
+  TermList whnfDeref(RobSubstitutionTL* sub);
+  TermList betaNF();
+  TermList etaNF();
+  TermList betaEtaNF();
+
+  TermList toBank(VarBank bank);
+  // Use with care! Make sure that it is a term before calling
+  // mainly here for compatibility with TermSpec in RobSubstitution
+  TermList nthArg(unsigned i) const;
+
+
 #if VDEBUG
   void assertValid() const;
 #endif
@@ -306,7 +361,13 @@ private:
     SORT_BITS_END = SORT_BITS_START + 1,
     HAS_TERM_VAR_BITS_START = SORT_BITS_END,
     HAS_TERM_VAR_BITS_END = HAS_TERM_VAR_BITS_START + 1,
-    ORDER_BITS_START = HAS_TERM_VAR_BITS_END,
+    HAS_DB_INDEX_BITS_START = HAS_TERM_VAR_BITS_END,
+    HAS_DB_INDEX_BITS_END = HAS_DB_INDEX_BITS_START + 1,
+    HAS_REDEX_BITS_START = HAS_DB_INDEX_BITS_END,
+    HAS_REDEX_BITS_END = HAS_REDEX_BITS_START + 1,
+    HAS_LAMBDA_BITS_START = HAS_REDEX_BITS_END,
+    HAS_LAMBDA_BITS_END = HAS_LAMBDA_BITS_START + 1,
+    ORDER_BITS_START = HAS_LAMBDA_BITS_END,
     ORDER_BITS_END = ORDER_BITS_START + 3,
     DISTINCT_VAR_BITS_START = ORDER_BITS_END,
     DISTINCT_VAR_BITS_END = DISTINCT_VAR_BITS_START + TERM_DIST_VAR_BITS,
@@ -314,6 +375,8 @@ private:
     ID_BITS_END = ID_BITS_START + 32,
     TERM_BITS_START = 0,
     TERM_BITS_END = CHAR_BIT * sizeof(Term *);
+
+
 
   // various properties we want to check
   static_assert(TAG_BITS_START == 0, "tag must be the least significant bits");
@@ -330,6 +393,9 @@ private:
   BITFIELD64_GET_AND_SET(bool, literal, Literal, LITERAL)
   BITFIELD64_GET_AND_SET(bool, sort, Sort, SORT)
   BITFIELD64_GET_AND_SET(bool, hasTermVar, HasTermVar, HAS_TERM_VAR)
+  BITFIELD64_GET_AND_SET(bool, hasDBIndex, HasDBIndex, HAS_DB_INDEX)
+  BITFIELD64_GET_AND_SET(bool, hasRedex, HasRedex, HAS_REDEX)
+  BITFIELD64_GET_AND_SET(bool, hasLambda, HasLambda, HAS_LAMBDA)
   BITFIELD64_GET_AND_SET(unsigned, order, Order, ORDER)
   BITFIELD64_GET_AND_SET(uint32_t, distinctVars, DistinctVars, DISTINCT_VAR)
   BITFIELD64_GET_AND_SET(uint32_t, id, Id, ID)
@@ -505,6 +571,8 @@ public:
   { return toSpecialFunctor(functor()); }
   vstring toString(bool topLevel = true) const;
   friend std::ostream& operator<<(std::ostream& out, Kernel::Term const& tl);
+  // auxiliary function to print lambda specials
+  vstring lambdaToString(const SpecialTermData* sd, bool pretty = false) const;
   static vstring variableToString(unsigned var);
   static vstring variableToString(TermList var);
 
@@ -564,7 +632,14 @@ public:
     * non-emptiness
     * In the monomorphic case, the same as args()
     */
-  TermList* termArgs();
+  const TermList* termArgs() const
+  {
+    ASS(!isSort());
+
+    return _args + (_arity - numTypeArguments());
+  }
+
+  TermList* termArgs(){ return _args + (_arity - numTypeArguments()); }
 
   /** Return the 1st type argument for a polymorphic term.
     * returns a nullpointer if the term not polymorphic
@@ -779,8 +854,71 @@ public:
   bool isLiteral() const { return _args[0]._literal(); }
   /** True if the term is, in fact, a sort */
   bool isSort() const { return _args[0]._sort(); }
+
+  typedef Stack<std::pair<int, unsigned>> IndexVarStack;
+
+  vstring toString(bool topLevel, IndexVarStack& map) const;
   /** true if the term is an application */
   bool isApplication() const;
+  /** true if the term is a lambda term */
+  bool isLambdaTerm() const;
+  /** true if the term is a redex */
+  bool isRedex();
+  /** true if the term is a negation of a Boolean term*/
+  bool isNot() const;
+
+  bool isSigma() const;
+  bool isPi() const;
+  bool isIff() const;
+  bool isAnd() const;
+  bool isOr() const;
+  bool isXOr() const;
+  bool isImp() const;
+  bool isEquals() const;
+  bool isPlaceholder() const;
+  bool isChoice() const;
+  /** true if term is a sort which is a arrow sort */
+  bool isArrowSort() const;
+
+  void setHasRedex(bool b)
+  {
+    ASS(shared() && !isSort());
+    _args[0]._setHasRedex(b);
+  }
+  /** true if term contains redex */
+  bool hasRedex() const
+  {
+    ASS(shared());
+    return _args[0]._hasRedex();
+  }
+  /** returns the head of an applicative term */
+  TermList head();
+  /** returns empty option if not a De Bruijn index and index otherwise */
+  Option<unsigned> deBruijnIndex() const;
+
+  void setHasDBIndex(bool b)
+  {
+    ASS(shared() && !isSort());
+    _args[0]._setHasDBIndex(b);
+  }
+  /** returns true if term contains De Bruijn index */
+  bool hasDBIndex() const
+  {
+    ASS(shared());
+    return _args[0]._hasDBIndex();
+  }
+
+  void setHasLambda(bool b)
+  {
+    ASS(shared() && !isSort());
+    _args[0]._setHasLambda(b);
+  }
+  /** true if term contains redex */
+  bool hasLambda() const
+  {
+    ASS(shared());
+    return _args[0]._hasLambda();
+  }
 
   /** Return an index of the argument to which @b arg points */
   unsigned getArgumentIndex(TermList* arg)
@@ -1136,6 +1274,13 @@ public:
   static Literal* positiveLiteral(Literal* l) {
     return l->isPositive() ? l : complementaryLiteral(l);
   }
+
+#if VHOL
+  bool isFlexFlex() const;
+  bool isFlexRigid() const;
+  bool isRigidRigid() const;
+  unsigned numOfAppVarsAndLambdas() const;
+#endif
 
   /** true if positive */
   bool isPositive() const
