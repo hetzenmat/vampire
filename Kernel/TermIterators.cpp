@@ -149,6 +149,7 @@ void SubtermIterator::right()
 ///                                                                    ///
 //////////////////////////////////////////////////////////////////////////
 
+/*
 bool TopLevelVarLikeTermIterator::hasNext()
 {
   static TermStack args;
@@ -232,6 +233,7 @@ bool TopLevelVarIterator::hasNext()
   return false;  
 
 }
+*/
 
 Term* FirstOrderSubtermIt::next()
 {
@@ -240,12 +242,23 @@ Term* FirstOrderSubtermIt::next()
   TermList head;
   args.reset();
   Term* t = _stack.pop();
-  AH::getHeadAndArgs(t, head, args);
-  if(!AH::isComb(head) || AH::isUnderApplied(head, args.size())){
-    for(unsigned i = 0; i < args.size(); i++){
-      if(!args[i].isVar()){
-        _added++;
-        _stack.push(args[i].term());
+
+  if(!t->isLambdaTerm() || _goInsideLambdas) {
+    AH::getHeadAndArgs(t, head, args);
+    if (!head.isLambdaTerm()) {
+      for (unsigned i = 0; i < args.size(); i++) {
+        // TODO logic below is wrong
+        // (not as complete as possible, but not unsound)
+        // A term that contains loose indices may still
+        // have subterms that don't have loose indices
+        // Moreover, we do not explore the body of a lambda currently
+        if (!args[i].isVar() && !args[i].containsLooseIndex()) {
+          // demodulating a term that contains a loose index
+          // is sound, but it may not maintain completeness
+          // depending on the ordering
+          _added++;
+          _stack.push(args[i].term());
+        }
       }
     }
   }
@@ -261,36 +274,7 @@ void FirstOrderSubtermIt::right()
 } // FirstOrderSubtermIt::right
 
 
-bool NarrowableSubtermIt::hasNext()
-{
-  if(!_used){ return true; }
 
-  static TermStack args;
-  TermList head;
-  while(!_stack.isEmpty()){
-    Term* t = _stack.pop();
-    AH::getHeadAndArgs(t, head, args);
-    if((AH::isComb(head) && AH::isExactApplied(head, args.size())) ||
-       (head.isVar() && args.size() <= 3)){
-      _next = TermList(t);
-      _used = false;
-    }
-    if(t->isApplication() && (!AH::isComb(head) || _used)){
-      TermList* trm = t->nthArgument(2);
-      if(trm->isApplication()){
-        _stack.push(trm->term());
-      }
-      if(!AH::isComb(head) || AH::isUnderApplied(head, args.size())){
-        trm = t->nthArgument(3);
-        if(trm->isApplication()){
-          _stack.push(trm->term());
-        } 
-      }
-    }
-    if(!_used){ return true; }
-  }
-  return false;
-}
 
 bool BooleanSubtermIt::hasNext()
 {
@@ -316,61 +300,9 @@ bool BooleanSubtermIt::hasNext()
   return false;
 }
 
-bool RewritableVarsIt::hasNext()
-{
-  if(_next.isSome()){ return true; }
 
-  static TermStack args;
-  TermList head;
-  TermList headSort;
-  while(!_stack.isEmpty()){
-    TermList t = _stack.pop();
-    TermList s = _sorts.pop();
-    AH::getHeadSortAndArgs(t, head, headSort, args);
-    if(head.isVar() && args.size() <= 1 && _unstableVars->find(head.var()) 
-       && (s.isVar() || s.isArrowSort())){
-      _next = some(TypedTermList(head, headSort));
-    }
-    if(!AH::isComb(head) || AH::isUnderApplied(head, args.size())){
-      unsigned count = 1;
-      while(!args.isEmpty()){
-        _sorts.push(AH::getNthArg(headSort, count++));
-        _stack.push(args.pop());
-      }
-    }
-    if(_next.isSome()){ return true; }
-  }
-  return false;
-}
 
-//TODO relook at stability and instability
-bool UnstableVarIt::hasNext()
-{
-  if(!_next.isEmpty()){ return true; }
 
-  static TermStack args;
-  TermList head;
-  while(!_stack.isEmpty()){
-    ASS(_stack.size() == _stable.size());
-    TermList t = _stack.pop();
-    bool stable = _stable.pop();
-    AH::getHeadAndArgs(t, head, args);
-    if(head.isVar()){
-      if(!stable || args.size()){
-        _next = head;
-      }
-    } 
-    bool argsStable = !head.isVar() && (!AH::isComb(head) || 
-         (AH::isUnderApplied(head, args.size()) && stable));
-    for(unsigned i = 0; i < args.size(); i++){
-      _stack.push(args[i]);
-      _stable.push(argsStable);
-    }
-    if(!_next.isEmpty()){ return true; }
-  }
-  return false;
-
-}
 
 //////////////////////////////////////////////////////////////////////////
 ///                                                                    ///

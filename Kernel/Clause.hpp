@@ -334,7 +334,6 @@ public:
   unsigned getNumeralWeight() const;
 
   void collectVars(DHSet<unsigned>& acc);
-  void collectUnstableVars(DHSet<unsigned>& acc);
 
   
   unsigned varCnt();

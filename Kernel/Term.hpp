@@ -94,9 +94,9 @@ enum ArgumentOrderVals {
   AO_INCOMPARABLE=6,
 };
 
-/*
+
 // TODO change to enum class
-enum VarBank : unsigned long {
+enum class VarBank : unsigned long {
   DEFAULT_BANK=0,
   QUERY_BANK=1,
   NORM_RESULT_BANK=2,
@@ -107,7 +107,8 @@ enum VarBank : unsigned long {
   SPECIAL_BANK=7,
   UNBOUND_BANK=8
 };
-*/
+
+class TermList;
 
 class RobSubstitutionTL; // forward declaration
 
@@ -126,6 +127,16 @@ public:
     _setTerm(t);
     ASS_EQ(tag(), REF);
   }
+
+  TermList(unsigned var, VarBank bank)
+  {
+    throw "TODO MH";
+  }
+
+  VarBank bank() const {
+    throw "TODO MH";
+  }
+
   /** creates a term list containing a variable. If @b special is true, then the variable
    * will be "special". Special variables are also variables, with a difference that a
    * special variables and ordinary variables have an empty intersection */

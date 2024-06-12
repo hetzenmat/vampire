@@ -97,10 +97,6 @@ Statistics::Statistics()
     generalizedInductionApplication(0),
     generalizedInductionApplicationInProof(0),
     argumentCongruence(0),
-    narrow(0),
-    forwardSubVarSup(0),
-    backwardSubVarSup(0),
-    selfSubVarSup(0),
     negativeExtensionality(0),
     primitiveInstantiations(0),
     choiceInstances(0),
@@ -359,7 +355,7 @@ void Statistics::print(ostream& out)
       cForwardSuperposition+cBackwardSuperposition+cSelfSuperposition+leibnizElims+
       equalityFactoring+equalityResolution+forwardExtensionalityResolution+
       backwardExtensionalityResolution+argumentCongruence+negativeExtensionality+
-      +primitiveInstantiations+choiceInstances+narrow+forwardSubVarSup+backwardSubVarSup+selfSubVarSup+
+      +primitiveInstantiations+choiceInstances+
       theoryInstSimp+theoryInstSimpCandidates+theoryInstSimpTautologies+theoryInstSimpLostSolution+inductionApplication+generalizedInductionApplication);
   COND_OUT("Binary resolution", resolution);
   COND_OUT("Unit resulting resolution", urResolution);
@@ -410,10 +406,7 @@ void Statistics::print(ostream& out)
   COND_OUT("Primitive substitutions", primitiveInstantiations);
   COND_OUT("Elimination of Leibniz equalities", leibnizElims);
   COND_OUT("Choice axiom instances creatded", choiceInstances);
-  COND_OUT("Narrow", narrow);
-  COND_OUT("Forward sub-variable superposition", forwardSubVarSup);
-  COND_OUT("Backward sub-variable superposition", backwardSubVarSup);
-  COND_OUT("Self sub-variable superposition", selfSubVarSup);
+
   SEPARATOR;
 
   HEADING("Term algebra simplifications",taDistinctnessSimplifications+

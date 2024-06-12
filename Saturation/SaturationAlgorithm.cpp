@@ -78,7 +78,6 @@
 #include "Inferences/PrimitiveInstantiation.hpp"
 #include "Inferences/Choice.hpp"
 #include "Inferences/ElimLeibniz.hpp"
-#include "Inferences/SubVarSup.hpp"
 #include "Inferences/CNFOnTheFly.hpp"
 #include "Inferences/URResolution.hpp"
 #include "Inferences/Instantiation.hpp"
@@ -1518,6 +1517,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     gie->addFront(new EqualityResolution()); 
   }
 
+  /* TODO MH
   if(opt.combinatorySup()){
     gie->addFront(new ArgCong());
     gie->addFront(new NegativeExt());//TODO add option
@@ -1527,7 +1527,7 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     if(!opt.pragmatic()){
       gie->addFront(new SubVarSup());
     }
-  }
+  }*/
 
   if(prb.hasFOOL() &&
     prb.isHigherOrder() && env.options->booleanEqTrick()){

@@ -252,17 +252,14 @@ enum class InferenceRule : unsigned char {
   ARITHMETIC_SUBTERM_GENERALIZATION,
   /* clause added after removing answer literal and saving it as a witness */
   ANSWER_LITERAL_REMOVAL,
-  /** the last simplifying inference marker --
-    inferences between GENERIC_SIMPLIFYING_INFERNCE and INTERNAL_SIMPLIFYING_INFERNCE_LAST will be automatically understood simplifying
-    (see also isSimplifyingInferenceRule) */
-   /* eager demodulation with combinator axioms */
-  COMBINATOR_DEMOD,
-  /* normalising combinators */
-  COMBINATOR_NORMALISE,
-  /* negative extnsionality */
+
   CASES_SIMP,
 
   BOOL_SIMP,
+
+  BETA_ETA_NORMALISE,
+
+  FLEX_FLEX_SIMPLIFY,
 
   FUNCTION_DEFINITION_DEMODULATION,
 
@@ -311,32 +308,7 @@ enum class InferenceRule : unsigned char {
         (see also isGeneratingInferenceRule) */
   /* argument congruence: t = t' => tx = t'x*/
   ARG_CONG,
-  /* narrow with combinator axiom */
-  SXX_NARROW,
 
-  SX_NARROW,
-
-  S_NARROW,
-
-  CXX_NARROW,
-
-  CX_NARROW,
-
-  C_NARROW,
-
-  BXX_NARROW,
-
-  BX_NARROW,
-
-  B_NARROW,
-
-  KX_NARROW,
-
-  K_NARROW,
-
-  I_NARROW,
-  /* superposition beneath variable */
-  SUB_VAR_SUP,
 
   INJECTIVITY,
 
@@ -345,6 +317,12 @@ enum class InferenceRule : unsigned char {
   LEIBNIZ_ELIMINATION,
 
   NEGATIVE_EXT,
+
+  POSITIVE_EXT,
+
+  IMITATE,
+
+  PROJECT,
 
   EQ_TO_DISEQ,
   /** The next five rules can be either simplifying or generating */
@@ -357,6 +335,9 @@ enum class InferenceRule : unsigned char {
   VPI_ELIMINATION,
 
   HOL_EQUALITY_ELIMINATION,
+
+  // TODO change to HEURISTIC_...
+  BOOL_INSTANTIATION,
 
   INTERNAL_GENERATING_INFERNCE_LAST,
 

@@ -898,36 +898,6 @@ vstring Kernel::ruleName(InferenceRule rule)
     return "sigma proxy axiom";
   case InferenceRule::ARG_CONG:
     return "argument congruence";
-  case InferenceRule::SXX_NARROW:
-    return "sxx_narrow";
-  case InferenceRule::SX_NARROW:
-    return "sx_narrow";
-  case InferenceRule::S_NARROW:
-    return "s_narrow";
-  case InferenceRule::CXX_NARROW:
-    return "cxx_narrow";
-  case InferenceRule::CX_NARROW:
-    return "cx_narrow";
-  case InferenceRule::C_NARROW:
-    return "c_narrow";
-  case InferenceRule::BXX_NARROW:
-    return "bxx_narrow";
-  case InferenceRule::BX_NARROW:
-    return "bx_narrow";
-  case InferenceRule::B_NARROW:
-    return "b_narrow";
-  case InferenceRule::KX_NARROW:
-    return "kx_narrow";
-  case InferenceRule::K_NARROW:
-    return "k_narrow";
-  case InferenceRule::I_NARROW:
-    return "i_narrow";
-  case InferenceRule::SUB_VAR_SUP:
-    return "sub-var superposition";
-  case InferenceRule::COMBINATOR_DEMOD:
-    return "combinator demodulation";
-  case InferenceRule::COMBINATOR_NORMALISE:
-    return "combinator normalisation";  
   case InferenceRule::NEGATIVE_EXT:
     return "negative extensionality";
   case InferenceRule::INJECTIVITY:
@@ -952,6 +922,16 @@ vstring Kernel::ruleName(InferenceRule rule)
     return "leibniz equality elimination";
   case InferenceRule::CASES_SIMP:
     return "cases simplifying";
+  case InferenceRule::BETA_ETA_NORMALISE:
+    return "beta eta normalization";
+  case InferenceRule::FLEX_FLEX_SIMPLIFY:
+    return "flex-flex simplify";
+  case InferenceRule::IMITATE:
+    return "imitate";
+  case InferenceRule::PROJECT:
+    return "project";
+  case InferenceRule::BOOL_INSTANTIATION:
+    return "heuristic instantiation";
     /* this cases are no actual inference rules but only markeres to separatea groups of rules */
   case InferenceRule::PROXY_AXIOM:
   case InferenceRule::GENERIC_FORMULA_TRANSFORMATION: 

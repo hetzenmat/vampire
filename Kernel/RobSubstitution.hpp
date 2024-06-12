@@ -437,6 +437,23 @@ private:
 
 inline AutoDerefTermSpec::AutoDerefTermSpec(TermSpec const& t, RobSubstitution const* s) : term(s->derefBound(t)) {}
 
+// TODO MH
+class RobSubstitutionTL {
+public:
+  TermList derefBound(TermList x) {
+    throw "TODO MH";
+  }
+};
+
+// TODO MH
+class RobSubstitutionTS {
+public:
+  void reset() {}
+  bool unify(TermList a, int b, TermList c, int d) { throw "TODO MH"; }
+  TermList apply(TermList a, int b) { throw "TODO MH"; }
+  Literal* apply(Literal* a, int b) { throw "TODO MH"; }
+};
+
 };
 
 namespace Lib {

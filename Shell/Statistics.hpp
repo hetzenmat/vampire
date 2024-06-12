@@ -145,10 +145,6 @@ public:
   unsigned generalizedInductionApplicationInProof;
   /** number of argument congruences */
   unsigned argumentCongruence;
-  unsigned narrow;
-  unsigned forwardSubVarSup;
-  unsigned backwardSubVarSup;
-  unsigned selfSubVarSup;
   unsigned negativeExtensionality;
   unsigned primitiveInstantiations;
   unsigned choiceInstances;

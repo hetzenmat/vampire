@@ -127,15 +127,16 @@ protected:
     static bool combSup = env.options->combinatorySup();
 
     static DArray<Literal*> litArr(64);
-    static Set<unsigned> maxTermHeads;
-    maxTermHeads.reset();
+    // TODO AYB decide what to do with selection
+    //    static Set<unsigned> maxTermHeads;
+    //    maxTermHeads.reset();
     litArr.initFromArray(eligible,*c);
     litArr.sortInversed(_comp);
 
     LiteralList* maximals=0;
     Literal* singleSelected=0; //If equals to 0 in the end, all maximal
 
-    if(combSup){ 
+    /*if(combSup){
       fillMaximals(maximals, litArr); 
       LiteralList::Iterator maxIt(maximals);
       while(maxIt.hasNext()){
@@ -147,7 +148,7 @@ protected:
         if(h0.isVar()){ maxTermHeads.insert(h0.var()); }
         if(h1.isVar()){ maxTermHeads.insert(h1.var()); }
       }
-    }
+    }*/
     //literals will be selected.
     bool allSelected=false;
 
