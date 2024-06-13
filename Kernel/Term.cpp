@@ -27,6 +27,7 @@
 #include "Lib/Metaiterators.hpp"
 
 #include "Term.hpp"
+#include "FormulaVarIterator.hpp"
 
 using namespace std;
 using namespace Lib;
@@ -122,6 +123,16 @@ bool TermList::ground() const
 bool TermList::isSafe() const
 {
   return isVar() || term()->shared();
+}
+
+bool TermList::isFreeVariable(unsigned var) const {
+  FormulaVarIterator fvi(*this);
+  while (fvi.hasNext()) {
+    if (var == fvi.next()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -1490,6 +1501,17 @@ Term* Term::foolTrue(){
 Term* Term::foolFalse(){
   static Term* _foolFalse = createConstant(env.signature->getFoolConstantSymbol(false));
   return _foolFalse;
+}
+
+bool Term::isFreeVariable(unsigned var) const
+{
+  FormulaVarIterator fvi(this);
+  while (fvi.hasNext()) {
+    if (var == fvi.next()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /*

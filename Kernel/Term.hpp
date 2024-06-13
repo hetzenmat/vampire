@@ -262,6 +262,8 @@ public:
   bool containsAllVariablesOf(TermList t);
   bool ground() const;
   bool isSafe() const;
+  bool isFreeVariable(unsigned var) const;
+
 
   bool isLambdaTerm() const;
   bool isEtaExpandedVar(TermList& var) const;
@@ -569,7 +571,7 @@ public:
   static Term* foolTrue(); 
   static Term* foolFalse(); 
 
-  VList* freeVariables() const;
+  bool isFreeVariable(unsigned var) const;
 
   /** Return number of bytes before the start of the term that belong to it */
   size_t getPreDataSize() { return isSpecial() ? sizeof(SpecialTermData) : 0; }

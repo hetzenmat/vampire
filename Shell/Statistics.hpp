@@ -143,9 +143,9 @@ public:
   unsigned inductionApplicationInProof;
   unsigned generalizedInductionApplication;
   unsigned generalizedInductionApplicationInProof;
-  /** number of argument congruences */
   unsigned argumentCongruence;
   unsigned negativeExtensionality;
+  unsigned positiveExtensionality;
   unsigned primitiveInstantiations;
   unsigned choiceInstances;
   unsigned proxyEliminations;

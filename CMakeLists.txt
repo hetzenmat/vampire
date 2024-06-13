@@ -318,8 +318,10 @@ set(VAMPIRE_KERNEL_SOURCES
     Inferences/ArgCong.cpp
     Inferences/NegativeExt.cpp
     Inferences/NegativeExt.hpp
-    Inferences/Narrow.hpp
-    Inferences/Narrow.cpp
+    Inferences/PositiveExt.cpp
+    Inferences/PositiveExt.hpp
+#    Inferences/Narrow.hpp
+#    Inferences/Narrow.cpp
 #    Inferences/SubVarSup.hpp
 #    Inferences/SubVarSup.cpp
     Inferences/BoolEqToDiseq.hpp
