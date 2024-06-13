@@ -43,6 +43,26 @@ public:
   VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getInstances(TypedTermList t, bool retrieveSubstitutions = true)
   { return _is->getInstances(t, retrieveSubstitutions); }
 
+// if VHOL
+  VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLUnifiers(TypedTermList t)
+  {
+    throw "TODO MH";
+    // return _is->getHOLUnifiers(t);
+  }
+
+  VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLInstances(TypedTermList t)
+  {
+    throw "TODO MH";
+    // return _is->getHOLInstances(t);
+  }
+
+  VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLGeneralizations(TypedTermList t)
+  {
+    throw "TODO MH";
+    // return _is->getHOLGeneralizations(t);
+  }
+// endif
+
   friend std::ostream& operator<<(std::ostream& out, TermIndex const& self)
   { return out << *self._is; }
 protected:

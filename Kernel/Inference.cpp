@@ -900,6 +900,8 @@ vstring Kernel::ruleName(InferenceRule rule)
     return "argument congruence";
   case InferenceRule::NEGATIVE_EXT:
     return "negative extensionality";
+  case InferenceRule::POSITIVE_EXT:
+    return "negative extensionality";
   case InferenceRule::INJECTIVITY:
     return "injectivity";
   case InferenceRule::HOL_NOT_ELIMINATION:

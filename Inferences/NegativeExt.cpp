@@ -43,12 +43,11 @@ using namespace Lib;
 using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
-using std::pair;
 
 struct NegativeExt::IsNegativeEqualityFn
 {
-  bool operator()(Literal* l)
-  { return l->isEquality() && !l->isPositive(); }
+  bool operator()(Literal* l) // TODO decide whether to keep final check (see ImitateProject)
+  { return l->isEquality() && !l->isPositive() && l->isRigidRigid(); }
 };
 
 struct NegativeExt::ResultFn
@@ -64,6 +63,7 @@ struct NegativeExt::ResultFn
     varSorts.reset();
    
     TermList eqSort = SortHelper::getEqualityArgumentSort(lit);
+    // TODO why do we not perform negative extensionality when eqSort is a variable?
     if(eqSort.isVar() || !eqSort.isArrowSort()){
       return 0;
     }
@@ -74,7 +74,7 @@ struct NegativeExt::ResultFn
     } else {
       VariableWithSortIterator vit(lhs.term());
       while(vit.hasNext()){
-        pair<TermList, TermList> varTypePair = vit.next();
+        std::pair<TermList, TermList> varTypePair = vit.next();
         varSorts.insert(varTypePair.first.var(), varTypePair.second);
       }
     }
@@ -85,7 +85,7 @@ struct NegativeExt::ResultFn
     } else {
       VariableWithSortIterator vit(rhs.term());
       while(vit.hasNext()){
-        pair<TermList, TermList> varTypePair = vit.next();
+        std::pair<TermList, TermList> varTypePair = vit.next();
         varSorts.insert(varTypePair.first.var(), varTypePair.second);
       }
     }
@@ -93,7 +93,7 @@ struct NegativeExt::ResultFn
     if(lit->isTwoVarEquality()){
       VariableWithSortIterator vit(eqSort.term());
       while(vit.hasNext()){
-        pair<TermList, TermList> varTypePair = vit.next();
+        std::pair<TermList, TermList> varTypePair = vit.next();
         //cout << "variable " + varTypePair.first.toString() + " has type " + varTypePair.second.toString() << endl;
         varSorts.insert(varTypePair.first.var(), varTypePair.second);
       }
@@ -119,8 +119,8 @@ struct NegativeExt::ResultFn
       }
     }
 
-    TermList alpha1 = *eqSort.term()->nthArgument(0);
-    TermList alpha2 = *eqSort.term()->nthArgument(1);
+    TermList alpha1 = eqSort.domain();
+    TermList alpha2 = eqSort.result();
    
     TermList resultSort = alpha1;
     SortHelper::normaliseArgSorts(typeVars, termVarSorts);
@@ -131,10 +131,10 @@ struct NegativeExt::ResultFn
     TermList head = TermList(Term::create(fun, typeVars.size(), typeVars.begin()));
     //cout << "the head is " + head.toString() << endl;
     //cout << "It has sort " + skSymSort.toString() << endl;
-    TermList skolemTerm = ApplicativeHelper::createAppTerm(SortHelper::getResultSort(head.term()), head, termVars);
+    TermList skolemTerm = ApplicativeHelper::app(head, termVars);
 
-    TermList newLhs = ApplicativeHelper::createAppTerm(alpha1, alpha2, lhs, skolemTerm);
-    TermList newRhs = ApplicativeHelper::createAppTerm(alpha1, alpha2, rhs, skolemTerm);
+    TermList newLhs = ApplicativeHelper::app(alpha1, alpha2, lhs, skolemTerm);
+    TermList newRhs = ApplicativeHelper::app(alpha1, alpha2, rhs, skolemTerm);
 
     Literal* newLit = Literal::createEquality(false, newLhs, newRhs, alpha2);
 

@@ -258,8 +258,8 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
         if(index){
           auto results = index->getHOLGeneralizations(TypedTermList(term.term()));
           if(results.hasNext()){
-            TermQueryResult tqr = results.next();
-            TermList skolemTerm = tqr.term;
+            auto tqr = results.next();
+            TermList skolemTerm = tqr.data->term; // TODO MH: use term or value?
             skolemTerm=tqr.unifier->applyToBoundResult(skolemTerm);
             newTerm = AH::app(srt, args[0], skolemTerm);
             newTermCreated = true;

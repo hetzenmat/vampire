@@ -56,10 +56,12 @@ struct ArgCong::IsPositiveEqualityFn
 
 struct ArgCong::ResultFn
 {
-  ResultFn(Clause* cl, bool afterCheck = false, Ordering* ord = nullptr)
-      : /*_afterCheck(afterCheck), _ord(ord),*/ _cl(cl), _cLen(cl->length()) {
-        _freshVar = cl->maxVar() + 1;
-      }
+  ResultFn(Clause *cl)
+      : _cl(cl)
+      , _cLen(cl->length())
+      , _freshVar(cl->maxVar() + 1)
+  {}
+
   Clause* operator() (Literal* lit)
   {
     ASS(lit->isEquality());
@@ -70,7 +72,7 @@ struct ArgCong::ResultFn
     TermList eqSort = SortHelper::getEqualityArgumentSort(lit);
     bool sortIsVar = eqSort.isVar();
     if(!sortIsVar && !eqSort.isArrowSort()){
-      return 0;
+      return nullptr;
     }
    
     TermList alpha1, alpha2;
@@ -80,8 +82,8 @@ struct ArgCong::ResultFn
       alpha2 = TermList(_freshVar+2, false);
       subst.bind(eqSort.var(), AtomicSort::arrowSort(alpha1, alpha2));
     } else {
-      alpha1 = *eqSort.term()->nthArgument(0);
-      alpha2 = *eqSort.term()->nthArgument(1);
+      alpha1 = eqSort.domain();
+      alpha2 = eqSort.result();
     }
 
     TermList freshVar = TermList(_freshVar, false);
@@ -91,8 +93,8 @@ struct ArgCong::ResultFn
       lhs = SubstHelper::apply(lhs, subst);
       rhs = SubstHelper::apply(rhs, subst);
     }
-    TermList newLhs = ApplicativeHelper::createAppTerm(alpha1, alpha2, lhs, freshVar);
-    TermList newRhs = ApplicativeHelper::createAppTerm(alpha1, alpha2, rhs, freshVar);
+    TermList newLhs = ApplicativeHelper::app(alpha1, alpha2, lhs, freshVar);
+    TermList newRhs = ApplicativeHelper::app(alpha1, alpha2, rhs, freshVar);
 
     Literal* newLit = Literal::createEquality(true, newLhs, newRhs, alpha2);
 
@@ -103,15 +105,8 @@ struct ArgCong::ResultFn
       if(curr!=lit) {
         Literal* currAfter;
 
-        if (sortIsVar /*&& _afterCheck && _cl->numSelected() > 1*/) {
+        if (sortIsVar) {
           currAfter = SubstHelper::apply(curr, subst);
-          /*
-
-          if (i < _cl->numSelected() && _ord->compare(currAfter,newLit) == Ordering::GREATER) {
-            env.statistics->inferencesBlockedForOrderingAftercheck++;
-            res->destroy();
-            return 0;
-          }*/ //TODO reintroduce check
         } else {
           currAfter = curr;
         }
@@ -127,9 +122,6 @@ struct ArgCong::ResultFn
     return res;
   }
 private:
-  // currently unused
-  // bool _afterCheck;
-  // Ordering* _ord;
   Clause* _cl;
   unsigned _cLen;
   unsigned _freshVar;
@@ -137,23 +129,19 @@ private:
 
 ClauseIterator ArgCong::generateClauses(Clause* premise)
 {
-  //cout << "argcong with " + premise->toString() << endl;
   if(premise->isEmpty()) {
     return ClauseIterator::getEmpty();
   }
-  ASS(premise->numSelected()>0);
+  ASS(premise->numSelected() > 0);
 
   auto it1 = premise->getSelectedLiteralIterator();
 
   auto it2 = getFilteredIterator(it1,IsPositiveEqualityFn());
 
-  auto it3 = getMappingIterator(it2,ResultFn(premise,
-      getOptions().literalMaximalityAftercheck() && _salg->getLiteralSelector().isBGComplete(),
-      &_salg->getOrdering()));
+  auto it3 = getMappingIterator(it2,ResultFn(premise));
 
   auto it4 = getFilteredIterator(it3,NonzeroFn());
 
-  //cout << "out of arg cong" << endl;
   return pvi( it4 );
 }
 

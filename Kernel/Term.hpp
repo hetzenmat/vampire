@@ -1286,12 +1286,41 @@ public:
     return l->isPositive() ? l : complementaryLiteral(l);
   }
 
-#if VHOL
-  bool isFlexFlex() const;
-  bool isFlexRigid() const;
-  bool isRigidRigid() const;
-  unsigned numOfAppVarsAndLambdas() const;
-#endif
+  bool isFlexFlex() const {
+    ASS(isEquality());
+
+    TermList lhs = *nthArgument(0);
+    TermList rhs = *nthArgument(1);
+    return !polarity() && lhs.head().isVar() && rhs.head().isVar();
+  }
+
+  bool isFlexRigid() const {
+    ASS(isEquality());
+
+    TermList lhs = *nthArgument(0);
+    TermList rhs = *nthArgument(1);
+    TermList lhsHead = lhs.head();
+    TermList rhsHead = rhs.head();
+
+    return (lhsHead.isVar() && !rhsHead.isVar()) ||
+           (rhsHead.isVar() && !lhsHead.isVar());
+  }
+
+  bool isRigidRigid() const {
+    ASS(isEquality());
+
+    TermList lhs = *nthArgument(0);
+    TermList rhs = *nthArgument(1);
+    return lhs.head().isTerm() && rhs.head().isTerm();
+  }
+
+  unsigned numOfAppVarsAndLambdas() const {
+    ASS(isEquality());
+
+    TermList lhs = *nthArgument(0);
+    TermList rhs = *nthArgument(1);
+    return lhs.numOfAppVarsAndLambdas() + rhs.numOfAppVarsAndLambdas();
+  }
 
   /** true if positive */
   bool isPositive() const
