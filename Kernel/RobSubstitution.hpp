@@ -443,6 +443,16 @@ public:
   TermList derefBound(TermList x) {
     throw "TODO MH";
   }
+
+  Literal* apply(Literal *, int) {
+    throw "TODO MH";
+  }
+
+  bool unify(TermList, TermList) {
+    throw "TODO MH";
+  }
+
+  void reset() { throw "TODO MH"; }
 };
 
 // TODO MH

@@ -79,16 +79,16 @@ ElimLeibniz::LeibEqRec ElimLeibniz::getLiteralInfo(Literal* lit){
 }
 
 Clause* ElimLeibniz::createConclusion(Clause* premise, Literal* newLit, 
-                                      Literal* posLit, Literal* negLit, RobSubstitution& subst){
+                                      Literal* posLit, Literal* negLit, RobSubstitutionTL& subst){
   unsigned newLen=premise->length() - 1;
   Clause* res = new(newLen) Clause(newLen, GeneratingInference1(InferenceRule::LEIBNIZ_ELIMINATION, premise));
-  Literal* newLitAfter = subst.apply(newLit, 0);
+  Literal* newLitAfter = subst.apply(newLit, 0 /*DEFAULT_BANK*/);
 
   unsigned next = 0;
   for(unsigned i=0;i<premise->length();i++) {
     Literal* curr=(*premise)[i];
     if(curr!=posLit && curr!=negLit){
-      Literal* currAfter = subst.apply(curr, 0);
+      Literal* currAfter = subst.apply(curr, 0 /*DEFAULT_BANK*/);
       (*res)[next++] = currAfter;
     }
   }
@@ -131,8 +131,11 @@ ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
         goto afterLoop;
       } 
     }
-    if(pol){ positiveLits.push(lit); } else 
-           { negativeLits.push(lit); }
+
+    if(pol)
+      positiveLits.push(lit);
+    else
+      negativeLits.push(lit);
   }
   
   return ClauseIterator::getEmpty();  
@@ -140,7 +143,7 @@ ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
 afterLoop:
 
   ClauseStack clauses;
-  static RobSubstitution subst;
+  static RobSubstitutionTL subst;
   subst.reset();
  
   LeibEqRec lerPosLit = getLiteralInfo(posLit);
@@ -151,24 +154,20 @@ afterLoop:
 
   TermList var = TermList(lerPosLit.var, false);
 
-  TermList vEquals = TermList(Term::create1(env.signature->getEqualityProxy(), argS));
-  TermList t1 = AH::createAppTerm(SH::getResultSort(vEquals.term()), vEquals, lerNegLit.arg);
-  if(subst.unify(var, 0, t1, 0)){
+  TermList vEquals = AH::equality(argS);
+  // creating the term  = arg  (which is eta-equivalent to ^x. arg = x)
+  TermList t1 = AH::app(vEquals, lerNegLit.arg);
+  if(subst.unify(var, t1)){
     Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
     clauses.push(c);
     subst.reset();
   }
 
-  TermList t2 = AH::createAppTerm(SH::getResultSort(vEquals.term()), vEquals, lerPosLit.arg);
-  
-  TermList typeArgs[] = {argS, AtomicSort::boolSort(), AtomicSort::boolSort()};
-  unsigned b_comb = env.signature->getCombinator(Signature::B_COMB);
-  
-  TermList bComb  = TermList(Term::create(b_comb, 3, typeArgs));
-  TermList vNot   = TermList(Term::createConstant(env.signature->getNotProxy()));
-  t2 = AH::createAppTerm3(SH::getResultSort(bComb.term()), bComb,vNot,t2);
+  TermList db = AH::getDeBruijnIndex(0, argS);
+  // creating the term ^x. arg != x
+  TermList t2 = AH::lambda(argS, AH::app(AH::neg(), AH::app(AH::app(vEquals, lerPosLit.arg),db)));
 
-  if(subst.unify(var, 0, t2, 0)){
+  if(subst.unify(var, t2)){
     Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
     clauses.push(c);
   }  
