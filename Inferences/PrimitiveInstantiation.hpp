@@ -31,18 +31,13 @@ class PrimitiveInstantiation
 : public GeneratingInferenceEngine
 {
 public:
-  void attach(SaturationAlgorithm* salg);
-  void detach();
+  USE_ALLOCATOR(PrimitiveInstantiation);
 
-  ClauseIterator generateClauses(Clause* premise);
+  ClauseIterator generateClauses(Clause* premise) override;
   
 private:
-  PrimitiveInstantiationIndex* _index;  
-
-  struct ApplicableRewritesFn;
-  struct ResultFn;  
+  struct ResultFn;
   struct IsInstantiable;
-  
 };
 
 
