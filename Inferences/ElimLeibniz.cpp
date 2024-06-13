@@ -99,8 +99,6 @@ Clause* ElimLeibniz::createConclusion(Clause* premise, Literal* newLit,
 
 ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
 {
-  typedef SortHelper SH;
-
   static TermStack args;
   TermList head;
 

@@ -8,8 +8,8 @@
  * and in the source directory
  */
 /**
- * @file PrimitiveInstantiation.cpp
- * Implements class PrimitiveInstantiation.
+ * @file Choice.cpp
+ * Implements class Choice.
  */
 
 #include "Debug/RuntimeStatistics.hpp"
@@ -44,10 +44,11 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
+typedef ApplicativeHelper AH;
+
 Clause* Choice::createChoiceAxiom(TermList op, TermList set)
 {
-  TermList opType = SortHelper::getResultSort(op.term());
-  TermList setType = ApplicativeHelper::getNthArg(opType, 1);
+  TermList setSort = SortHelper::getResultSort(op.term()).domain();
 
   unsigned max = 0;
   FormulaVarIterator fvi(set);
@@ -59,27 +60,29 @@ Clause* Choice::createChoiceAxiom(TermList op, TermList set)
   }
   TermList freshVar = TermList(max+1, false);
 
-  TermList t1 = ApplicativeHelper::createAppTerm(setType, set, freshVar);
-  TermList t2 = ApplicativeHelper::createAppTerm(opType, op, set);
-  t2 =  ApplicativeHelper::createAppTerm(setType, set, t2);
+  TermList t1 = AH::app(setSort, set, freshVar);
+  TermList t2 = AH::app(op, set);
+  t2 =          AH::app(setSort, set, t2);
 
   Clause* axiom = new(2) Clause(2, NonspecificInference0(UnitInputType::AXIOM, InferenceRule::CHOICE_AXIOM));
 
-  (*axiom)[0] = Literal::createEquality(true, t1, TermList(Term::foolFalse()), AtomicSort::boolSort());;
-  (*axiom)[1] = Literal::createEquality(true, t2, TermList(Term::foolTrue()), AtomicSort::boolSort());;
+  (*axiom)[0] = Literal::createEquality(true, t1, AH::bottom(), AtomicSort::boolSort());
+  (*axiom)[1] = Literal::createEquality(true, t2, AH::top(), AtomicSort::boolSort());
 
   return axiom;
 }
 
 struct Choice::AxiomsIterator
 {
-  AxiomsIterator(Term* term)
+  AxiomsIterator(Term* _term)
   {
-    _set = *term->nthArgument(3);
-    _headSort = AtomicSort::arrowSort(*term->nthArgument(0),*term->nthArgument(1));
-    _resultSort = ApplicativeHelper::getResultApplieadToNArgs(_headSort, 1);
+    TermList term = TermList(_term);
+    ASS(term.isApplication());
 
-    //cout << "the result sort is " + _resultSort.toString() << endl;
+    _set = term.rhs();
+
+    _headSort = AH::lhsSort(term);
+    _resultSort = SortHelper::getResultSort(term.term());
 
     DHSet<unsigned>* ops = env.signature->getChoiceOperators();
     DHSet<unsigned>::Iterator opsIt(*ops);
@@ -97,7 +100,7 @@ struct Choice::AxiomsIterator
       _choiceOps.remove(op);
       OperatorType* type = env.signature->getFunction(op)->fnType();
       
-      static RobSubstitution subst;
+      static RobSubstitutionTL subst;
       static TermStack typeArgs;
       typeArgs.reset();
       subst.reset();
@@ -158,24 +161,24 @@ struct Choice::ResultFn
 struct Choice::IsChoiceTerm
 {
   bool operator()(Term* t)
-  { 
+  {
+    if(t->isLambdaTerm()) return false;
     TermStack args;
     TermList head;
     ApplicativeHelper::getHeadAndArgs(t, head, args);
-    if(args.size() != 1){ return false; }
-    
-    TermList headSort = AtomicSort::arrowSort(*t->nthArgument(0), *t->nthArgument(1));
+    if(args.size() == 1 && !args[0].isVar() && !args[0].containsLooseIndex()){
+      TermList headSort = AH::lhsSort(TermList(t));
 
-    TermList tv = TermList(0, false);
-    TermList o  = AtomicSort::boolSort();
-    TermList sort = AtomicSort::arrowSort(AtomicSort::arrowSort(tv, o), tv);
- 
-    static RobSubstitution subst;
-    subst.reset();
+      TermList tv = TermList(0, VarBank::QUERY_BANK); // put on QUERY_BANK to separate in from variables in headSort
+      TermList o  = AtomicSort::boolSort();
+      TermList sort = AtomicSort::arrowSort(AtomicSort::arrowSort(tv, o), tv);
 
-    subst.reset();
-    return ((head.isVar() || env.signature->isChoiceOperator(head.term()->functor())) &&
-           subst.match(sort,0,headSort,1));
+      static RobSubstitutionTL subst;
+      subst.reset();
+      return ((head.isVar() || env.signature->isChoiceOperator(head.term()->functor())) &&
+              subst.match(sort,headSort,1 /*VarBank::QUERY_BANK*/));
+    }
+    return false;
 
   }
 };
@@ -194,19 +197,14 @@ struct Choice::SubtermsFn
 
 ClauseIterator Choice::generateClauses(Clause* premise)
 {
-  //cout << "Choice with " << premise->toString() << endl;
-  
   //is this correct?
   auto it1 = premise->getSelectedLiteralIterator();
-  //filter out literals that are not suitable for narrowing
+
   auto it2 = getMapAndFlattenIterator(it1, SubtermsFn());
 
-  //pair of literals and possible rewrites that can be applied to literals
   auto it3 = getFilteredIterator(it2, IsChoiceTerm());
-  
-  //apply rewrite rules to literals
+
   auto it4 = getMapAndFlattenIterator(it3, ResultFn());
-  
 
   return pvi( it4 );
 

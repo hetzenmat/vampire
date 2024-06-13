@@ -444,6 +444,10 @@ public:
     throw "TODO MH";
   }
 
+  TermList apply(TermList, int) {
+    throw "TODO MH";
+  }
+
   Literal* apply(Literal *, int) {
     throw "TODO MH";
   }
@@ -451,6 +455,12 @@ public:
   bool unify(TermList, TermList) {
     throw "TODO MH";
   }
+  bool unify(TermList, int, TermList, int) {
+    throw "TODO MH";
+  }
+
+  bool match(TermList, TermList, int) {throw "TODO MH";}
+
 
   void reset() { throw "TODO MH"; }
 };

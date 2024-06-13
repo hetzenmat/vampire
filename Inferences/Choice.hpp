@@ -8,8 +8,8 @@
  * and in the source directory
  */
 /**
- * @file BoolSimp.hpp
- * Defines class BoolSimp.
+ * @file Choice.hpp
+ * Defines class Choice.
  */
 
 #ifndef __CHOICE__
