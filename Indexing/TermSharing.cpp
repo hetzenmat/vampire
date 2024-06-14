@@ -69,9 +69,12 @@ TermSharing::~TermSharing()
 
 void TermSharing::setPoly()
 {
-  //combinatory superposiiton can introduce polymorphism into a monomorphic problem
-  _poly = env.getMainProblem()->isHigherOrder() || env.getMainProblem()->hasPolymorphicSym() ||
-    (env.options->equalityProxy() != Options::EqualityProxy::OFF && !env.options->useMonoEqualityProxy());
+  _poly =
+//#if VHOL
+      env.getMainProblem()->isHigherOrder() ||
+//#endif
+      env.getMainProblem()->hasPolymorphicSym() ||
+      (env.options->equalityProxy() != Options::EqualityProxy::OFF && !env.options->useMonoEqualityProxy());
 }
 
 /**
@@ -85,58 +88,23 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
 
     unsigned weight = 1;
     unsigned vars = 0;
+    bool hasSortVar = false;
     bool hasInterpretedConstants=t->arity()==0 &&
 	env.signature->getFunction(t->functor())->interpreted();
     bool hasTermVar = false;
+// #if VHOL
+    bool hasDBIndex = t->deBruijnIndex().isSome();
+    bool hasRedex = t->isRedex();
+    bool hasLambda = t->isLambdaTerm();
+// #endif
     Color color = COLOR_TRANSPARENT;
-
-    if(env.options->combinatorySup()){ 
-      int maxRedLength = -1;
-      TermList head;
-      TermStack args;
-      AH::getHeadAndArgs(t, head, args);
-      if(!AH::isComb(head) || AH::isUnderApplied(head, args.size())){
-        maxRedLength = sumRedLengths(args);
-      } else {
-        switch(AH::getComb(head)){
-          case Signature::B_COMB:
-            if(!AH::isComb(AH::getHead(args[args.size()-1]))  &&
-               !AH::isComb(AH::getHead(args[args.size()-2]))){
-              maxRedLength = sumRedLengths(args);
-              maxRedLength = maxRedLength == -1 ? -1 : maxRedLength + 1;
-            }
-            break;
-          case Signature::S_COMB:
-            if(!AH::isComb(AH::getHead(args[args.size()-1]))  &&
-               !AH::isComb(AH::getHead(args[args.size()-2]))){
-              maxRedLength = sumRedLengths(args);
-              maxRedLength = maxRedLength == -1 ? -1 : maxRedLength + 1;
-              if(maxRedLength != -1 && args[args.size() - 3].isTerm()){
-                maxRedLength += args[args.size() - 3].term()->maxRedLength();
-              }
-            }
-            break;
-          case Signature::C_COMB:
-          case Signature::I_COMB:
-          case Signature::K_COMB:
-            if(!AH::isComb(AH::getHead(args[args.size()-1]))){
-              maxRedLength = sumRedLengths(args);
-              maxRedLength = maxRedLength == -1 ? -1 : maxRedLength + 1;
-            }
-            break;
-          default:
-            ASSERTION_VIOLATION;
-        }
-      }
-      t->setMaxRedLen(maxRedLength);
-    }
     
     unsigned typeArity = t->numTypeArguments();
     for (unsigned i = 0; i < t->arity(); i++) {
       TermList* tt = t->nthArgument(i);
       if (tt->isVar()) {
         ASS(tt->isOrdinaryVar());
-        if(i >= typeArity){
+        if(i < typeArity){
           hasTermVar = true;
         }
         vars++;
@@ -151,12 +119,15 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
   
         vars += r->numVarOccs();
         weight += r->weight();
-        hasTermVar |= r->hasTermVar();
+        hasTermVar              |= r->hasTermVar();
+//#if VHOL
+        hasDBIndex              |= r->hasDBIndex();
+        hasRedex                |= r->hasRedex();
+        hasLambda               |= r->hasLambda();
+// #endif
+        hasInterpretedConstants |= r->hasInterpretedConstants();
         if (env.colorUsed) {
           color = static_cast<Color>(color | r->color());
-        }
-        if(!hasInterpretedConstants && r->hasInterpretedConstants()) {
-          hasInterpretedConstants=true; 
         }
       }
     }
@@ -165,26 +136,31 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
     t->setNumVarOccs(vars);
     t->setWeight(weight);
     t->setHasTermVar(hasTermVar);
+
     if (env.colorUsed) {
       Color fcolor = env.signature->getFunction(t->functor())->color();
       color = static_cast<Color>(color | fcolor);
       t->setColor(color);
     }
-
+//#if VHOL
+    t->setHasRedex(hasRedex);
+    t->setHasDBIndex(hasDBIndex);
+    t->setHasLambda(hasLambda);
+// #endif
     t->setInterpretedConstantsPresence(hasInterpretedConstants);
 
     //poly function works for mono as well, but is slow
     //it is fine to use for debug
     ASS_REP(_wellSortednessCheckingDisabled || SortHelper::areImmediateSortsValidPoly(t), t->toString());
-    if (!_poly && !SortHelper::areImmediateSortsValidMono(t) && !_wellSortednessCheckingDisabled){
+    if (!_wellSortednessCheckingDisabled && !_poly && !SortHelper::areImmediateSortsValidMono(t)){
       USER_ERROR("Immediate (shared) subterms of  term/literal "+t->toString()+" have different types/not well-typed!");
-    } else if (_poly && !SortHelper::areImmediateSortsValidPoly(t) && !_wellSortednessCheckingDisabled){
+    } else if (!_wellSortednessCheckingDisabled && _poly && !SortHelper::areImmediateSortsValidPoly(t)){
       USER_ERROR("Immediate (shared) subterms of  term/literal "+t->toString()+" have different types/not well-typed!");      
     }
-} // TermSharing::insert
+}
 
 /** same as `TermSharing::computeAndSetSharedTermData(Term*)` but for sorts */
-void TermSharing::computeAndSetSharedSortData(AtomicSort* sort)
+void TermSharing::computeAndSetSharedSortData(AtomicSort *sort)
 {
   ASS(!sort->isLiteral());
   ASS(!sort->isSpecial());
@@ -192,37 +168,40 @@ void TermSharing::computeAndSetSharedSortData(AtomicSort* sort)
 
   TIME_TRACE("sort sharing");
 
-    if(sort->isArraySort()){
-      _arraySorts.insert(TermList(sort));
-    }
-    unsigned weight = 1;
-    unsigned vars = 0;
+  if (sort->isArraySort()) {
+    _arraySorts.insert(TermList(sort));
+  }
+  unsigned weight = 1;
+  unsigned vars = 0;
+  bool hasTermVar = false;
 
-    for (TermList* tt = sort->args(); ! tt->isEmpty(); tt = tt->next()) {
-      if (tt->isVar()) {
-        ASS(tt->isOrdinaryVar());
-        vars++;
-        weight += 1;
-      }
-      else 
-      {
-        ASS_REP(tt->term()->shared(), tt->term()->toString());
-        
-        Term* r = tt->term();
-  
-        vars += r->numVarOccs();
-        weight += r->weight();
-      }
+  for (TermList *tt = sort->args(); !tt->isEmpty(); tt = tt->next()) {
+    if (tt->isVar()) {
+      ASS(tt->isOrdinaryVar());
+      hasTermVar = true;
+      vars++;
+      weight += 1;
     }
-    sort->markShared();
-    sort->setId(_sorts.size());
-    sort->setNumVarOccs(vars);
-    sort->setWeight(weight);
+    else {
+      ASS_REP(tt->term()->shared(), tt->term()->toString());
 
-    ASS_REP(SortHelper::allTopLevelArgsAreSorts(sort), sort->toString());
-    if (!SortHelper::allTopLevelArgsAreSorts(sort)){
-      USER_ERROR("Immediate subterms of sort "+sort->toString()+" are not all sorts as mandated in rank-1 polymorphism!");      
+      Term *r = tt->term();
+
+      vars += r->numVarOccs();
+      weight += r->weight();
+      hasTermVar |= r->hasTermVar();
     }
+  }
+  sort->markShared();
+  sort->setId(_sorts.size());
+  sort->setNumVarOccs(vars);
+  sort->setWeight(weight);
+  sort->setHasTermVar(hasTermVar);
+
+  ASS_REP(SortHelper::allTopLevelArgsAreSorts(sort), sort->toString());
+  if (!SortHelper::allTopLevelArgsAreSorts(sort)) {
+    USER_ERROR("Immediate subterms of sort " + sort->toString() + " are not all sorts as mandated in rank-1 polymorphism!");
+  }
 } // TermSharing::computeAndSetSharedSortData
 
 /** same as `TermSharing::computeAndSetSharedTermData(Term*)` but for literals 
@@ -305,7 +284,7 @@ void TermSharing::computeAndSetSharedVarEqData(Literal* t, TermList sort)
   TermList* ts1 = t->args();
   TermList* ts2 = ts1->next();
   if (argNormGt(*ts1, *ts2)) {
-    swap(ts1->_content, ts2->_content);
+    t->argSwap();
   }
 
   //we need these values set during insertion into the sharing set
@@ -344,21 +323,6 @@ Literal* TermSharing::tryGetOpposite(Literal* l)
     return res;
   }
   return 0;
-}
-
-
-int TermSharing::sumRedLengths(TermStack& args)
-{
-  int redLength = 0;
-
-  for(unsigned i = 0; i < args.size(); i++){
-    if(args[i].isTerm() && args[i].term()->maxRedLength() != -1){
-      redLength += args[i].term()->maxRedLength();
-    } else if(args[i].isTerm()) {
-      return -1;
-    }
-  }
-  return redLength;
 }
 
 /**
