@@ -27,7 +27,6 @@
 #include "Kernel/Term.hpp"
 #include "Kernel/TermIterators.hpp"
 
-#include "Shell/LambdaElimination.hpp"
 #include "Indexing/TermSubstitutionTree.hpp"
 
 #include "TermIndex.hpp"

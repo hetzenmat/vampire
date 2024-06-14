@@ -49,7 +49,6 @@
 #include "SineUtils.hpp"
 #include "Statistics.hpp"
 #include "FOOLElimination.hpp"
-#include "LambdaElimination.hpp"
 #include "TheoryAxioms.hpp"
 #include "TheoryFlattening.hpp"
 #include "TweeGoalTransformation.hpp"

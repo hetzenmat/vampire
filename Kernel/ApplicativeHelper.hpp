@@ -112,7 +112,7 @@ class BetaNormaliser : public TermTransformer
 public:
 
   BetaNormaliser() {
-    _transformSorts = false;
+    dontTransformSorts();
   }
   TermList normalise(TermList t);
   // puts term into weak head normal form
@@ -141,7 +141,7 @@ class WHNFDeref : public TermTransformer
 public:
 
   WHNFDeref( RobSubstitutionTL* sub) : _sub(sub) {
-    _transformSorts = false;
+    dontTransformSorts();
   }
   TermList normalise(TermList t);
   // puts term into weak head normal form
@@ -158,7 +158,7 @@ class RedexReducer : public TermTransformer
 public:
   typedef ApplicativeHelper AH;
   RedexReducer() {
-    _transformSorts = false;
+    dontTransformSorts();
   }
   TermList reduce(TermList head, TermStack& args);
   TermList transformSubterm(TermList t) override;
@@ -175,7 +175,7 @@ class TermShifter : public TermTransformer
 {
 public:
   TermShifter() : _minFreeIndex(-1) {
-    _transformSorts = false;
+    dontTransformSorts();
   }
   // positive value -> shift up
   // negative -> shift down
@@ -225,7 +225,7 @@ public:
         _topLevel(true),
         _mode(env.options->functionExtensionality())
   {
-    _transformSorts = false;
+    dontTransformSorts();
   }
 
   TermList replace(TermList term);

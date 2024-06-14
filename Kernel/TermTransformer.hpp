@@ -55,12 +55,14 @@ protected:
 class TermTransformer : public TermTransformerCommon {
 public:
   virtual ~TermTransformer() {}
-  TermTransformer() = default;
-  explicit TermTransformer(bool transformSorts) : _transformSorts(transformSorts) {}
-  Term* transform(Term* term) override;
+  TermTransformer() : _sharedResult(true),
+                      _dontTransformSorts(false) {}
+  Term *transform(Term *term) override;
 
   Formula* transform(Formula* f) override;
   TermList transform(TermList ts) override;
+
+  void dontTransformSorts() { _dontTransformSorts = true; }
 
 protected:
   virtual TermList transformSubterm(TermList trm) = 0;
@@ -70,18 +72,27 @@ protected:
 
   virtual bool exploreSubterms(TermList orig, TermList newTerm);
 
-  bool _transformSorts = true;
+  bool _sharedResult;
+  bool _dontTransformSorts;
 };
 
 class SubtermReplacer : public TermTransformer {
 public:
   SubtermReplacer(TermList what, TermList by, bool liftFree = false)
-      : TermTransformer(false), _what(what), _by(by), _liftFreeIndices(liftFree), _shiftBy(0)
+      : _what(what), _by(by), _liftFreeIndices(liftFree), _shiftBy(0)
   {
     ASS(what.isVar() || by.isVar() || SortHelper::getResultSort(what.term()) == SortHelper::getResultSort(by.term()));
+    dontTransformSorts();
   }
 
   TermList transformSubterm(TermList t) override;
+
+  Literal* transformLit(Literal* lit)
+  {
+    Term* t = transform(static_cast<Term*>(lit));
+    ASS(t->isLiteral());
+    return static_cast<Literal*>(t);
+  }
 
 // #if VHOL
   void onTermEntry(Term* t) override;

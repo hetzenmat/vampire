@@ -340,8 +340,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Inferences/CasesSimp.hpp
     Inferences/Cases.cpp
     Inferences/Cases.hpp
-    Shell/LambdaElimination.cpp
-    Shell/LambdaElimination.hpp
+#    Shell/LambdaElimination.cpp
+#    Shell/LambdaElimination.hpp
     )
 source_group(kernel_source_files FILES ${VAMPIRE_KERNEL_SOURCES})
 
