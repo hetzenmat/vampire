@@ -23,6 +23,7 @@
 #include "Kernel/TermIterators.hpp"
 
 #include "Lib/Environment.hpp"
+#include "Shell/Statistics.hpp"
 #include "Lib/Metaiterators.hpp"
 
 #include "BoolEqToDiseq.hpp"
@@ -85,8 +86,9 @@ afterLoop:
     (*res)[i] = i == pos ? newLit : (*cl)[i];
   }
 
-  return pvi(getSingletonIterator(res));
+  env.statistics->boolEqToDiseq++;
 
+  return pvi(getSingletonIterator(res));
 }
 
 }

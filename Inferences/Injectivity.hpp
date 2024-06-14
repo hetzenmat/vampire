@@ -8,8 +8,8 @@
  * and in the source directory
  */
 /**
- * @file Injectivty.hpp
- * Defines class Injectivty.
+ * @file Injectivity.hpp
+ * Defines class Injectivity.
  */
 
 #ifndef __Injectivity__
@@ -26,7 +26,7 @@ class Injectivity : public GeneratingInferenceEngine {
     ClauseIterator generateClauses(Clause* premise);
 
   private:
-  	TermList createNewLhs(TermList oldhead, TermStack& termArgs, unsigned index);
+  	TermList createNewLhs(TermList oldhead, TermStack& termArgs, TermList sort);
 };
 
 }

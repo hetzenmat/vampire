@@ -151,6 +151,8 @@ public:
   unsigned proxyEliminations;
   unsigned leibnizElims;
   unsigned booleanSimps;
+  unsigned injectiveFunInverses;
+  unsigned boolEqToDiseq;
 
   // Simplifying inferences
   /** number of duplicate literals deleted */

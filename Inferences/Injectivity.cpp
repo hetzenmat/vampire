@@ -13,7 +13,6 @@
  * creates a Skolem to act as left-inverse funcion
  */
 
-#include "Lib/Environment.hpp"
 
 #include "Kernel/Clause.hpp"
 #include "Kernel/EqHelper.hpp"
@@ -24,6 +23,9 @@
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/ApplicativeHelper.hpp"
+
+#include "Lib/Environment.hpp"
+#include "Shell/Statistics.hpp"
 
 #include "Injectivity.hpp"
 
@@ -38,8 +40,8 @@ ClauseIterator Injectivity::generateClauses(Clause* premise) {
   Literal* sideLit;
   Literal* lit0 = (*premise)[0];
   Literal* lit1 = (*premise)[1];
-  if(!lit0->isTwoVarEquality() && lit1->isTwoVarEquality() && 
-     !lit0->polarity() && lit1->polarity()){
+  if(!lit0->isTwoVarEquality() && lit1->isTwoVarEquality() &&
+      !lit0->polarity() && lit1->polarity()){
     mainLit = lit0;
     sideLit = lit1;
   }else if(!lit1->isTwoVarEquality() && lit0->isTwoVarEquality() &&
@@ -52,28 +54,46 @@ ClauseIterator Injectivity::generateClauses(Clause* premise) {
 
   TermList lhsM = *(mainLit->nthArgument(0));
   TermList rhsM = *(mainLit->nthArgument(1));
+  if(lhsM.isLambdaTerm() || rhsM.isLambdaTerm())
+  { return ClauseIterator::getEmpty(); }
+
   TermList lhsS = *(sideLit->nthArgument(0));
   TermList rhsS = *(sideLit->nthArgument(1));
 
   static TermStack argsLhs;//No need to reset because getHeadAndArgs resets
   static TermStack argsRhs;
   TermStack termArgs;
-  TermList argLhs, argRhs, headLhs, headRhs, differingArg;
+
+  TermStack argSorts; // sorts of argsLhs and argsRhs (not instantiated!)
+  TermStack termArgSorts;
+  TermList headLhs, headRhs, differingArg, differingArgSort;
 
   ApplicativeHelper::getHeadAndArgs(lhsM, headLhs, argsLhs);
   ApplicativeHelper::getHeadAndArgs(rhsM, headRhs, argsRhs);
-  if(headLhs != headRhs || headLhs.isVar() || 
-    ApplicativeHelper::isComb(headLhs)){
-    return ClauseIterator::getEmpty();
-  }
+
+  if(headLhs != headRhs || headLhs.isVar())
+  { return ClauseIterator::getEmpty(); }
+  // assertion below holds, since lhsM and rhsM have same types and neither is a lambda term
   ASS(argsLhs.size() == argsRhs.size());
 
+
+  // TODO inelegant stuff here
+  // THe reason we get the sorts from the type instead of using getHeadArgsAndSorts
+  // is become we want the original non-instantiated sorts...
+  TermList headLhsSort = env.signature->getFunction(headLhs.term()->functor())->fnType()->result();
+  for(unsigned i = 0; i < argsLhs.size(); i++){
+    argSorts.push(headLhsSort.domain());
+    headLhsSort = headLhsSort.result();
+  }
+
   bool differingArgFound = false;
-  unsigned index = 0;
   termArgs.push(lhsM);
+  termArgSorts.push(headLhsSort);
+  int idx = argSorts.size() - 1;
   while(!argsLhs.isEmpty()){
-    argLhs = argsLhs.pop();
-    argRhs = argsRhs.pop();
+    TermList argLhs = argsLhs.pop();
+    TermList argRhs = argsRhs.pop();
+    TermList sort   = argSorts[idx];
     if(!argLhs.isVar() || !argRhs.isVar()){
       return ClauseIterator::getEmpty();
     }
@@ -82,23 +102,25 @@ ClauseIterator Injectivity::generateClauses(Clause* premise) {
         return ClauseIterator::getEmpty();
       }
       if((argLhs == lhsS && argRhs == rhsS) ||
-         (argLhs == rhsS && argRhs == lhsS)){
-        differingArg = argLhs;
+          (argLhs == rhsS && argRhs == lhsS)){
+        differingArg      = argLhs;
+        differingArgSort  = sort;
         differingArgFound = true;
       } else {
-        return ClauseIterator::getEmpty();        
+        return ClauseIterator::getEmpty();
       }
     } else {
       termArgs.push(argLhs);
+      termArgSorts.push(sort);
     }
-    if(!differingArgFound){ index++; }
+    idx--;
   }
 
-  //at this point, we know the clause is of the form f x1 y x2... = f x1 z x2 ... \/ x != y 
-  //index holds the index of the different argument
-  TermList newLhs = createNewLhs(headLhs, termArgs, index);
-  TermList sort = SortHelper::getResultSort(newLhs.term());
-  Literal* lit = Literal::createEquality(true, newLhs, differingArg, sort);
+  env.statistics->injectiveFunInverses++;
+
+  //at this point, we know the clause is of the form f x1 y x2... != f x1 z x2 ... \/ x = y
+  TermList newLhs = createNewLhs(headLhs, termArgs, AtomicSort::arrowSort(termArgSorts, differingArgSort));
+  Literal* lit = Literal::createEquality(true, newLhs, differingArg, differingArgSort);
 
   Clause* conclusion = new(1) Clause(1, GeneratingInference1(InferenceRule::INJECTIVITY, premise));
 
@@ -107,44 +129,26 @@ ClauseIterator Injectivity::generateClauses(Clause* premise) {
   return pvi(getSingletonIterator(conclusion));
 }
 
-TermList Injectivity::createNewLhs(TermList oldhead, TermStack& termArgs, unsigned index){
-  TermList* typeArg = oldhead.term()->args();
+TermList Injectivity::createNewLhs(TermList oldhead, TermStack &termArgs, TermList invFunSort)
+{
+  TermList *typeArg = oldhead.term()->args();
   TermStack typeArgs;
-  while(!typeArg->isEmpty()){
+  while (!typeArg->isEmpty()) {
     typeArgs.push(*typeArg);
     typeArg = typeArg->next();
   }
 
-  Signature::Symbol* func = env.signature->getFunction(oldhead.term()->functor());
+  Signature::Symbol *func = env.signature->getFunction(oldhead.term()->functor());
   vstring pref = "inv_" + func->name() + "_";
-  unsigned iFunc = env.signature->addFreshFunction(func->arity(), pref.c_str() ); 
+  unsigned iFunc = env.signature->addFreshFunction(oldhead.term()->arity(), pref.c_str());
 
-  OperatorType* funcType = func->fnType();
-  TermList type = funcType->result(); 
+  OperatorType *invFuncType = OperatorType::getConstantsType(invFunSort, oldhead.term()->arity());
+  Signature::Symbol *invFunc = env.signature->getFunction(iFunc);
 
-  TermList oldResult = ApplicativeHelper::getResultApplieadToNArgs(type, termArgs.size());
-  TermStack sorts;
-  TermList newResult;
-
-  sorts.push(oldResult); 
-  for(unsigned i = 1; i <= termArgs.size(); i++){
-    if(i - 1 != index){
-      sorts.push(ApplicativeHelper::getNthArg(type,i));
-    } else {
-      newResult = ApplicativeHelper::getNthArg(type,i);
-    }
-  }
-
-  TermList inverseType = AtomicSort::arrowSort(sorts, newResult);
-
-  OperatorType* invFuncType = OperatorType::getConstantsType(inverseType, funcType->numTypeArguments());
-  Signature::Symbol* invFunc = env.signature->getFunction(iFunc);
   invFunc->setType(invFuncType);
   TermList invFuncHead = TermList(Term::create(iFunc, func->arity(), typeArgs.begin()));
 
-  TermList invFuncHeadType = SortHelper::getResultSort(invFuncHead.term());
-  return ApplicativeHelper::createAppTerm(invFuncHeadType, invFuncHead, termArgs);  
+  return ApplicativeHelper::app(invFuncHead, termArgs);
 }
-
 
 }
