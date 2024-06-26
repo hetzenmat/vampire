@@ -81,6 +81,7 @@ Property::Property()
     _hasBoolVar(false),
     _hasLogicalProxy(false),
     _hasLambda(false),
+    _higherOrder(false),
     _hasPolymorphicSym(false),
     _hasAnswerLiteral(false),
     _quantifiesOverPolymorphicVar(false),
@@ -339,13 +340,13 @@ void Property::scan(Clause* clause)
   if (_variablesInThisClause > _maxVariablesInClause) {
     _maxVariablesInClause = _variablesInThisClause;
   }
-  if (! hasProp(PR_HAS_X_EQUALS_Y) && hasXEqualsY(clause)) {
+  if (!hasProp(PR_HAS_X_EQUALS_Y) && hasXEqualsY(clause)) {
     addProp(PR_HAS_X_EQUALS_Y);
   }
 
   if (_variablesInThisClause > 0) {
     _allClausesGround = false;
-    if(!clause->isTheoryAxiom()){
+    if(!clause->isTheoryAxiom()) {
       _allNonTheoryClausesGround = false;
     }
   }
@@ -474,35 +475,35 @@ void Property::scan(Formula* f, int polarity)
  */
 void Property::scanSort(TermList sort)
 {
-  if(sort.isVar()){
+  if(sort.isVar()) {
     _hasNonDefaultSorts = true;
     return;
   }
 
-  if(sort.term()->isSuper()){
+  if(sort.term()->isSuper()) {
     return;
   }
 
-  if(sort.isArrowSort()){
+  if(sort.isArrowSort()) {
     _hasArrowSort = true;
   }
 
-  if(!higherOrder() && !hasPolymorphicSym()){
+  if(!higherOrder() && !hasPolymorphicSym()) {
     //used sorts is for FMB which is not compatible with 
     //higher-order or polymorphism
     unsigned sortU = sort.term()->functor();
-    if(!_usesSort.get(sortU)){
+    if(!_usesSort.get(sortU)) {
       _sortsUsed++;
-      _usesSort[sortU]=true;
+      _usesSort[sortU] = true;
     } 
   }
 
-  if (sort==AtomicSort::defaultSort()) {
+  if (sort == AtomicSort::defaultSort()) {
     return;
   }
   _hasNonDefaultSorts = true;
   
-  if(sort.isArraySort()){
+  if(sort.isArraySort()) {
     // an array sort is infinite, if the index or value sort is infinite
     // we rely on the recursive calls setting appropriate flags
     TermList idx = *sort.term()->nthArgument(0);
@@ -529,8 +530,8 @@ void Property::scanSort(TermList sort)
     return;
   }
   
-  TermList resultSort = ApplicativeHelper::getResultSort(sort);
-  if(resultSort == AtomicSort::boolSort()){
+  TermList resultSort = sort;
+  if(resultSort == AtomicSort::boolSort()) {
     _hasFOOL = true;
   }
 
@@ -687,34 +688,29 @@ void Property::scan(TermList ts,bool unit,bool goal)
     _symbolsInFormula.insert(t->functor());
     Signature::Symbol* func = env.signature->getFunction(t->functor());
     func->incUsageCnt();
-    if(unit){ func->markInUnit();}
-    if(goal){ func->markInGoal();}
+    if (unit) { func->markInUnit();}
+    if (goal) { func->markInGoal();}
 
-    if(t->isApplication()){
+    if (t->isApplication()) {
       _hasApp = true;
       TermList sort = SortHelper::getResultSort(t);
-      if(ApplicativeHelper::getResultSort(sort) == AtomicSort::boolSort()){
-        TermList head = ApplicativeHelper::getHead(ts);
-        if(head.isVar()){
+      if (sort.finalResult().isBoolSort() && ts.head().isVar()) {
           _hasBoolVar = true;
-        }
       }
     }
 
-    if(func->combinator() != Signature::NOT_COMB){
-      _hasCombs = true;
-    } else if(func->proxy() != Signature::NOT_PROXY){
-      if(func->proxy() == Signature::PI || func->proxy() == Signature::SIGMA){
+    if (func->proxy() != Signature::NOT_PROXY) {
+      if (func->proxy() == Signature::PI || func->proxy() == Signature::SIGMA) {
         ASS(t->arity() == 1);
         TermList sort = *t->nthArgument(0);
-        if(ApplicativeHelper::getResultSort(sort) == AtomicSort::boolSort()){
+        if (sort.finalResult().isBoolSort()) {
           _hasBoolVar = true;
         }
       }
       _hasLogicalProxy = true;
     }
 
-    if(!t->isApplication() && t->numTypeArguments() > 0){
+    if (!t->isApplication() && !t->isLambdaTerm() && t->numTypeArguments() > 0) {
       _hasPolymorphicSym = true;
     }
 

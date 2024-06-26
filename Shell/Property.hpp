@@ -227,10 +227,12 @@ public:
   bool hasAppliedVar() const { return _hasAppliedVar; }
   bool hasBoolVar() const { return _hasBoolVar; }
   bool hasLogicalProxy() const { return _hasLogicalProxy; }
+  // for use in unit tests
+  void forceHigherOrder() { _higherOrder = true; }
   bool hasPolymorphicSym() const { return _hasPolymorphicSym; }
   bool hasAnswerLiteral() const { return _hasAnswerLiteral; }
   bool higherOrder() const { return hasCombs() || hasApp() || hasLogicalProxy() ||
-                                    hasArrowSort() || _hasLambda; }
+                                    hasArrowSort() || _hasLambda || _higherOrder;; }
   bool quantifiesOverPolymorphicVar() const { return _quantifiesOverPolymorphicVar; }
   bool usesSort(unsigned sort) const { 
     if(_usesSort.size() <= sort) return false;
@@ -331,6 +333,7 @@ public:
   bool _hasBoolVar;
   bool _hasLogicalProxy;
   bool _hasLambda;
+  bool _higherOrder;
   bool _hasPolymorphicSym;
   bool _hasAnswerLiteral;
   bool _quantifiesOverPolymorphicVar;
