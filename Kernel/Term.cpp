@@ -302,6 +302,38 @@ TermList TermList::head() {
   return term()->head();
 }
 
+TermList TermList::domain() {
+  ASS(isArrowSort());
+
+  return *term()->nthArgument(0);
+}
+
+TermList TermList::result(){
+  ASS(isArrowSort());
+
+  return *term()->nthArgument(1);
+}
+
+TermList TermList::finalResult(){
+  return isVar() || !isArrowSort() ? *this : static_cast<AtomicSort*>(term())->finalResult();
+}
+
+TermList TermList::whnfDeref(RobSubstitutionTL* sub){
+  return WHNFDeref(sub).normalise(*this);
+}
+
+TermList TermList::betaNF(){
+  return BetaNormaliser().normalise(*this);
+}
+
+TermList TermList::etaNF(){
+  return EtaNormaliser().normalise(*this);
+}
+
+TermList TermList::betaEtaNF(){
+  return this->betaNF().etaNF();
+}
+
 TermList Term::head() {
   TermList trm = TermList(this);
   while(trm.isLambdaTerm()){
@@ -1141,6 +1173,26 @@ const vstring& AtomicSort::typeConName() const
 
   return env.signature->typeConName(_functor);
 } // Term::functionName
+
+TermList AtomicSort::domain() {
+  ASS(isArrowSort());
+
+  return *nthArgument(0);
+}
+
+TermList AtomicSort::result() {
+  ASS(isArrowSort());
+
+  return *nthArgument(1);
+}
+
+TermList AtomicSort::finalResult() {
+  TermList trm(this);
+  while(trm.isArrowSort()){
+    trm = trm.result();
+  }
+  return trm;
+}
 
 /**
  * Return the print name of the function symbol of this literal.

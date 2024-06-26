@@ -1153,7 +1153,13 @@ public:
   bool isTupleSort() const;
 
   const vstring& typeConName() const;  
-  
+
+  TermList domain();
+  /** result sort of an arrow sort */
+  TermList result();
+  /** */
+  TermList finalResult();
+
   static TermList arrowSort(TermStack& domSorts, TermList range);
   static TermList arrowSort(TermList s1, TermList s2);
   static TermList arrowSort(TermList s1, TermList s2, TermList s3);
