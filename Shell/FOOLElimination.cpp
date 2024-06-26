@@ -32,6 +32,7 @@
 
 #include "Shell/Options.hpp"
 #include "Shell/SymbolOccurrenceReplacement.hpp"
+#include "Shell/LambdaConversion.hpp"
 #include "Shell/Statistics.hpp"
 
 #include "Rectify.hpp"
@@ -49,9 +50,32 @@ const char* FOOLElimination::LET_PREFIX  = "lG";
 const char* FOOLElimination::BOOL_PREFIX = "bG";
 const char* FOOLElimination::MATCH_PREFIX  = "mG";
 
-FOOLElimination::FOOLElimination() : _defs(0), _currentDefs(0), _higherOrder(0), _polymorphic(0) {}
+FOOLElimination::FOOLElimination()
+    : _defs(nullptr),
+      _currentDefs(nullptr),
+      _higherOrder(false),
+      _polymorphic(false) {}
 
 bool FOOLElimination::needsElimination(FormulaUnit* unit) {
+
+//#if VHOL
+  if(env.getMainProblem()->isHigherOrder())
+  {
+    switch(env.options->cnfOnTheFly()){
+      case Options::CNFOnTheFly::EAGER:
+        break;
+      case Options::CNFOnTheFly::CONJ_EAGER:
+        if (unit->inputType() != UnitInputType::NEGATED_CONJECTURE &&
+            unit->inputType() != UnitInputType::CONJECTURE) {
+          return true;
+        }
+        break;
+      default:
+        return true;
+    }
+  }
+//#endif
+
   /**
    * Be careful with the difference between FOOLElimination::needsElimination
    * and Property::_hasFOOL!
@@ -144,7 +168,21 @@ FormulaUnit* FOOLElimination::apply(FormulaUnit* unit) {
 
   SortHelper::collectVariableSorts(formula, _varSorts);
 
-  Formula* processedFormula = process(formula);
+//#if VHOL
+  bool isConjecture =
+      unit->inputType() == UnitInputType::NEGATED_CONJECTURE ||
+      unit->inputType() == UnitInputType::CONJECTURE;
+
+  // The old implementation (combinator implementation) had a check !_polymorhpic
+  // I've removed it here, but if we start seeing issues on polymorphic problems, that
+  // is one place to check immediately
+  bool proxify = env.getMainProblem()->isHigherOrder() &&
+      env.options->cnfOnTheFly() != Options::CNFOnTheFly::EAGER &&
+      env.options->cnfOnTheFly() != Options::CNFOnTheFly::OFF   &&
+      (env.options->cnfOnTheFly() != Options::CNFOnTheFly::CONJ_EAGER || !isConjecture);
+//#endif
+
+  Formula* processedFormula = proxify ? convertToProxified(formula) : process(formula);
   if (formula == processedFormula) {
     return rectifiedUnit;
   }
@@ -163,19 +201,36 @@ FormulaUnit* FOOLElimination::apply(FormulaUnit* unit) {
   return processedUnit;
 }
 
-Formula* FOOLElimination::process(Formula* formula) {
-  if(env.options->cnfOnTheFly() != Options::CNFOnTheFly::EAGER &&
-     !_polymorphic){
-    LambdaElimination le = LambdaElimination();
-    TermList proxifiedFormula = le.elimLambda(formula);
-    Formula* processedFormula = toEquality(proxifiedFormula);
+//#if VHOL
+Formula* FOOLElimination::convertToProxified(Formula* formula)
+{
+  LambdaConversion lc;
 
-    if (env.options->showPreprocessing()) {
-      reportProcessed(formula->toString(), processedFormula->toString());
-    }
-
-    return processedFormula;
+  Formula* processedFormula;
+  if(formula->connective() == LITERAL){
+    // don't proxify the equality itself, as this blocks definition rewriting
+    // which really harms performance
+    Literal* literal = formula->literal();
+    TermList lhs = *literal->nthArgument(0);
+    TermList rhs = *literal->nthArgument(1);
+    lhs = lc.convertLambda(lhs);
+    rhs = lc.convertLambda(rhs);
+    literal = Literal::createEquality(literal->polarity(), lhs, rhs, SortHelper::getEqualityArgumentSort(literal));
+    processedFormula = new AtomicFormula(literal);
+  } else {
+    TermList proxifiedFormula = lc.convertLambda(formula);
+    processedFormula = toEquality(proxifiedFormula);
   }
+
+  if (env.options->showPreprocessing()) {
+    reportProcessed(formula->toString(), processedFormula->toString());
+  }
+
+  return processedFormula;
+}
+//#endif
+
+Formula* FOOLElimination::process(Formula* formula) {
 
   switch (formula->connective()) {
     case LITERAL: {
@@ -721,7 +776,7 @@ void FOOLElimination::process(Term* term, Context context, TermList& termResult,
          *     where true is FOOL constant
          *  3) Replace the term with g(Y1, ..., Ym, X1, ..., Xn)
          */
-        if(!_higherOrder){
+        if (!_higherOrder) {
           Formula *formula = process(sd->getFormula());
 
           collectSorts(freeVars, typeVars, termVars, allVars, termVarSorts);
@@ -748,16 +803,13 @@ void FOOLElimination::process(Term* term, Context context, TermList& termResult,
 
           termResult = freshSymbolApplication;
         } else {
-          LambdaElimination le = LambdaElimination();
-          termResult = le.elimLambda(sd->getFormula());
+          termResult = LambdaConversion().convertLambda(sd->getFormula());
         }
         break;
       }
       case SpecialFunctor::LAMBDA: {
-        // Lambda terms are translated to FOL using SKIBC combinators which are extensively described in
-        // the literature.
-        LambdaElimination le = LambdaElimination();
-        termResult = le.elimLambda(term);
+        // Lambda terms using named representation are converted to nameless De Bruijn representation
+        termResult = LambdaConversion().convertLambda(term);
         break;
       }
 
