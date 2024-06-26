@@ -14,8 +14,6 @@
  * @since 02/06/2007 Manchester, changed to new datastructures
  */
 
-class LambdaConversion;
-
 #include "Lib/ScopedLet.hpp"
 
 #include "Kernel/Unit.hpp"
@@ -54,6 +52,7 @@ class LambdaConversion;
 #include "TheoryFlattening.hpp"
 #include "TweeGoalTransformation.hpp"
 #include "BlockedClauseElimination.hpp"
+#include "LambdaConversion.hpp"
 
 #include "UIHelper.hpp"
 #include "Lib/List.hpp"
@@ -181,15 +180,17 @@ void Preprocess::preprocess(Problem& prb)
     }
   }
 
-  if (env.options->addProxyAxioms()){
-    if(!prb.isHigherOrder()){
+  if (env.options->addProxyAxioms()) {
+    if (!prb.isHigherOrder()) {
       if (outputAllowed()) {
         addCommentSignForSZS(std::cout);
         std::cout << "WARNING: ignoring request to add logical proxy axioms as problem is first-order" << std::endl;
       }
-    } else {
+    }
+    else {
       LambdaConversion::addProxyAxioms(prb);
     }
+  }
 //#endif
 
   if (prb.hasInterpretedOperations() || env.signature->hasTermAlgebras()){
