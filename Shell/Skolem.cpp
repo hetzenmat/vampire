@@ -67,7 +67,7 @@ FormulaUnit* Skolem::skolemise (FormulaUnit* unit, bool appify)
   return skol.skolemiseImpl(unit, appify);
 } // Skolem::skolemise
 
-FormulaUnit* Skolem::skolemiseImpl (FormulaUnit* unit, bool appify)
+FormulaUnit* Skolem::skolemiseImpl(FormulaUnit* unit, bool appify)
 {
   ASS(_introducedSkolemSyms.isEmpty());
   
@@ -400,12 +400,12 @@ Formula* Skolem::skolemise (Formula* f)
       VarSet* dep = depInfo.univ;
 
       /*
-       * Universals occuring below are not enough,
+       * Universals occurring below are not enough,
        * because some existential from above could depend on them
        * and its corresponding skolem will bring them here...
        *
        * Ex: ! [A] : ? [B] : ( p(A,B) | ? [C] : r(B,C) & something )
-       * when skolimising the subformula
+       * when skolemising the subformula
        * ? [C] : r(B,C) & something
        * univ dep of C is empty, but A will sneak into the actual dep
        * through B's dependency on A.
@@ -483,8 +483,7 @@ Formula* Skolem::skolemise (Formula* f)
           TermList skSymSort = AtomicSort::arrowSort(termVarSorts, rangeSort);
           sym = addSkolemFunction(typeVars.size(), 0, skSymSort, v, typeVars.size());
           TermList head = TermList(Term::create(sym, typeVars.size(), typeVars.begin()));
-          skolemTerm = ApplicativeHelper::createAppTerm(
-            SortHelper::getResultSort(head.term()), head, termVars).term();
+          skolemTerm = ApplicativeHelper::app(head, termVars).term();
         }
         _introducedSkolemSyms.push(make_pair(skolemisingTypeVar, sym));
 
