@@ -74,7 +74,6 @@
 #include "Inferences/Superposition.hpp"
 #include "Inferences/ArgCong.hpp"
 #include "Inferences/NegativeExt.hpp"
-#include "Inferences/Narrow.hpp"
 #include "Inferences/PrimitiveInstantiation.hpp"
 #include "Inferences/Choice.hpp"
 #include "Inferences/ElimLeibniz.hpp"

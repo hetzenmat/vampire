@@ -42,16 +42,16 @@ using namespace std;
 using namespace Lib;
 using namespace Kernel;
 
-
-InequalitySplitting::InequalitySplitting(const Options& opt)
-: _splittingTreshold(opt.inequalitySplitting()), _appify(false)
+InequalitySplitting::InequalitySplitting(const Options &opt)
+    : _splittingTreshold(opt.inequalitySplitting()),
+      _appify(false)
 {
-  ASS_G(_splittingTreshold,0);
+  ASS_G(_splittingTreshold, 0);
 }
 
 void InequalitySplitting::perform(Problem& prb)
 {
-  _appify = prb.hasApp();
+  _appify = prb.isHigherOrder();
   if(perform(prb.units())) {
     prb.invalidateByRemoval();
   }
@@ -137,7 +137,6 @@ Clause* InequalitySplitting::trySplitClause(Clause* cl)
 #endif
 
   return res;
-
 }
 
 Literal* InequalitySplitting::splitLiteral(Literal* lit, UnitInputType inpType, Clause*& premise)
@@ -228,10 +227,9 @@ Literal* InequalitySplitting::makeNameLiteral(unsigned predNum, TermList arg, bo
     vars.push(arg);
     return Literal::create(predNum, vars.size(), polarity, false, vars.begin());
   } else {
-    TermList boolT = polarity ? TermList(Term::foolTrue()) : TermList(Term::foolFalse());
+    TermList boolT = polarity ? ApplicativeHelper::top() : ApplicativeHelper::bottom();
     TermList head = TermList(Term::create(predNum, vars.size(), vars.begin()));
-    TermList headS = SortHelper::getResultSort(head.term());
-    TermList t = ApplicativeHelper::createAppTerm(headS, head, arg);
+    TermList t = ApplicativeHelper::app(head, arg);
     return Literal::createEquality(true, t, boolT, AtomicSort::boolSort());
   }
 

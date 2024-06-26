@@ -65,12 +65,23 @@ class HOLUnification {
  {
  private:
    TermList _t1head;
+   int _t1index;
    TermList _t2head;
+   int _t2index;
+   TermList _sort;
+   int _sortIndex;
  public:
 
    HOLConstraint(){} // dummy constructor required for use in SkipList
-   HOLConstraint(TermList t1, TermList t2) : UnificationConstraint(t1,t2),
-                                             _t1head(t1.head()), _t2head(t2.head()) {
+   HOLConstraint(TermList t1, int t1index, TermList t2, int t2index, TermList sort, int sortIndex)
+       : UnificationConstraint({t1,t1index}, {t2,t2index}, {sort,sortIndex}),
+         _t1head(t1.head()),
+         _t1index(t1index),
+         _t2head(t2.head()),
+         _t2index(t2index),
+         _sort(sort),
+         _sortIndex(sortIndex)
+   {
      ASS(!_t1head.isLambdaTerm() && !_t2head.isLambdaTerm()); // terms must be in whnf
    }
    USE_ALLOCATOR(HOLConstraint)
@@ -85,11 +96,11 @@ class HOLUnification {
    TermList sort() const {
      ASS(lhs().isTerm() || rhs().isTerm());
      if(lhs().isTerm())
-     { return SortHelper::getResultSort(lhs().term()); }
-     return SortHelper::getResultSort(rhs().term());
+     { return SortHelper::getResultSort(lhs().term.term()); }
+     return SortHelper::getResultSort(rhs().term.term());
    }
 
-   UnificationConstraint constraint() { return UnificationConstraint(lhs(),rhs()); }
+   // UnificationConstraint constraint() { return UnificationConstraint(lhs(),rhs()); }
  };
 
  inline bool sortCheck(TermList sort, bool topLevel = false){
@@ -106,9 +117,9 @@ public:
  HOLUnification() : _funcExt( env.options->functionExtensionality() == Options::FunctionExtensionality::ABSTRACTION)
  {}
 
- HOLUnification(TypedTermList query) :
-                                       _funcExt( env.options->functionExtensionality() == Options::FunctionExtensionality::ABSTRACTION) {
-   TypedTermList t = ToBank(QUERY_BANK).toBank(query);
+ HOLUnification(TypedTermList query)
+     : _funcExt( env.options->functionExtensionality() == Options::FunctionExtensionality::ABSTRACTION) {
+   TypedTermList t = ToBank(VarBank::QUERY_BANK).toBank(query);
    _origQuery = t;
    _origQuerySort = t.sort();
  }

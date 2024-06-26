@@ -1989,7 +1989,7 @@ void Options::init()
     _lookup.insert(&_holPrinting);
     _holPrinting.tag(OptionTag::HIGHER_ORDER);
 
-#endif
+// #endif
 
 //*********************** InstGen  ***********************
 // TODO not really InstGen any more, just global subsumption

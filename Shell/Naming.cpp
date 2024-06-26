@@ -50,9 +50,12 @@ using namespace Shell;
  * @param preserveEpr If true, names will not be introduced if it would
  *   lead to introduction of non-constant Skolem functions.
  */
-Naming::Naming(int threshold, bool preserveEpr, bool appify) :
-    _threshold(threshold + 1), _preserveEpr(preserveEpr), 
-    _appify(appify), _varsInScope(false) {
+Naming::Naming(int threshold, bool preserveEpr, bool appify)
+    : _threshold(threshold + 1),
+      _preserveEpr(preserveEpr),
+      _appify(appify),
+      _varsInScope(false)
+{
   ASS(threshold < 32768);
 } // Naming::Naming
 
@@ -123,7 +126,7 @@ Formula* Naming::apply_iter(Formula* top_f) {
 
   while(todo_stack.isNonEmpty()) {
     // Careful: this is a potentially risky practice,
-    // referencess to the stack become invalid after push !!!
+    // references to the stack become invalid after push !!!
     Task& t = todo_stack.top();
 
     switch (t.fncTag) {
@@ -1137,9 +1140,8 @@ Literal* Naming::getDefinitionLiteral(Formula* f, VList* freeVars) {
     sym->markSkipCongruence();
     sym->setType(OperatorType::getConstantsType(sort, typeArgArity)); 
     TermList head = TermList(Term::create(fun, typeVars.size(), typeVars.begin()));
-    TermList t = ApplicativeHelper::createAppTerm(
-                 SortHelper::getResultSort(head.term()), head, termVars);
-    return  Literal::createEquality(true, TermList(t), TermList(Term::foolTrue()), AtomicSort::boolSort());  
+    TermList t = ApplicativeHelper::app(head, termVars);
+    return Literal::createEquality(true, TermList(t), TermList(Term::foolTrue()), AtomicSort::boolSort());
   }
 }
 
