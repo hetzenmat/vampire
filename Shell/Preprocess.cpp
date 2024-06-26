@@ -14,6 +14,7 @@
  * @since 02/06/2007 Manchester, changed to new datastructures
  */
 
+class LambdaConversion;
 
 #include "Lib/ScopedLet.hpp"
 
@@ -155,23 +156,41 @@ void Preprocess::preprocess(Problem& prb)
     }
   }
 
+  prb.getProperty();
+
+//#if VHOL
   if(env.options->functionExtensionality() == Options::FunctionExtensionality::AXIOM){
-    LambdaElimination::addFunctionExtensionalityAxiom(prb);
+    if(!prb.isHigherOrder()){
+      if (outputAllowed()) {
+        addCommentSignForSZS(std::cout);
+        std::cout << "WARNING: ignoring request to add function extensionality axiom as problem is first-order" << std::endl;
+      }
+    } else {
+      LambdaConversion::addFunctionExtensionalityAxiom(prb);
+    }
   }
 
   if(env.options->choiceAxiom()){
-    LambdaElimination::addChoiceAxiom(prb);
+    if(!prb.isHigherOrder()){
+      if (outputAllowed()) {
+        addCommentSignForSZS(std::cout);
+        std::cout << "WARNING: ignoring request to add choice axiom as problem is first-order" << std::endl;
+      }
+    } else {
+      LambdaConversion::addChoiceAxiom(prb);
+    }
   }
 
-  prb.getProperty();
-
-  if ((prb.hasCombs() || prb.hasAppliedVar()) && env.options->addCombAxioms()){
-    LambdaElimination::addCombinatorAxioms(prb);
-  }
-
-  if ((prb.hasLogicalProxy() || prb.hasBoolVar()) && env.options->addProxyAxioms()){
-    LambdaElimination::addProxyAxioms(prb);
-  }
+  if (env.options->addProxyAxioms()){
+    if(!prb.isHigherOrder()){
+      if (outputAllowed()) {
+        addCommentSignForSZS(std::cout);
+        std::cout << "WARNING: ignoring request to add logical proxy axioms as problem is first-order" << std::endl;
+      }
+    } else {
+      LambdaConversion::addProxyAxioms(prb);
+    }
+//#endif
 
   if (prb.hasInterpretedOperations() || env.signature->hasTermAlgebras()){
     // Some axioms needed to be normalized, so we call InterpretedNormalizer twice
@@ -400,6 +419,12 @@ void Preprocess::preprocess(Problem& prb)
      twee.apply(prb,(env.options->tweeGoalTransformation() == Options::TweeGoalTransformation::GROUND));
    }
 
+//#if VHOL
+   if(prb.isHigherOrder() && env.options->heuristicInstantiation()){
+     findAbstractions(prb.units());
+   }
+//#endif
+
    if (!prb.isHigherOrder() && _options.equalityProxy()!=Options::EqualityProxy::OFF && prb.mayHaveEquality()) {
      env.statistics->phase=Statistics::EQUALITY_PROXY;
      if (env.options->showPreprocessing())
@@ -417,7 +442,6 @@ void Preprocess::preprocess(Problem& prb)
      }
    }
 
-
    if(_options.theoryFlattening()) {
      if (prb.hasPolymorphicSym()) { // TODO: extend theoryFlattening to support polymorphism?
        if (outputAllowed()) {
@@ -434,12 +458,22 @@ void Preprocess::preprocess(Problem& prb)
    }
 
    if (_options.blockedClauseElimination()) {
-     env.statistics->phase=Statistics::BLOCKED_CLAUSE_ELIMINATION;
-     if(env.options->showPreprocessing())
-       std::cout << "blocked clause elimination" << std::endl;
 
-     BlockedClauseElimination bce;
-     bce.apply(prb);
+     // #if VHOL
+     if (prb.isHigherOrder()) {
+
+       addCommentSignForSZS(std::cout);
+       std::cout << "WARNING: blocked clause elimination is currently not compatible with higher-order. Ignoring request to use." << endl;
+     }
+     else {
+     // #endif
+       env.statistics->phase = Statistics::BLOCKED_CLAUSE_ELIMINATION;
+       if (env.options->showPreprocessing())
+         std::cout << "blocked clause elimination" << std::endl;
+
+       BlockedClauseElimination bce;
+       bce.apply(prb);
+     }
    }
 
    if (_options.shuffleInput()) {
@@ -478,6 +512,29 @@ void Preprocess::preprocess(Problem& prb)
    }
 } // Preprocess::preprocess ()
 
+
+//#if VHOL
+void Preprocess::findAbstractions(UnitList*& units) {
+  UnitList::RefIterator uit(units);
+  while (uit.hasNext()) {
+    Unit* &u = uit.next();
+    if (!u->derivedFromGoal())
+      continue;
+
+    ASS(u->isClause());
+    Clause* c = u->asClause();
+
+    for(unsigned i = 0; i < c->length(); i++){
+      Literal* lit = (*c)[i];
+      TermStack abstractionTerms;
+      ApplicativeHelper::getAbstractionTerms(lit, abstractionTerms);
+      while(!abstractionTerms.isEmpty()){
+        env.signature->addInstantiation(abstractionTerms.pop());
+      }
+    }
+  }
+}
+//#endif
 
 /**
  * Preprocess the unit using options from opt. Preprocessing may

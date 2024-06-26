@@ -75,12 +75,12 @@ public:
   bool colorUsed;
 
   /**
-   * A global way of accessing "the problem vampire is working on", maily for checking its properties.
+   * A global way of accessing "the problem vampire is working on", mainly for checking its properties.
    * Note that if in some special cases there is more than one Problem instance used at one time moment,
    * one should know which is the main one and that one should be set/reset here.
    *
    * (In an ideal world, there would be no need for this function, as the correct Problem object would
-   * be explicitly passed to all the functions interested in knowning...)
+   * be explicitly passed to all the functions interested in knowing...)
    */
   Kernel::Problem* getMainProblem() { return _problem; }
   void setMainProblem(Kernel::Problem* p) { _problem = p; }
