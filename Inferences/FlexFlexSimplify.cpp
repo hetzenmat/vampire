@@ -8,11 +8,8 @@
  * and in the source directory
  */
 /**
- * @file CombinatorDemodISE.cpp
- * Implements class CombinatorDemodISE.
+ * @file FlexFlexSimplify.cpp
  */
-
-#if VHOL
 
 #include "Kernel/Term.hpp"
 #include "Kernel/Clause.hpp"
@@ -27,8 +24,6 @@ using namespace Inferences;
 
 Clause* FlexFlexSimplify::simplify(Clause* c)
 {
-  CALL("FlexFlexSimplify::simplify");
-
   if(c->isEmpty()) return c;
  
   for(unsigned i = 0; i < c->length(); i++){
@@ -40,6 +35,3 @@ Clause* FlexFlexSimplify::simplify(Clause* c)
   // all flex flex, return the empty clause
   return new(0) Clause(0, SimplifyingInference1(InferenceRule::FLEX_FLEX_SIMPLIFY, c));
 }
-
-#endif
-

@@ -8,15 +8,12 @@
  * and in the source directory
  */
 /**
- * @file CombinatorDemodISE.hpp
- * Defines class CombinatorDemodISE.
+ * @file FlexFlexSimplify.hpp
  */
 
 
 #ifndef __FlexFlexSimplify__
 #define __FlexFlexSimplify__
-
-#if VHOL
 
 #include "Forwards.hpp"
 #include "InferenceEngine.hpp"
@@ -29,7 +26,6 @@ class FlexFlexSimplify
 : public ImmediateSimplificationEngine
 {
 public:
-  CLASS_NAME(FlexFlexSimplify);
   USE_ALLOCATOR(FlexFlexSimplify);
 
   Clause* simplify(Clause* cl);
@@ -37,6 +33,4 @@ public:
 
 };
 
-#endif
-
-#endif /* __BetaEtaSimplify__ */
+#endif /* __FlexFlexSimplify__ */
