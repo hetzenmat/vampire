@@ -51,22 +51,25 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
-void BackwardDemodulation::attach(SaturationAlgorithm* salg)
+template <class SubtermIt>
+void BackwardDemodulation<SubtermIt>::attach(SaturationAlgorithm* salg)
 {
   BackwardSimplificationEngine::attach(salg);
-  _index=static_cast<DemodulationSubtermIndex*>(
+  _index=static_cast<DemodulationSubtermIndex<SubtermIt>*>(
 	  _salg->getIndexManager()->request(DEMODULATION_SUBTERM_SUBST_TREE) );
   _helper = DemodulationHelper(getOptions(), &_salg->getOrdering());
 }
 
-void BackwardDemodulation::detach()
+template <class SubtermIt>
+void BackwardDemodulation<SubtermIt>::detach()
 {
   _index=0;
   _salg->getIndexManager()->release(DEMODULATION_SUBTERM_SUBST_TREE);
   BackwardSimplificationEngine::detach();
 }
 
-struct BackwardDemodulation::RemovedIsNonzeroFn
+template <class SubtermIt>
+struct BackwardDemodulation<SubtermIt>::RemovedIsNonzeroFn
 {
   bool operator() (BwSimplificationRecord arg)
   {
@@ -74,15 +77,18 @@ struct BackwardDemodulation::RemovedIsNonzeroFn
   }
 };
 
-struct BackwardDemodulation::RewritableClausesFn
+template <class SubtermIt>
+struct BackwardDemodulation<SubtermIt>::RewritableClausesFn
 {
-  RewritableClausesFn(DemodulationSubtermIndex* index) : _index(index) {}
+  RewritableClausesFn(DemodulationSubtermIndex<SubtermIt>* index) : _index(index) {}
   VirtualIterator<pair<TypedTermList,QueryRes<ResultSubstitutionSP, TermLiteralClause>> > operator() (TypedTermList lhs)
   {
-    return pvi( pushPairIntoRightIterator(lhs, _index->getInstances(lhs, true)) );
+    return pvi( pushPairIntoRightIterator(lhs,
+                                         env.getMainProblem()->isHigherOrder() ? _index->getHOLInstances(lhs) :
+                                                                                 _index->getInstances(lhs, true)) );
   }
 private:
-  DemodulationSubtermIndex* _index;
+  DemodulationSubtermIndex<SubtermIt>* _index;
 };
 
 namespace {
@@ -97,7 +103,8 @@ struct Applicator : SubstApplicator {
 
 } // end namespace
 
-struct BackwardDemodulation::ResultFn
+template <class SubtermIt>
+struct BackwardDemodulation<SubtermIt>::ResultFn
 {
   typedef DHMultiset<Clause*> ClauseSet;
 
@@ -155,7 +162,9 @@ struct BackwardDemodulation::ResultFn
       return BwSimplificationRecord(0);
     }
 
-    Literal* resLit=EqHelper::replace(qr.data->literal,lhsS,rhsS);
+    //Literal* resLit=EqHelper::replace(qr.data->literal,lhsS,rhsS); TODO MH: figure out which line is correct
+    Literal* resLit = SubtermReplacer(lhsS,rhsS).transformLiteral(qr.data->literal);
+
     if(EqHelper::isEqTautology(resLit)) {
       env.statistics->backwardDemodulationsToEqTaut++;
       _removed->insert(qr.data->clause);
@@ -191,7 +200,8 @@ private:
 };
 
 
-void BackwardDemodulation::perform(Clause* cl,
+template <class SubtermIt>
+void BackwardDemodulation<SubtermIt>::perform(Clause* cl,
 	BwSimplificationRecordIterator& simplifications)
 {
   TIME_TRACE("backward demodulation");
@@ -220,4 +230,7 @@ void BackwardDemodulation::perform(Clause* cl,
   simplifications=getPersistentIterator(replacementIterator);
 }
 
-}
+template class BackwardDemodulation<DemodulationSubtermIt>;
+template class BackwardDemodulation<NonVariableNonTypeIterator>;
+
+} // namespace Inferences

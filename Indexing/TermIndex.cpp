@@ -67,14 +67,13 @@ void SuperpositionLHSIndex::handleClause(Clause* c, bool adding)
   }
 }
 
-template <bool combinatorySupSupport>
-void DemodulationSubtermIndexImpl<combinatorySupSupport>::handleClause(Clause* c, bool adding)
+
+template <class SubtermIterator>
+void DemodulationSubtermIndex<SubtermIterator>::handleClause(Clause* c, bool adding)
 {
   TIME_TRACE("backward demodulation index maintenance");
 
   static DHSet<Term*> inserted;
-
-  bool skipNonequationalLiterals = _opt.demodulationOnlyEquational();
 
   unsigned cLen=c->length();
   for (unsigned i=0; i<cLen; i++) {
@@ -84,15 +83,7 @@ void DemodulationSubtermIndexImpl<combinatorySupSupport>::handleClause(Clause* c
     // the removes could be called on different literals than the inserts!
     inserted.reset();
     Literal* lit=(*c)[i];
-    if (lit->isAnswerLiteral()) {
-      continue;
-    }
-    if (skipNonequationalLiterals && !lit->isEquality()) {
-      continue;
-    }
-    typename std::conditional<!combinatorySupSupport,
-      NonVariableNonTypeIterator,
-      FirstOrderSubtermIt>::type it(lit);
+    SubtermIterator it(lit);
     while (it.hasNext()) {
       Term* t= it.next();
       if (!inserted.insert(t)) {//TODO existing error? Terms are inserted once per a literal
@@ -103,18 +94,17 @@ void DemodulationSubtermIndexImpl<combinatorySupSupport>::handleClause(Clause* c
         continue;
       }
       if (adding) {
-        _is->insert(TermLiteralClause{ t, lit, c });
-      } else {
-        _is->remove(TermLiteralClause{ t, lit, c });
+        _is->insert(TypedTermList(t), lit, c);
+      }
+      else {
+        _is->remove(TypedTermList(t), lit, c);
       }
     }
   }
 }
 
-// This is necessary for templates defined in cpp files.
-// We are happy to do it for DemodulationSubtermIndexImpl, since it (at the moment) has only two specializations:
-template class DemodulationSubtermIndexImpl<false>;
-template class DemodulationSubtermIndexImpl<true>;
+template class DemodulationSubtermIndex<DemodulationSubtermIt>;
+template class DemodulationSubtermIndex<NonVariableNonTypeIterator>;
 
 void DemodulationLHSIndex::handleClause(Clause* c, bool adding)
 {

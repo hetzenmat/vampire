@@ -28,6 +28,7 @@ namespace Inferences {
 using namespace Indexing;
 using namespace Kernel;
 
+template <class SubtermIt>
 class BackwardDemodulation
 : public BackwardSimplificationEngine
 {
@@ -41,7 +42,7 @@ private:
   struct RewritableClausesFn;
   struct ResultFn;
 
-  DemodulationSubtermIndex* _index;
+  DemodulationSubtermIndex<SubtermIt>* _index;
   DemodulationHelper _helper;
 };
 

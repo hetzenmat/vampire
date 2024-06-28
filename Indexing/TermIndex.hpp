@@ -100,29 +100,16 @@ private:
 /**
  * Term index for backward demodulation
  */
+template <class SubtermIterator>
 class DemodulationSubtermIndex
 : public TermIndex<TermLiteralClause>
 {
 public:
-  // people seemed to like the class, although it add's no interface on top of TermIndex
   DemodulationSubtermIndex(TermIndexingStructure<TermLiteralClause>* is)
   : TermIndex(is) {};
 protected:
   // it's the implementation of this below in DemodulationSubtermIndexImpl, which makes this work
-  void handleClause(Clause* c, bool adding) = 0;
-};
-
-template <bool combinatorySupSupport>
-class DemodulationSubtermIndexImpl
-: public DemodulationSubtermIndex
-{
-public:
-  DemodulationSubtermIndexImpl(TermIndexingStructure<TermLiteralClause>* is, const Options& opt)
-  : DemodulationSubtermIndex(is), _opt(opt) {};
-protected:
   void handleClause(Clause* c, bool adding);
-private:
-  const Options& _opt;
 };
 
 /**
