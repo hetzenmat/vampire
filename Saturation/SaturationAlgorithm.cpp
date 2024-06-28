@@ -84,8 +84,6 @@
 #include "Inferences/Induction.hpp"
 #include "Inferences/ArithmeticSubtermGeneralization.hpp"
 #include "Inferences/TautologyDeletionISE.hpp"
-#include "Inferences/CombinatorDemodISE.hpp"
-#include "Inferences/CombinatorNormalisationISE.hpp"
 #include "Inferences/BoolSimp.hpp"
 #include "Inferences/CasesSimp.hpp"
 #include "Inferences/Cases.hpp"
@@ -134,8 +132,20 @@ std::unique_ptr<PassiveClauseContainer> makeLevel0(bool isOutermost, const Optio
   return std::make_unique<AWPassiveClauseContainer>(isOutermost, opt, name + "AWQ");
 }
 
-std::unique_ptr<PassiveClauseContainer> makeLevel1(bool isOutermost, const Options& opt, vstring name)
+std::unique_ptr<PassiveClauseContainer> makeLevel1(bool isOutermost, bool forHO, const Options& opt, vstring name)
 {
+  //#if VHOL
+  if(opt.hoFeaturesSplitQueues() && forHO){
+    Lib::vvector<std::unique_ptr<PassiveClauseContainer>> queues;
+    auto cutoffs = opt.hoFeaturesSplitQueueCutoffs();
+    for (unsigned i = 0; i < cutoffs.size(); i++)
+    {
+      auto queueName = name + "HoFSQ" + Int::toString(cutoffs[i]) + ":";
+      queues.push_back(makeLevel0(false, opt, queueName));
+    }
+    return std::make_unique<HoFeaturesMultiSplitPassiveClauseContainer>(isOutermost, opt, name + "HoFSQ", std::move(queues));
+  }
+  //#else
   if (opt.useTheorySplitQueues())
   {
     Lib::vvector<std::unique_ptr<PassiveClauseContainer>> queues;
@@ -147,13 +157,14 @@ std::unique_ptr<PassiveClauseContainer> makeLevel1(bool isOutermost, const Optio
     }
     return std::make_unique<TheoryMultiSplitPassiveClauseContainer>(isOutermost, opt, name + "ThSQ", std::move(queues));
   }
+  //#endif
   else
   {
     return makeLevel0(isOutermost, opt, name);
   }
 }
 
-std::unique_ptr<PassiveClauseContainer> makeLevel2(bool isOutermost, const Options& opt, vstring name)
+std::unique_ptr<PassiveClauseContainer> makeLevel2(bool isOutermost, bool forHO, const Options& opt, vstring name)
 {
   if (opt.useAvatarSplitQueues())
   {
@@ -162,17 +173,17 @@ std::unique_ptr<PassiveClauseContainer> makeLevel2(bool isOutermost, const Optio
     for (unsigned i = 0; i < cutoffs.size(); i++)
     {
       auto queueName = name + "AvSQ" + Int::toString(cutoffs[i]) + ":";
-      queues.push_back(makeLevel1(false, opt, queueName));
+      queues.push_back(makeLevel1(false, forHO, opt, queueName));
     }
     return std::make_unique<AvatarMultiSplitPassiveClauseContainer>(isOutermost, opt, name + "AvSQ", std::move(queues));
   }
   else
   {
-    return makeLevel1(isOutermost, opt, name);
+    return makeLevel1(isOutermost, forHO, opt, name);
   }
 }
 
-std::unique_ptr<PassiveClauseContainer> makeLevel3(bool isOutermost, const Options& opt, vstring name)
+std::unique_ptr<PassiveClauseContainer> makeLevel3(bool isOutermost, bool forHO, const Options& opt, vstring name)
 {
   if (opt.useSineLevelSplitQueues())
   {
@@ -181,17 +192,17 @@ std::unique_ptr<PassiveClauseContainer> makeLevel3(bool isOutermost, const Optio
     for (unsigned i = 0; i < cutoffs.size(); i++)
     {
       auto queueName = name + "SLSQ" + Int::toString(cutoffs[i]) + ":";
-      queues.push_back(makeLevel2(false, opt, queueName));
+      queues.push_back(makeLevel2(false, forHO, opt, queueName));
     }
     return std::make_unique<SineLevelMultiSplitPassiveClauseContainer>(isOutermost, opt, name + "SLSQ", std::move(queues));
   }
   else
   {
-    return makeLevel2(isOutermost, opt, name);
+    return makeLevel2(isOutermost, forHO, opt, name);
   }
 }
 
-std::unique_ptr<PassiveClauseContainer> makeLevel4(bool isOutermost, const Options& opt, vstring name)
+std::unique_ptr<PassiveClauseContainer> makeLevel4(bool isOutermost, bool forHO, const Options& opt, vstring name)
 {
   if (opt.usePositiveLiteralSplitQueues())
   {
@@ -200,13 +211,13 @@ std::unique_ptr<PassiveClauseContainer> makeLevel4(bool isOutermost, const Optio
     for (unsigned i = 0; i < cutoffs.size(); i++)
     {
       auto queueName = name + "PLSQ" + Int::toString(cutoffs[i]) + ":";
-      queues.push_back(makeLevel3(false, opt, queueName));
+      queues.push_back(makeLevel3(false, forHO, opt, queueName));
     }
     return std::make_unique<PositiveLiteralMultiSplitPassiveClauseContainer>(isOutermost, opt, name + "PLSQ", std::move(queues));
   }
   else
   {
-    return makeLevel3(isOutermost, opt, name);
+    return makeLevel3(isOutermost, forHO, opt, name);
   }
 }
 
@@ -221,7 +232,7 @@ SaturationAlgorithm::SaturationAlgorithm(Problem& prb, const Options& opt)
     _clauseActivationInProgress(false),
     _fwSimplifiers(0), _simplifiers(0), _bwSimplifiers(0), _splitter(0),
     _consFinder(0), _labelFinder(0), _symEl(0), _answerLiteralManager(0),
-    _instantiation(0), _fnDefHandler(prb.getFunctionDefinitionHandler()),
+    _instantiation(0),
     _generatedClauseCount(0),
     _activationLimit(0)
 {
@@ -246,7 +257,7 @@ SaturationAlgorithm::SaturationAlgorithm(Problem& prb, const Options& opt)
   }
   else
   {
-    _passive = makeLevel4(true, opt, "");
+    _passive = makeLevel4(true, prb.isHigherOrder(), opt, "");
   }
   _active = new ActiveClauseContainer(opt);
 
@@ -1506,7 +1517,8 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     gie->addFront(res->_instantiation);
   }
 
-  if (prb.hasEquality()) {
+  // cases and foolParamodulation can introduce equality into a problem which has none
+  if (prb.hasEquality()|| opt.FOOLParamodulation() ||  opt.cases()) {
     gie->addFront(new EqualityFactoring());
     gie->addFront(new EqualityResolution());
     if(env.options->superposition()){
@@ -1516,62 +1528,76 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     gie->addFront(new EqualityResolution()); 
   }
 
-  /* TODO MH
-  if(opt.combinatorySup()){
+//#if VHOL
+  if (prb.isHigherOrder()) {
     gie->addFront(new ArgCong());
-    gie->addFront(new NegativeExt());//TODO add option
-    if(opt.narrow() != Options::Narrow::OFF){
-      gie->addFront(new Narrow());
+    gie->addFront(new NegativeExt()); //TODO add option
+    if(!env.options->higherOrderUnifDepth() && !env.options->applicativeUnify()){
+      // only add when we are not carrying out higher-order unification
+      gie->addFront(new ImitateProject());
     }
-    if(!opt.pragmatic()){
-      gie->addFront(new SubVarSup());
+    if(env.options->positiveExtensionality()){
+      gie->addFront(new PositiveExt());
     }
-  }*/
-
-  if(prb.hasFOOL() &&
-    prb.isHigherOrder() && env.options->booleanEqTrick()){
-  //  gie->addFront(new ProxyElimination::NOTRemovalGIE());
-    gie->addFront(new BoolEqToDiseq());
+    if(prb.hasFOOL() && env.options->booleanEqTrick()){
+      gie->addFront(new BoolEqToDiseq());
+    }
+    if(env.options->choiceReasoning()){
+      gie->addFront(new Choice());
+    }
   }
 
-  if(opt.complexBooleanReasoning() && prb.hasBoolVar() &&
-     prb.isHigherOrder() && !opt.lambdaFreeHol()){
+  if(opt.complexBooleanReasoning() && prb.hasBoolVar() && prb.isHigherOrder()) {
     gie->addFront(new PrimitiveInstantiation()); //TODO only add in some cases
     gie->addFront(new ElimLeibniz());
   }
 
-  if(env.options->choiceReasoning()){
-    gie->addFront(new Choice());
+  if (opt.cases() && prb.hasFOOL()) {
+    gie->addFront(new Cases());
   }
+
+  if ((prb.hasLogicalProxy() || prb.hasBoolVar() || prb.hasFOOL()) &&
+       prb.isHigherOrder() && !prb.quantifiesOverPolymorphicVar()) { // TODO why the last condition????
+    if (env.options->cnfOnTheFly() != Options::CNFOnTheFly::EAGER &&
+        env.options->cnfOnTheFly() != Options::CNFOnTheFly::OFF) {
+      gie->addFront(new LazyClausificationGIE());
+    }
+  }
+
+  if (prb.isHigherOrder() && opt.injectivityReasoning()) {
+    gie->addFront(new Injectivity());
+  }
+//#endif
 
   gie->addFront(new Factoring());
   if (opt.binaryResolution()) {
     gie->addFront(new BinaryResolution());
   }
   if (opt.unitResultingResolution() != Options::URResolution::OFF) {
-    gie->addFront(new URResolution(opt.unitResultingResolution() == Options::URResolution::FULL));
+    if(env.getMainProblem()->isHigherOrder()) {
+      // TODO Should we be outputing an error or just dying?
+      if (outputAllowed()) {
+        addCommentSignForSZS(std::cout);
+        std::cout << "WARNING: unit resulting resolution is not compatible with higher-order. Ignoring request." << endl;
+      }
+    } else {
+      gie->addFront(new URResolution(opt.unitResultingResolution() == Options::URResolution::FULL));
+    }
   }
   if (opt.extensionalityResolution() != Options::ExtensionalityResolution::OFF) {
     gie->addFront(new ExtensionalityResolution());
   }
   if (opt.FOOLParamodulation()) {
-    gie->addFront(new FOOLParamodulation());
-  }
-  if (opt.cases() && prb.hasFOOL() && !opt.casesSimp()) {
-    gie->addFront(new Cases());
-  }
-
-  if((prb.hasLogicalProxy() || prb.hasBoolVar() || prb.hasFOOL()) &&
-      prb.isHigherOrder() && !prb.quantifiesOverPolymorphicVar()){
-    if(env.options->cnfOnTheFly() != Options::CNFOnTheFly::EAGER &&
-       env.options->cnfOnTheFly() != Options::CNFOnTheFly::OFF){
-      gie->addFront(new LazyClausificationGIE());
+    if(env.getMainProblem()->isHigherOrder()) {
+      if (outputAllowed()) {
+        addCommentSignForSZS(std::cout);
+        std::cout << "WARNING: FOOL paramodulation is not compatible with higher-order. Try using Cases or CasesSimp instead. Ignoring request." << endl;
+      }
+    } else {
+      gie->addFront(new FOOLParamodulation());
     }
   }
 
-  if (opt.injectivityReasoning()) {
-    gie->addFront(new Injectivity());
-  }
   if(prb.hasEquality() && env.signature->hasTermAlgebras()) {
     if (opt.termAlgebraCyclicityCheck() == Options::TACyclicityCheck::RULE) {
       gie->addFront(new AcyclicityGIE());
@@ -1686,7 +1712,11 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     switch(opt.backwardDemodulation()) {
     case Options::Demodulation::ALL:
     case Options::Demodulation::PREORDERED:
-      res->addBackwardSimplifierToFront(new BackwardDemodulation());
+      if (prb.isHigherOrder()) {
+        res->addBackwardSimplifierToFront(new BackwardDemodulation<DemodulationSubtermIt>());
+      } else {
+        res->addBackwardSimplifierToFront(new BackwardDemodulation<NonVariableNonTypeIterator>());
+      }
       break;
     case Options::Demodulation::OFF:
       break;
@@ -1697,7 +1727,11 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     }
   }
   if (prb.hasEquality() && opt.backwardSubsumptionDemodulation()) {
-    res->addBackwardSimplifierToFront(new BackwardSubsumptionDemodulation());
+    if (prb.isHigherOrder()) {
+      res->addBackwardSimplifierToFront(new BackwardSubsumptionDemodulation<DemodulationSubtermIt>());
+    } else {
+      res->addBackwardSimplifierToFront(new BackwardSubsumptionDemodulation<NonVariableNonTypeIterator>());
+    }
   }
   if (opt.backwardSubsumption() != Options::Subsumption::OFF) {
     bool byUnitsOnly=opt.backwardSubsumption()==Options::Subsumption::UNIT_ONLY;
@@ -1745,23 +1779,14 @@ ImmediateSimplificationEngine* SaturationAlgorithm::createISE(Problem& prb, cons
     break;
   }
 
-  if(env.options->combinatorySup()){
-    res->addFront(new CombinatorDemodISE());
-    res->addFront(new CombinatorNormalisationISE());
-  }
-
-  if(env.options->choiceReasoning()){
+//#if VHOL
+  if(prb.isHigherOrder() && env.options->choiceReasoning()){
     res->addFront(new ChoiceDefinitionISE());
   }
 
   if((prb.hasLogicalProxy() || prb.hasBoolVar() || prb.hasFOOL()) &&
       prb.isHigherOrder() && !env.options->addProxyAxioms()){
     if(env.options->cnfOnTheFly() == Options::CNFOnTheFly::EAGER){
-      /*res->addFrontMany(new ProxyISE());
-      res->addFront(new OrImpAndProxyISE());
-      res->addFront(new NotProxyISE());   
-      res->addFront(new EqualsProxyISE());   
-      res->addFront(new PiSigmaProxyISE());*/
       res->addFrontMany(new EagerClausificationISE());
     } else {
       res->addFront(new IFFXORRewriterISE());
@@ -1773,11 +1798,21 @@ ImmediateSimplificationEngine* SaturationAlgorithm::createISE(Problem& prb, cons
     res->addFrontMany(new CasesSimp());
   }
 
-  // Only add if there are distinct groups 
-  if(prb.hasEquality() && env.signature->hasDistinctGroups()) {
+  if (prb.isHigherOrder() && env.options->newTautologyDel()){
+    res->addFront(new TautologyDeletionISE2());
+  }
+
+  if (prb.isHigherOrder()) {
+    res->addFront(new BetaEtaSimplify());
+    res->addFront(new FlexFlexSimplify());
+  }
+//#endif
+
+  // Only add if there are distinct groups
+  if (prb.hasEquality() && env.signature->hasDistinctGroups()) {
     res->addFront(new DistinctEqualitySimplifier());
   }
-  if(prb.hasEquality() && env.signature->hasTermAlgebras()) {
+  if (prb.hasEquality() && env.signature->hasTermAlgebras()) {
     if (opt.termAlgebraInferences()) {
       res->addFront(new DistinctnessISE());
       res->addFront(new InjectivityISE());
@@ -1819,9 +1854,6 @@ ImmediateSimplificationEngine* SaturationAlgorithm::createISE(Problem& prb, cons
     res->addFront(new TrivialInequalitiesRemovalISE());
   }
   res->addFront(new TautologyDeletionISE());
-  if(env.options->newTautologyDel()){
-    res->addFront(new TautologyDeletionISE2());
-  }
   res->addFront(new DuplicateLiteralRemovalISE());
 
   if (env.options->questionAnswering() == Options::QuestionAnsweringMode::SYNTHESIS)
