@@ -312,6 +312,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Inferences/BetaEtaSimplify.cpp
     Inferences/FlexFlexSimplify.hpp
     Inferences/FlexFlexSimplify.cpp
+    Inferences/ImitateProject.hpp
+    Inferences/ImitateProject.cpp
     Inferences/ArgCong.hpp
     Inferences/ArgCong.cpp
     Inferences/NegativeExt.cpp

@@ -88,6 +88,8 @@
 #include "Inferences/CasesSimp.hpp"
 #include "Inferences/Cases.hpp"
 #include "Inferences/DefinitionIntroduction.hpp"
+#include "Inferences/BetaEtaSimplify.hpp"
+#include "Inferences/FlexFlexSimplify.hpp"
 
 #include "Saturation/ExtensionalityClauseContainer.hpp"
 
