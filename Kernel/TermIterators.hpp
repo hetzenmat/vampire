@@ -276,37 +276,12 @@ private:
   bool _goInsideLambdas;
 };
 
-
-/*class NarrowableSubtermIt
-: public IteratorCore<TermList>
+class DemodulationSubtermIt
+    : public FirstOrderSubtermIt
 {
 public:
-  NarrowableSubtermIt(Term* term, bool includeSelf=false) 
-  : _used(true), _stack(8)
-  {
-    if(term->isLiteral()){
-      TermList t0 = *term->nthArgument(0);
-      TermList t1 = *term->nthArgument(1);
-      if(!t0.isVar()){ _stack.push(t0.term()); }
-      if(!t1.isVar()){ _stack.push(t1.term()); }      
-      return;      
-    } 
-    _stack.push(term);
-    //TODO
-  }
-
-  bool hasNext();
-  TermList next(){
-    ASS(!_used);
-    _used = true;
-    return _next;
-  }
-
-private:
-  bool _used;
-  TermList _next;
-  Stack<Term*> _stack;
-};*/
+  DemodulationSubtermIt(Term* t) : FirstOrderSubtermIt(t, false, true) {}
+};
 
 /*
  *  Returns Boolean subterms of a term.

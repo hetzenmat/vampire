@@ -54,29 +54,29 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
-
-BackwardSubsumptionDemodulation::BackwardSubsumptionDemodulation()
+template <class SubtermIterator>
+BackwardSubsumptionDemodulation<SubtermIterator>::BackwardSubsumptionDemodulation()
   : _preorderedOnly{false}
   , _allowIncompleteness{false}
 { }
 
-
-void BackwardSubsumptionDemodulation::attach(SaturationAlgorithm* salg)
+template <class SubtermIterator>
+void BackwardSubsumptionDemodulation<SubtermIterator>::attach(SaturationAlgorithm* salg)
 {
   BackwardSimplificationEngine::attach(salg);
 
   _index.request(salg->getIndexManager(), BACKWARD_SUBSUMPTION_SUBST_TREE);
 }
 
-
-void BackwardSubsumptionDemodulation::detach()
+template <class SubtermIterator>
+void BackwardSubsumptionDemodulation<SubtermIterator>::detach()
 {
   _index.release();
   BackwardSimplificationEngine::detach();
 }
 
-
-void BackwardSubsumptionDemodulation::perform(Clause* sideCl, BwSimplificationRecordIterator& simplifications)
+template <class SubtermIterator>
+void BackwardSubsumptionDemodulation<SubtermIterator>::perform(Clause* sideCl, BwSimplificationRecordIterator& simplifications)
 {
   ASSERT_VALID(*sideCl);
 
@@ -133,8 +133,8 @@ void BackwardSubsumptionDemodulation::perform(Clause* sideCl, BwSimplificationRe
   simplificationsStorage.clear();
 }  // perform
 
-
-void BackwardSubsumptionDemodulation::performWithQueryLit(Clause* sideCl, Literal* candidateQueryLit, vvector<BwSimplificationRecord>& simplifications)
+template <class SubtermIterator>
+void BackwardSubsumptionDemodulation<SubtermIterator>::performWithQueryLit(Clause* sideCl, Literal* candidateQueryLit, vvector<BwSimplificationRecord>& simplifications)
 {
   //   sideCl
   // vvvvvvvvvv
@@ -155,7 +155,10 @@ void BackwardSubsumptionDemodulation::performWithQueryLit(Clause* sideCl, Litera
   bool mustPredActive = false;
   unsigned mustPred;
 
-  auto rit = _index->getInstances(candidateQueryLit, false, false);
+  auto rit = env.getMainProblem()->isHigherOrder() ?
+                                  _index->getHOLInstances(candidateQueryLit, false, false) :
+                                  _index->getInstances(candidateQueryLit, false, false);
+
   while (rit.hasNext()) {
     auto qr = rit.next();
     Clause* candidate = qr.data->clause;
@@ -258,7 +261,8 @@ void BackwardSubsumptionDemodulation::performWithQueryLit(Clause* sideCl, Litera
 
 /// Handles the matching part.
 /// Returns true iff the main premise has been simplified.
-bool BackwardSubsumptionDemodulation::simplifyCandidate(Clause* sideCl, Clause* mainCl, vvector<BwSimplificationRecord>& simplifications)
+template <class SubtermIterator>
+bool BackwardSubsumptionDemodulation<SubtermIterator>::simplifyCandidate(Clause* sideCl, Clause* mainCl, vvector<BwSimplificationRecord>& simplifications)
 {
     static vvector<LiteralList*> alts;
 
@@ -352,7 +356,8 @@ bool BackwardSubsumptionDemodulation::simplifyCandidate(Clause* sideCl, Clause* 
 
 /// Handles the rewriting part.
 /// Returns true iff the main premise has been simplified.
-bool BackwardSubsumptionDemodulation::rewriteCandidate(Clause* sideCl, Clause* mainCl, MLMatcherSD const& matcher, Clause*& replacement)
+template <class SubtermIterator>
+bool BackwardSubsumptionDemodulation<SubtermIterator>::rewriteCandidate(Clause* sideCl, Clause* mainCl, MLMatcherSD const& matcher, Clause*& replacement)
 {
   Ordering const& ordering = _salg->getOrdering();
 
@@ -451,10 +456,7 @@ bool BackwardSubsumptionDemodulation::rewriteCandidate(Clause* sideCl, Clause* m
       continue;
     }
 
-    // TODO higher-order support not yet implemented; see forward demodulation
-    //      (maybe it's enough to just use the different iterator)
-    ASS(!env.options->combinatorySup());
-    NonVariableNonTypeIterator nvi(dlit);
+    SubtermIterator nvi(dlit);
     while (nvi.hasNext()) {
       TypedTermList lhsS = nvi.next();  // named 'lhsS' because it will be matched against 'lhs'
 
@@ -610,7 +612,7 @@ isRedundant:
         /**
          * Step 4: found application of SD; now create the conclusion
          */
-        Literal* newLit = EqHelper::replace(dlit, lhsS, rhsS);
+        Literal* newLit = SubtermReplacer(lhsS,rhsS).transformLiteral(dlit);
         ASS_EQ(ordering.compare(lhsS, rhsS), Ordering::GREATER);
 #if VDEBUG
         if (getOptions().literalComparisonMode() != Options::LiteralComparisonMode::REVERSE) {
@@ -675,5 +677,7 @@ isRedundant:
   return false;
 }  // rewriteCandidate
 
+template class BackwardSubsumptionDemodulation<DemodulationSubtermIt>;
+template class BackwardSubsumptionDemodulation<NonVariableNonTypeIterator>;
 
 }
