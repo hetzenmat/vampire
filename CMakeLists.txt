@@ -308,6 +308,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/ApplicativeHelper.cpp
     Inferences/CNFOnTheFly.cpp
     Inferences/CNFOnTheFly.hpp
+    Inferences/BetaEtaSimplify.hpp
+    Inferences/BetaEtaSimplify.cpp
     Inferences/ArgCong.hpp
     Inferences/ArgCong.cpp
     Inferences/NegativeExt.cpp
