@@ -480,6 +480,29 @@ float TheoryMultiSplitPassiveClauseContainer::evaluateFeatureEstimate(unsigned, 
   return inf.th_ancestors * expectedRatioDenominator - inf.all_ancestors;
 }
 
+//#if VHOL
+
+HoFeaturesMultiSplitPassiveClauseContainer::HoFeaturesMultiSplitPassiveClauseContainer(bool isOutermost, const Shell::Options &opt, Lib::vstring name, Lib::vvector<std::unique_ptr<PassiveClauseContainer>> queues) :
+PredicateSplitPassiveClauseContainer(isOutermost, opt, name, std::move(queues), opt.hoFeaturesSplitQueueCutoffs(), opt.hoFeaturesSplitQueueRatios(), opt.hoFeaturesSplitQueueLayeredArrangement()) {}
+
+float HoFeaturesMultiSplitPassiveClauseContainer::evaluateFeature(Clause* cl) const
+{
+  //calculate the number of higher-order features (applied variable and lambdas) in the clause;
+  unsigned res = 0;
+  for(unsigned i = 0; i < cl->size(); i++){
+    res = res + (*cl)[i]->numOfAppVarsAndLambdas();
+  }
+  return res;
+}
+
+float HoFeaturesMultiSplitPassiveClauseContainer::evaluateFeatureEstimate(unsigned, const Inference& inf) const
+{
+  // from the information provided we cannot estimate the feature sadly...
+  return 0;
+}
+
+//#endif
+
 AvatarMultiSplitPassiveClauseContainer::AvatarMultiSplitPassiveClauseContainer(bool isOutermost, const Shell::Options &opt, Lib::vstring name, Lib::vvector<std::unique_ptr<PassiveClauseContainer>> queues) :
 PredicateSplitPassiveClauseContainer(isOutermost, opt, name, std::move(queues), opt.avatarSplitQueueCutoffs(), opt.avatarSplitQueueRatios(), opt.avatarSplitQueueLayeredArrangement()) {}
 
