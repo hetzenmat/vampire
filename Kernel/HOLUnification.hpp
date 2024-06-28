@@ -38,6 +38,8 @@ using namespace Indexing;
 
 namespace UnificationAlgorithms {
 
+class HOLInstantiation;
+class HOLGeneralisation;
 
 class HOLUnification {
  // when this class is used for tree unification the field

@@ -139,11 +139,11 @@ template<class LD> std::ostream& operator<<(std::ostream& out, OutputMultiline<S
 /**
  * Class of substitution trees. 
  *
- * We can either store typed terms, or literals in a subtitution tree.
+ * We can either store typed terms, or literals in a substitution tree.
  * Classically we'd think of inserting/removing only one term t into a substitution tree. 
  * This can be understood as inserting the substitution { S0 -> t } into the tree.
  *
- * In general we can insertt a substitution with more than just this one binding. 
+ * In general we can insert a substitution with more than just this one binding.
  * This is what we do in order to store the sort of variables, and in order to insert all the arguments of a literal:
  * - For a term t of sort s we insert { S0 -> t; S1 -> s }
  * - For literals (~)P(t0..tn) we insert { S0 -> t0 .. Sn -> tn }.

@@ -26,6 +26,7 @@
 #include "Index.hpp"
 #include "TermIndexingStructure.hpp"
 #include "SubstitutionTree.hpp"
+#include "Kernel/HOLUnification.hpp"
 
 namespace Indexing {
 
@@ -50,6 +51,9 @@ class TermSubstitutionTree
   using LDIterator                  = typename SubstitutionTree::LDIterator;
   using Leaf                        = typename SubstitutionTree::Leaf;
   using LeafIterator                = typename SubstitutionTree::LeafIterator;
+  using HOLAlgo = UnificationAlgorithms::HOLUnification;
+  using HOLInstAlgo = UnificationAlgorithms::HOLInstantiation;
+  using HOLGenAlgo = UnificationAlgorithms::HOLGeneralisation;
 
   Indexing::SubstitutionTree<LeafData_> _inner;
 public:
