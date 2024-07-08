@@ -667,11 +667,11 @@ void ApplicativeHelper::getAbstractionTerms(Literal* lit, TermStack& terms)
   }
 }
 
-bool ApplicativeHelper::isBool(TermList t){
+bool ApplicativeHelper::isBool(TermList t) {
   return isTrue(t) || isFalse(t);
 }
 
-bool ApplicativeHelper::splittable(TermList t, bool topLevel){
+bool ApplicativeHelper::splittable(TermList t, bool topLevel) {
   if(t.isVar()) return true;
 
   ASS(!t.head().isLambdaTerm()); // assume t is in head normal form

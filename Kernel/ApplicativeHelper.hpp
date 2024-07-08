@@ -140,7 +140,7 @@ class WHNFDeref : public TermTransformer
 {
 public:
 
-  WHNFDeref( RobSubstitutionTL* sub) : _sub(sub) {
+  WHNFDeref( RobSubstitution* sub) : _sub(sub) {
     dontTransformSorts();
   }
   TermList normalise(TermList t);
@@ -149,7 +149,7 @@ public:
   bool exploreSubterms(TermList orig, TermList newTerm) override;
 
 private:
-  RobSubstitutionTL* _sub;
+  RobSubstitution* _sub;
 };
 
 

@@ -250,6 +250,7 @@ public:
   static bool equals(TermList t1, TermList t2);
   static bool allShared(TermList* args);
   static TermList var(unsigned var, bool special = false) { return TermList(var, special); }
+  static inline TermList specialVar(unsigned var) { return TermList(var, true); }
   /** if not var, the inner term must be shared */
   unsigned weight() const;
   /** returns true if this termList is wrapping a higher-order "arrow" sort */
@@ -292,7 +293,7 @@ public:
   TermList result();
   TermList finalResult();
   // return the weak head normal form of the term
-  TermList whnfDeref(RobSubstitutionTL* sub);
+  TermList whnfDeref(RobSubstitution* sub);
   TermList betaNF();
   TermList etaNF();
   TermList betaEtaNF();

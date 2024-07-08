@@ -318,7 +318,7 @@ TermList TermList::finalResult(){
   return isVar() || !isArrowSort() ? *this : static_cast<AtomicSort*>(term())->finalResult();
 }
 
-TermList TermList::whnfDeref(RobSubstitutionTL* sub){
+TermList TermList::whnfDeref(RobSubstitution* sub){
   return WHNFDeref(sub).normalise(*this);
 }
 

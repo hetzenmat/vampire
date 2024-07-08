@@ -94,6 +94,10 @@ struct TermSpec {
 
   friend std::ostream& operator<<(std::ostream& out, TermSpec const& self);
 
+  TermSpec nthArg(unsigned i) const {
+    return TermSpec(term.nthArg(i), index);
+  }
+
   bool isVar() const { return term.isVar(); }
   VarSpec varSpec() const { return VarSpec(term.var(), term.isSpecialVar() ? SPECIAL_INDEX : index); }
   bool isTerm() const { return term.isTerm(); }
@@ -272,6 +276,14 @@ public:
 
 using namespace Lib;
 
+namespace UnificationAlgorithms {
+//class AbstractingUnification;
+  class HOLUnification;
+//class HOLInstantiation;
+//class HOLGeneralisation;
+//class RobUnification;
+}
+
 class AbstractingUnifier;
 class UnificationConstraint;
 
@@ -280,6 +292,7 @@ class RobSubstitution
 {
   friend class AbstractingUnifier;
   friend class UnificationConstraint;
+  friend class UnificationAlgorithms::HOLUnification;
  
   DHMap<VarSpec, TermSpec> _bindings;
   mutable DHMap<VarSpec, unsigned> _outputVarBindings;
@@ -416,7 +429,20 @@ private:
   void bindVar(const VarSpec& var, const VarSpec& to);
   bool match(TermSpec base, TermSpec instance);
   bool unify(TermSpec t1, TermSpec t2);
+  bool applicativeUnify(TermSpec t1, TermSpec t2);
   bool occurs(VarSpec const& vs, TermSpec const& ts);
+
+  TermSpec root(TermSpec v) const {
+    ASS(v.isVar());
+
+    for(;;) {
+      auto binding = _bindings.find(v.varSpec());
+      if(binding.isNone() || binding->isTerm() || binding->index == static_cast<int>(VarBank::OUTPUT_BANK)) {
+        return v;
+      }
+      v = binding.unwrap();
+    }
+  }
 
   friend std::ostream& operator<<(std::ostream& out, RobSubstitution const& self)
   { return out << "(" << self._bindings << ", " << self._outputVarBindings << ")"; }

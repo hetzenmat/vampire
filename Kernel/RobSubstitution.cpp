@@ -314,7 +314,7 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
     // If they have the same content then skip
     // (note that sameTermContent is best-effort)
     if (dt1.sameTermContent(dt2)) {
-    // Deal with the case where eithe rare variables
+    // Deal with the case where either are variables
     // Do an occurs-check and note that the variable 
     // cannot be currently bound as we already dereferenced
     } else if(dt1.isVar() && !occurs(dt1.varSpec(), dt2)) {
@@ -325,6 +325,105 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
 
     } else if(dt1.isTerm() && dt2.isTerm() 
            && dt1.functor() == dt2.functor()) {
+
+      for (auto c : dt1.allArgs().zip(dt2.allArgs())) {
+        pushTodo(make_pair(std::move(c.first), std::move(c.second)));
+      }
+
+    } else {
+      mismatch = true;
+      break;
+    }
+
+    ASS(!mismatch)
+  }
+
+  if(mismatch) {
+    toDo.reset();
+  }
+
+  bdDone();
+
+  if(mismatch) {
+    localBD.backtrack();
+  } else {
+    if(bdIsRecording()) {
+      bdCommit(localBD);
+    }
+    localBD.drop();
+  }
+
+  DEBUG_UNIFY(0, *this)
+  return !mismatch;
+}
+
+bool RobSubstitution::applicativeUnify(TermSpec s, TermSpec t) {
+
+  if(s.sameTermContent(t)) {
+    return true;
+  }
+
+  BacktrackData localBD;
+  bdRecord(localBD);
+
+  static Stack<pair<TermSpec, TermSpec>> toDo(64);
+  ASS(toDo.isEmpty());
+  toDo.push(make_pair(std::move(s), std::move(t)));
+
+  // Save encountered unification pairs to avoid
+  // recomputing their unification
+  static DHSet<pair<TermSpec, TermSpec>> encountered_;
+  auto encountered = &encountered_;
+  encountered->reset();
+
+  auto containsLooseIndex = [](TermSpec t){
+    if (env.getMainProblem()->isHigherOrder()) {
+      // should never reach here from a tree
+      // currently we only reach this point by a call to unifiers
+      // from condensation
+      ASS(t.isVar() || t.term.term()->shared())
+      // we don't need to dereference any bound variables
+      // since we should never be binding a variable to a term that contains a loose index
+      return t.term.containsLooseIndex();
+    }
+    return false;
+  };
+
+  auto pushTodo = [&](auto pair) {
+    // we unify each subterm pair at most once, to avoid worst-case exponential runtimes
+    // in order to safe memory we do ot do this for variables.
+    // (Note by joe:  didn't make this decision, but just keeping the implemenntation
+    // working as before. i.e. as described in the paper "Comparing Unification
+    // Algorithms in First-Order Theorem Proving", by Krystof and Andrei)
+    if (pair.first.isVar() && isUnbound(pair.first.varSpec()) &&
+        pair.second.isVar() && isUnbound(pair.second.varSpec())) {
+      toDo.push(std::move(pair));
+    } else if (!encountered->find(pair)) {
+      encountered->insert(pair);
+      toDo.push(std::move(pair));
+    }
+  };
+
+  bool mismatch=false;
+  // Iteratively resolve unification pairs in toDo
+  // the current pair is always in t1 and t2 with their dereferenced
+  // version in dt1 and dt2
+  while (toDo.isNonEmpty()) {
+    auto x = toDo.pop();
+    TermSpec dt1 = derefBound(x.first);
+    TermSpec dt2 = derefBound(x.second);
+    DEBUG_UNIFY(1, "next pair: ", tie(dt1, dt2))
+    // If they have the same content then skip
+    // (note that sameTermContent is best-effort)
+    if (dt1.sameTermContent(dt2)) {
+      // Deal with the case where either are variables
+      // Do an occurs-check and note that the variable
+      // cannot be currently bound as we already dereferenced
+    } else if (dt1.isVar() && !occurs(dt1.varSpec(), dt2) && !containsLooseIndex(dt2)) {
+      bind(dt1.varSpec(), dt2);
+    } else if (dt2.isVar() && !occurs(dt2.varSpec(), dt1) && !containsLooseIndex(dt1)) {
+      bind(dt2.varSpec(), dt1);
+    } else if (dt1.isTerm() && dt2.isTerm() && dt1.functor() == dt2.functor()) {
 
       for (auto c : dt1.allArgs().zip(dt2.allArgs())) {
         pushTodo(make_pair(std::move(c.first), std::move(c.second)));

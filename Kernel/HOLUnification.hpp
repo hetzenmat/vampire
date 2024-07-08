@@ -10,7 +10,6 @@
 /**
 * @file HOLUnification.hpp
 * Defines class HOLUnification.
-*
 */
 
 #ifndef __HOLUnification__
@@ -50,7 +49,7 @@ class HOLUnification {
  bool _funcExt;
 
  // bool unifyWithPlaceholders(TermList t1, TermList t2, RobSubstitutionTL* sub);
- bool unifyWithPlaceholders(TermList t1, TermList t2, RobSubstitution* sub);
+ bool unifyWithPlaceholders(TermSpec t1, TermSpec t2, RobSubstitution* sub);
 
  // TODO if we implement solid fragment, this will not work...
  enum OracleResult
@@ -61,7 +60,7 @@ class HOLUnification {
  };
 
  // static OracleResult fixpointUnify(TermList var, TermList t, RobSubstitutionTL* sub);
- static OracleResult fixpointUnify(TermList var, TermList t, RobSubstitution* sub);
+ static OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub);
 
  class HOLConstraint : public UnificationConstraint
  {
@@ -127,10 +126,10 @@ public:
  }
 
  // bool associate(unsigned specialVar, TermList node, RobSubstitutionTL* sub);
- bool associate(unsigned specialVar, TermList node, RobSubstitution* sub);
+ bool associate(unsigned specialVar, TermSpec node, RobSubstitution* sub);
 
  //SubstIterator unifiers(TermList t1, TermList t2, RobSubstitutionTL* sub, bool topLevelCheck = false);
- SubstIterator unifiers(TermList t1, TermList t2, RobSubstitution* sub, bool topLevelCheck = false);
+ SubstIterator unifiers(TermSpec t1, TermSpec t2, RobSubstitution* sub, bool topLevelCheck = false);
 
  //SubstIterator postprocess(RobSubstitutionTL*, TermList t, TermList sort);
  SubstIterator postprocess(RobSubstitution*, TermList t, TermList sort);
