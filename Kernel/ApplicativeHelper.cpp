@@ -50,16 +50,20 @@ bool BetaNormaliser::exploreSubterms(TermList orig, TermList newTerm)
   return newTerm.term()->hasRedex();
 }
 
-TermList WHNFDeref::normalise(TermList t)
+TermSpec WHNFDeref::normalise(TermSpec t)
 {
+  _index = t.index;
   // term transformer does not work at the top level...
-  t = transformSubterm(t);
-  return t.isLambdaTerm() ? transform(t) : t;
+  auto transformed = transformSubterm(t.term);
+  throw "TODO MH";
+  // return transformed.isLambdaTerm() ? transform(transformed) : transformed;
 }
 
 TermList WHNFDeref::transformSubterm(TermList t)
 {
-  if(t.isLambdaTerm()) return t;
+  throw "TODO MH";
+
+  /*if(t.isLambdaTerm()) return t;
 
   TermList head;
   TermList sort;
@@ -87,6 +91,7 @@ TermList WHNFDeref::transformSubterm(TermList t)
   return !headDereffed ? t :
          !args.size()  ? newHead : // TOOD MH maybe use args.empty() instead of !args.size()
                          ApplicativeHelper::app(sort, newHead, args);
+*/
 
   /*if(!headDereffed){
     return t;
@@ -301,21 +306,24 @@ bool TermShifter::exploreSubterms(TermList orig, TermList newTerm)
   return orig == newTerm && newTerm.term()->hasDBIndex();
 }
 
-TermList SortDeref::deref(TermList term)
+TermSpec SortDeref::deref(TermList term)
 {
   // assume term var here
-  if(term.isVar() || !term.term()->hasTermVar()) return term;
-  return transform(term);
+  if(term.isVar() || !term.term()->hasTermVar()) return {term, _index};
+  return {transform(term), _index};
 }
 
 TermList SortDeref::transformSubterm(TermList t)
 {
+  throw "TODO MH";
+  /*
   if(t.isVar() && _positions.top() < _typeArities.top()) {
     t = _sub->derefBound(t);
   }
   unsigned pos = _positions.pop();
   _positions.push(pos + 1);
   return t;
+   */
 }
 
 void SortDeref::onTermEntry(Term* t){

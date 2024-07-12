@@ -1773,13 +1773,6 @@ void Options::init()
 
 //*********************** Higher-order  ***********************
 
-    _superposition = BoolOptionValue("superposition","sup",true);
-    _superposition.onlyUsefulWith(ProperSaturationAlgorithm());
-    _superposition.tag(OptionTag::INFERENCES);
-    _superposition.description= "Control superposition. Turning off this core inference leads to an incomplete calculus on equational problems.";
-    _lookup.insert(&_superposition);
-
-
     _heuristicInstantiation = BoolOptionValue("heur_inst","hi",false);
     _heuristicInstantiation.onlyUsefulWith(ProperSaturationAlgorithm());
     _heuristicInstantiation.addProblemConstraint(hasHigherOrder());

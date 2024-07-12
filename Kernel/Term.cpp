@@ -318,8 +318,9 @@ TermList TermList::finalResult(){
   return isVar() || !isArrowSort() ? *this : static_cast<AtomicSort*>(term())->finalResult();
 }
 
-TermList TermList::whnfDeref(RobSubstitution* sub){
-  return WHNFDeref(sub).normalise(*this);
+TermList TermList::whnfDeref(RobSubstitution* sub) {
+  throw "TODO MH";
+  // return WHNFDeref(sub).normalise(*this);
 }
 
 TermList TermList::betaNF(){

@@ -62,30 +62,31 @@ class HOLUnification {
  // static OracleResult fixpointUnify(TermList var, TermList t, RobSubstitutionTL* sub);
  static OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub);
 
- class HOLConstraint : public UnificationConstraint
+ class HOLConstraint //: public UnificationConstraint
  {
  private:
+   TermSpec _lhs;
+   TermSpec _rhs;
    TermList _t1head;
-   int _t1index;
    TermList _t2head;
-   int _t2index;
-   TermList _sort;
-   int _sortIndex;
  public:
 
    HOLConstraint(){} // dummy constructor required for use in SkipList
-   HOLConstraint(TermList t1, int t1index, TermList t2, int t2index, TermList sort, int sortIndex)
-       : UnificationConstraint({t1,t1index}, {t2,t2index}, {sort,sortIndex}),
-         _t1head(t1.head()),
-         _t1index(t1index),
-         _t2head(t2.head()),
-         _t2index(t2index),
-         _sort(sort),
-         _sortIndex(sortIndex)
+
+   // HOLConstraint(TermList t1, int t1index, TermList t2, int t2index)
+   HOLConstraint(TermSpec ll, TermSpec rr)
+       : // UnificationConstraint({t1,t1index}, {t2,t2index}, {sort,sortIndex}),
+         _lhs(ll),
+         _rhs(rr),
+         _t1head(ll.term.head()),
+         _t2head(rr.term.head())
    {
      ASS(!_t1head.isLambdaTerm() && !_t2head.isLambdaTerm()); // terms must be in whnf
    }
-   USE_ALLOCATOR(HOLConstraint)
+   //USE_ALLOCATOR(HOLConstraint)
+
+   TermSpec lhs() const { return _lhs; }
+   TermSpec rhs() const { return _rhs; }
 
    bool flexFlex()   const { return _t1head.isVar() && _t2head.isVar(); }
    bool rigidRigid() const { return _t1head.isTerm() && _t2head.isTerm(); }
@@ -95,13 +96,13 @@ class HOLUnification {
    TermList rhsHead() const { return _t2head; }
 
    TermList sort() const {
-     ASS(lhs().isTerm() || rhs().isTerm());
-     if(lhs().isTerm())
-     { return SortHelper::getResultSort(lhs().term.term()); }
-     return SortHelper::getResultSort(rhs().term.term());
+     ASS(_lhs.isTerm() || _rhs.isTerm());
+     if(_lhs.isTerm())
+     { return SortHelper::getResultSort(_lhs.term.term()); }
+     return SortHelper::getResultSort(_rhs.term.term());
    }
 
-   // UnificationConstraint constraint() { return UnificationConstraint(lhs(),rhs()); }
+   HOLConstraint constraint() { return HOLConstraint(lhs(),rhs()); }
  };
 
  inline bool sortCheck(TermList sort, bool topLevel = false){
@@ -111,7 +112,7 @@ class HOLUnification {
  }
 
  class HigherOrderUnifiersIt;
- class HigherOrderUnifiersItWrapper;
+ //class HigherOrderUnifiersItWrapper;
 
 public:
 

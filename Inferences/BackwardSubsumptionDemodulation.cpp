@@ -155,9 +155,12 @@ void BackwardSubsumptionDemodulation<SubtermIterator>::performWithQueryLit(Claus
   bool mustPredActive = false;
   unsigned mustPred;
 
-  auto rit = env.getMainProblem()->isHigherOrder() ?
+  throw "TOOD MH";
+  auto rit = _index->getInstances(candidateQueryLit, false, false);
+
+  /*auto rit = env.getMainProblem()->isHigherOrder() ?
                                   _index->getHOLInstances(candidateQueryLit, false, false) :
-                                  _index->getInstances(candidateQueryLit, false, false);
+                                  _index->getInstances(candidateQueryLit, false, false);*/
 
   while (rit.hasNext()) {
     auto qr = rit.next();

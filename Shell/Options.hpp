@@ -1976,7 +1976,7 @@ public:
   Proof proof() const { return _proof.actualValue; }
   bool minimizeSatProofs() const { return _minimizeSatProofs.actualValue; }
   ProofExtra proofExtra() const { return _proofExtra.actualValue; }
-  bool traceback() const { return _traceback.actualValue; }
+  bool traceback() const { return true || _traceback.actualValue; }
   void setTraceback(bool traceback) { _traceback.actualValue = traceback; }
   vstring printProofToFile() const { return _printProofToFile.actualValue; }
   int naming() const { return _naming.actualValue; }

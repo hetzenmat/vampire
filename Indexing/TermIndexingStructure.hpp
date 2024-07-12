@@ -35,9 +35,9 @@ public:
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getGeneralizations(TypedTermList t, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getInstances(TypedTermList t, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
 
-  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLUnifiers(TypedTermList t) = 0;
-  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLInstances(TypedTermList t) = 0;
-  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLGeneralizations(TypedTermList t) = 0;
+  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLUnifiers(TypedTermList t) { throw "TODO MH"; };
+  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLInstances(TypedTermList t) { throw "TODO MH"; };
+  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLGeneralizations(TypedTermList t) { throw "TODO MH"; };
 
   virtual bool generalizationExists(TermList t) { NOT_IMPLEMENTED; }
 

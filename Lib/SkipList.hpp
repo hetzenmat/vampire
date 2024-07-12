@@ -26,6 +26,7 @@
 #include "List.hpp"
 #include "Random.hpp"
 #include "Lib/Option.hpp"
+#include <new>
 
 #define SKIP_LIST_MAX_HEIGHT 32
 

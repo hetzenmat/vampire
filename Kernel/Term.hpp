@@ -836,7 +836,7 @@ public:
 
   void setHasTermVar(bool b)
   {
-    ASS(shared() && !isSort());
+    ASS(shared());
     _args[0]._setHasTermVar(b);
   }
 

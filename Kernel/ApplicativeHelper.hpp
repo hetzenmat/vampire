@@ -140,15 +140,16 @@ class WHNFDeref : public TermTransformer
 {
 public:
 
-  WHNFDeref( RobSubstitution* sub) : _sub(sub) {
+  WHNFDeref(RobSubstitution* sub) : _sub(sub) {
     dontTransformSorts();
   }
-  TermList normalise(TermList t);
+  TermSpec normalise(TermSpec t);
   // puts term into weak head normal form
   TermList transformSubterm(TermList t) override;
   bool exploreSubterms(TermList orig, TermList newTerm) override;
 
 private:
+  int _index;
   RobSubstitution* _sub;
 };
 
@@ -199,16 +200,17 @@ private:
 class SortDeref : public TermTransformer
 {
 public:
-  SortDeref(RobSubstitutionTL* sub) : _sub(sub) {}
+  SortDeref(RobSubstitution* sub, int index) : _sub(sub), _index(index) {}
 
-  TermList deref(TermList term);
+  TermSpec deref(TermList term);
   TermList transformSubterm(TermList t) override;
   void onTermEntry(Term* t) override;
   void onTermExit(Term* t) override;
   bool exploreSubterms(TermList orig, TermList newTerm) override;
 
 private:
-  RobSubstitutionTL* _sub;
+  RobSubstitution* _sub;
+  int _index;
   Stack<unsigned> _typeArities;
   Stack<unsigned> _positions;
 };
