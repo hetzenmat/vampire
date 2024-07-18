@@ -733,7 +733,8 @@ set(UNIT_TESTS
     UnitTests/tTermAlgebra.cpp
     UnitTests/tFunctionDefinitionHandler.cpp
     UnitTests/tFunctionDefinitionRewriting.cpp
-    )
+    UnitTests/tBetaReduction.cpp
+)
 source_group(unit_tests FILES ${UNIT_TESTS})
 
 set(UNIT_TESTS_Z3

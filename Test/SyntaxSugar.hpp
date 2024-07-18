@@ -92,8 +92,11 @@
 #define DECL_TYPE_CON(f, arity) auto f = TypeConSugar(#f, arity);    
 #define DECL_SORT(s)        auto s = TypeConstSugar(#s);
 #define DECL_SORT_BOOL      auto Bool = SortSugar(AtomicSort::boolSort());
+#define DECL_ARROW_SORT(s, ...)        auto s = SortSugar(#s, __VA_ARGS__);
 #define DECL_VAR(x, i) auto x = TermSugar(TermList::var(i));
-#define DECL_SORT_VAR(x, i) auto x = SortSugar(TermList::var(i));    
+#define DECL_SORT_VAR(x, i) auto x = SortSugar(TermList::var(i));
+// same sugar, remove 1?
+#define DECL_HOL_VAR(x, i, s) auto x = TermSugar(TermList::var(i), s);
 #define DECL_VAR_SORTED(x, i, s) auto x = TermSugar(TermList::var(i), s);
 #define DECL_I_COMB(i) auto i = FuncSugar(env.signature->getCombinator(Signature::I_COMB));
 #define DECL_K_COMB(k) auto k = FuncSugar(env.signature->getCombinator(Signature::K_COMB));
@@ -243,8 +246,29 @@ class SyntaxSugarGlobals
 
 public:
   static SyntaxSugarGlobals& instance() 
-  { return _instance; }
+  {
+    _instance.setApply();
+    _instance.setLambda();
+    return _instance;
+  }
 
+  void setApply()
+  {
+    apply = [](TermList sort, TermList t1, TermList t2) {
+      TermList app = ApplicativeHelper::app(sort, t1, t2);
+      return app;
+    };
+  }
+
+  void setLambda()
+  {
+    lambda = [](TermList varSort, TermList var, TermList termSort, TermList term) {
+      VList* boundVar = new VList(var.var());
+      SList* boundVarSort = new SList(varSort);
+      Term* lambdaTerm = Term::createLambda(term, boundVar, boundVarSort, termSort);
+      return TermList(lambdaTerm);
+    };
+  }
 
   void setNumTraits(IntTraits)
   {
@@ -264,6 +288,9 @@ public:
 
   void setNumTraits(RealTraits)
   { setFracTraits<RealTraits>(); }
+
+  std::function<TermList(TermList, TermList, TermList)> apply;
+  std::function<TermList(TermList, TermList, TermList, TermList)> lambda;
 
   std::function<TermList(int, int)> createFraction;
   std::function<TermList(int)> createNumeral;
@@ -366,6 +393,7 @@ public:
       if (_sugaredExpr.term()->isLiteral()) {
         _srt = AtomicSort::boolSort();
       } else {
+        std::cout << _sugaredExpr.term()->isLiteral() << std::endl;
         _srt = SortHelper::getResultSort(_sugaredExpr.term());
       }
     }
@@ -452,6 +480,10 @@ inline TermSugar ap(SortSugar sort, TermSugar lhs, TermSugar rhs)
 
 inline TermSugar ap(TermSugar lhs, TermSugar rhs) 
 { return ap(lhs.sort(), lhs, rhs); }  
+
+inline TermSugar lam(TermSugar var, TermSugar term)  {
+  return syntaxSugarGlobals().lambda(var.sort(), var, term.sort(), term);
+}
 
 inline TermSugar operator+(TermSugar lhs, TermSugar rhs)  { return syntaxSugarGlobals().add(lhs, rhs); }  
 inline TermSugar operator-(TermSugar lhs, TermSugar rhs)  { return lhs + -rhs; }  

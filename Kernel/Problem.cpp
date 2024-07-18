@@ -422,6 +422,10 @@ bool Problem::isHigherOrder() const
   return _higherOrder.value();
 }
 
+void Problem::forceHigherOrder() {
+  _higherOrder = MaybeBool::True;
+}
+
 bool Problem::hasNonDefaultSorts() const
 {
   if(!_hasNonDefaultSorts.known()) { refreshProperty(); }

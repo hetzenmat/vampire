@@ -109,6 +109,7 @@ public:
   bool hasPolymorphicSym() const;
   bool quantifiesOverPolymorphicVar() const;
   bool isHigherOrder() const;
+  void forceHigherOrder();
   bool hasNonDefaultSorts() const;
 
   bool mayHaveEquality() const { return _mayHaveEquality; }
