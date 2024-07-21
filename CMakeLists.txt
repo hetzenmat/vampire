@@ -962,6 +962,8 @@ endif()
 ################################################################
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
   set(VAMPIRE_BINARY_BUILD _dbg)
+  add_compile_options(-g)
+  message(STATUS "Compile with debug")
 elseif(CMAKE_BUILD_TYPE STREQUAL Release)
   set(VAMPIRE_BINARY_BUILD _rel)
 else()

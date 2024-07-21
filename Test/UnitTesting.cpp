@@ -83,12 +83,12 @@ bool TestUnit::runTest(vstring const& name)
   }
 }
 
-bool UnitTesting::run(Stack<vstring> const& args) 
+bool UnitTesting::run(Stack<vstring> const& args, bool fork)
 {
   if (args.size() == 2) {
     return runTest(args[0], args[1]);
   } else if (args.size() == 1) {
-    return runUnit(args[0]);
+    return runUnit(args[0], fork);
   } else {
     std::cerr << "usage: vtest <unit-name> [ <test-name-substring> ]";
     exit(-1);
@@ -115,11 +115,11 @@ TestUnit* UnitTesting::findUnit(vstring const& id)
   return found;
 }
 
-bool UnitTesting::runUnit(vstring const& id)
+bool UnitTesting::runUnit(vstring const& id, bool fork)
 {
   auto unit = findUnit(id);
   if (unit == nullptr) return false;
-  else return unit->run(std::cout);
+  else return unit->run(std::cout, fork);
 }
 
 bool UnitTesting::listTests(Stack<vstring> const&)
@@ -133,7 +133,7 @@ bool UnitTesting::listTests(Stack<vstring> const&)
   return true;
 }
 
-bool TestUnit::runTestsWithNameSubstring(vstring const& pref, ostream& out)
+bool TestUnit::runTestsWithNameSubstring(vstring const& pref, ostream& out, bool fork)
 {
   Stack<Test>::BottomFirstIterator uit(_tests);
 
@@ -147,9 +147,17 @@ bool TestUnit::runTestsWithNameSubstring(vstring const& pref, ostream& out)
     if (vstring(t.name).find(pref) != vstring::npos) {
       out << "Running " << t.name << "... \r";
       out.flush();
+
       bool ok;
-      {
+      if (fork) {
         ok = spawnTest(t.proc);
+      } else {
+        try {
+          t.proc();
+          ok = true;
+        } catch (...) {
+          ok = false;
+        }
       }
       out << "\r" << ( ok ? "[  OK  ]" : "[ FAIL ]" ) << " " << t.name << "          " << endl;
       if (ok) cnt_ok++;
@@ -165,8 +173,8 @@ bool TestUnit::runTestsWithNameSubstring(vstring const& pref, ostream& out)
   return cnt_fail == 0;
 }
 
-bool TestUnit::run(ostream& out)
-{ return runTestsWithNameSubstring("", out); }
+bool TestUnit::run(ostream& out, bool fork)
+{ return runTestsWithNameSubstring("", out, fork); }
 
 void TestUnit::add(Test t)
 { _tests.push(t); }
@@ -227,7 +235,7 @@ int main(int argc, const char** argv)
 
   // enable tracebacks in failing unit tests by default
   System::registerArgv0(argv[0]);
-  env.options->setTraceback(true);
+  env.options->setTraceback(false);
 
   bool success;
   auto cmd = vstring(argv[1]);
@@ -239,9 +247,11 @@ int main(int argc, const char** argv)
     success = Test::UnitTesting::instance().listTests(args);
   } else if (cmd == "run") {
     success = Test::UnitTesting::instance().run(args);
+  } else if (cmd == "run2") {
+    success = Test::UnitTesting::instance().run(args, false);
   } else {
-    cerr << "unknown command: " << cmd << endl;
-    success = false;
+      cerr << "unknown command: " << cmd << endl;
+      success = false;
   }
   return success ? 0 : -1;
 }

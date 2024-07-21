@@ -18,7 +18,7 @@
 #include "Kernel/ApplicativeHelper.hpp"
 #include "Shell/LambdaConversion.hpp"
 
-TermList toDeBruijnIndices(TermList t){
+TermList toDeBruijnIndices(TermList t) {
   return LambdaConversion().convertLambda(t);
 }
 

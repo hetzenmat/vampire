@@ -387,16 +387,21 @@ public:
     : ExpressionSugar(trm)
   { 
     ASS_REP(!_sugaredExpr.isEmpty(), _sugaredExpr);
-    if (_sugaredExpr.isVar()) {
+
+    _srt = _sugaredExpr.isVar() ? TermList::empty() :
+           _sugaredExpr.term()->isLiteral() ? AtomicSort::boolSort() :
+           _sugaredExpr.term()->isSpecial() ? _sugaredExpr.term()->getSpecialData()->getSort() :
+           SortHelper::getResultSort(_sugaredExpr.term());
+
+    /*if (_sugaredExpr.isVar()) {
       _srt = TermList::empty();
+    } else if (_sugaredExpr.term()->isLiteral()) {
+      _srt = AtomicSort::boolSort();
+    } else if (_sugaredExpr.term()->isSpecial()) {
+      _srt = _sugaredExpr.term()->getSpecialData()->getSort();
     } else {
-      if (_sugaredExpr.term()->isLiteral()) {
-        _srt = AtomicSort::boolSort();
-      } else {
-        std::cout << _sugaredExpr.term()->isLiteral() << std::endl;
-        _srt = SortHelper::getResultSort(_sugaredExpr.term());
-      }
-    }
+      _srt = SortHelper::getResultSort(_sugaredExpr.term());
+    }*/
   }
 
   TermSugar(TermList trm, SortSugar sort)
