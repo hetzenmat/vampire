@@ -233,25 +233,25 @@ RUN_TEST(term_indexing_one_side_interp_01,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
       .insert = {
-        f(1 + num(1)),
-        f(1 + a),
+         f(1 + num(1)),
+         f(1 + a),
       },
       .query = f(x),
-      .expected = { 
+     .expected = {
+         TermUnificationResultSpec
+         { .querySigma  = f(1 + a),
+          .resultSigma = f(1 + a),
+          .constraints = Stack<Literal*>() },
 
-          TermUnificationResultSpec 
-          { .querySigma  = f(1 + a),
-            .resultSigma = f(1 + a),
-            .constraints = Stack<Literal*>() }, 
+         TermUnificationResultSpec
+         { .querySigma  = f(1 + num(1)),
+          .resultSigma = f(1 + num(1)),
+          .constraints = Stack<Literal*>() },
 
-          TermUnificationResultSpec 
-          { .querySigma  = f(1 + num(1)),
-            .resultSigma = f(1 + num(1)),
-            .constraints = Stack<Literal*>() }, 
-
-      },
+     },
+      .uwa = "one_side_interpreted",
+      .fixedPointIteration = "off",
     })
 
 
@@ -259,25 +259,25 @@ RUN_TEST(term_indexing_one_side_interp_02,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
       .insert = {
         f(1 + num(1)),
         f(1 + a),
       },
       .query = g(x),
       .expected = Stack<TermUnificationResultSpec>(),
+      .uwa = "one_side_interpreted",
+      .fixedPointIteration = "off",
     })
  
 RUN_TEST(term_indexing_one_side_interp_03, 
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
-      .insert = {
-        1 + num(1),
-        1 + a,
-      },
-      .query = x.sort(Int),
+             .insert = {
+                 1 + num(1),
+                 1 + a,
+             },
+             .query = x.sort(Int),
       .expected = { 
 
         TermUnificationResultSpec 
@@ -290,7 +290,9 @@ RUN_TEST(term_indexing_one_side_interp_03,
           .resultSigma = 1 + num(1),
           .constraints = Stack<Literal*>() }, 
 
-      }
+      },
+     .uwa = "one_side_interpreted",
+     .fixedPointIteration = "off",
     })
 
 
@@ -298,11 +300,12 @@ RUN_TEST(term_indexing_one_side_interp_04,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
-      .insert = {
-        1 + num(1),
-        1 + a,
-      },
+             .insert = {
+                 1 + num(1),
+                 1 + a,
+             },
+
+
       .query = b + 2,
       .expected = { 
 
@@ -316,7 +319,9 @@ RUN_TEST(term_indexing_one_side_interp_04,
           .resultSigma = 1 + num(1),
           .constraints = { 2 + b != 1 + num(1), } }, 
 
-      }
+      },
+     .uwa = "one_side_interpreted",
+     .fixedPointIteration = "off",
     })
 
 
@@ -325,7 +330,7 @@ RUN_TEST(term_indexing_one_side_interp_04_b,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         1 + a,
       },
@@ -338,7 +343,9 @@ RUN_TEST(term_indexing_one_side_interp_04_b,
           .constraints = { 1 + a != 2 + a, } },
 
 
-      }
+      },
+     .uwa = "one_side_interpreted",
+     .fixedPointIteration = "off",
     })
 
 
@@ -346,7 +353,7 @@ RUN_TEST(term_indexing_one_side_interp_04_c,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         f(1 + num(1)),
         f(1 + a),
@@ -364,14 +371,16 @@ RUN_TEST(term_indexing_one_side_interp_04_c,
           .resultSigma = f( 1 + num(1) ),
           .constraints = { 2 + b != 1 + num(1), } }, 
 
-      }
+      },
+             .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off",
     })
 
 RUN_TEST(term_indexing_one_side_interp_04_d, 
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         g(f(1 + num(1))),
         g(f(1 + a)),
@@ -389,14 +398,16 @@ RUN_TEST(term_indexing_one_side_interp_04_d,
           .resultSigma = g(f( 1 + num(1) )),
           .constraints = { 2 + b != 1 + num(1), } }, 
 
-      }
+      },
+       .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off",
     })
 
 RUN_TEST(term_indexing_one_side_interp_05, 
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         1 + num(1),
         1 + a,
@@ -419,15 +430,17 @@ RUN_TEST(term_indexing_one_side_interp_05,
           .resultSigma = a,
           .constraints = { 2 + b != a, } }, 
 
-      }
-})
+      },
+     .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off",
+         })
 
 
 RUN_TEST(term_indexing_one_side_interp_06, 
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         1 + num(1),
         1 + a,
@@ -450,15 +463,17 @@ RUN_TEST(term_indexing_one_side_interp_06,
           .resultSigma = a,
           .constraints = Stack<Literal*>{} }, 
 
-      }
-})
+      },
+             .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off",
+         })
 
 
 RUN_TEST(term_indexing_one_side_interp_07, 
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         1 + num(1),
         1 + a,
@@ -483,14 +498,16 @@ RUN_TEST(term_indexing_one_side_interp_07,
           .resultSigma = f(a),
           .constraints = Stack<Literal*>{} }, 
 
-      }
-})
+      },
+             .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off",
+         })
 
 RUN_TEST(term_indexing_one_side_interp_08, 
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         1 + num(1),
         1 + a,
@@ -519,7 +536,9 @@ RUN_TEST(term_indexing_one_side_interp_08,
           .resultSigma = f(x),
           .constraints = { 3 + a != f(x) } }, 
 
-      }
+      },
+             .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off"
 })
 
 TEST_FUN(term_indexing_poly_01)
@@ -581,7 +600,7 @@ RUN_TEST(term_indexing_poly_uwa_01,
     POLY_INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "one_side_interpreted",
+
       .insert = {
         f(alpha, a(alpha)),
         f(alpha, b(alpha)),
@@ -601,7 +620,9 @@ RUN_TEST(term_indexing_poly_uwa_01,
           .resultSigma = f(Int, b(Int)),
           .constraints = { b(Int) != a(Int) + y } }, 
 
-      }
+      },
+             .uwa = "one_side_interpreted",
+             .fixedPointIteration = "off",
     })
 
 
@@ -1475,8 +1496,7 @@ RUN_TEST(top_level_constraints_2_with_fixedPointIteration,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "ac2",
-      .fixedPointIteration = "on",
+
       .insert = {
         a + b + c,
         b,
@@ -1498,6 +1518,8 @@ RUN_TEST(top_level_constraints_2_with_fixedPointIteration,
             .constraints = Stack<Literal*>{ b + f(a) + c != x3 + x2 } }, 
 
       },
+             .uwa = "ac2",
+             .fixedPointIteration = "on",
     })
 
 
@@ -1505,7 +1527,7 @@ RUN_TEST(top_level_constraints_2,
     INT_SUGAR,
     IndexTest {
       .index = getTermIndex(),
-      .uwa = "ac2",
+
       .insert = {
         a + b + c,
         b,
@@ -1527,4 +1549,6 @@ RUN_TEST(top_level_constraints_2,
             .constraints = Stack<Literal*>{ a + b + a + c != a + x3 + x2 } }, 
 
       },
+             .uwa = "ac2",
+             .fixedPointIteration = "off",
     })

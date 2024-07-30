@@ -8,8 +8,8 @@
  * and in the source directory
  */
 /**
- * @file Injectivty.hpp
- * Defines class Injectivty.
+ * @file Injectivity.hpp
+ * Defines class Injectivity.
  */
 
 #ifndef __Injectivity__

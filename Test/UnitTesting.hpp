@@ -54,8 +54,8 @@ public:
    *
    * returns true iff all tests of the unit were successfull.
    */
-  bool run(ostream& out);
-  bool runTestsWithNameSubstring(vstring const& pref, ostream& out);
+  bool run(ostream& out, bool fork = true);
+  bool runTestsWithNameSubstring(vstring const& pref, ostream& out, bool fork = true);
   bool runTest(vstring const& name);
 
 
@@ -93,8 +93,8 @@ public:
   bool add(vstring const& testUnit, TestUnit::Test test);
   TestUnit* findUnit(vstring const& id);
   bool listTests(Stack<vstring>const& args);
-  bool run(Stack<vstring>const& args);
-  bool runUnit(vstring const& args);
+  bool run(Stack<vstring>const& args, bool fork = true);
+  bool runUnit(vstring const& args, bool fork = true);
   bool runTest(vstring const& unit, vstring const& testCase);
 };
 

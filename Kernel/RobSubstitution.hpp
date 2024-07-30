@@ -103,6 +103,7 @@ struct TermSpec { // for backwards compatibility
 template<class TermSpecOrList, class VarBankOrInt>
 class UnificationConstraint
 {
+  static_assert(std::is_same<TermSpecOrList, TermSpec>::value || std::is_same<TermSpecOrList, TermList>::value, "");
 protected:  
   TermSpecOrList _t1;
   TermSpecOrList _t2;

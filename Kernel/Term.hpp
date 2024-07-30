@@ -247,7 +247,7 @@ public:
   bool isRatSort();
   bool isRealSort();
 
-#if VHOL  
+#if VHOL  // TODO
   bool isApplication() const;
   bool isLambdaTerm() const; 
   bool isEtaExpandedVar(TermList& var) const;
@@ -268,10 +268,10 @@ public:
   // nuber of applued variables and lambdas in the term
   unsigned numOfAppVarsAndLambdas() const;  
   Option<unsigned> deBruijnIndex() const;
-  TermList lhs() const;
-  TermList rhs() const;
-  TermList lambdaBody() const;
-  TermList head();
+  TermList lhs() const; // done
+  TermList rhs() const; // done
+  TermList lambdaBody() const; // done
+  TermList head(); // done
   TermList domain();
   TermList result();
   TermList finalResult();
@@ -799,7 +799,7 @@ public:
   /** True if the term is, in fact, a sort */
   bool isSort() const { return _args[0]._info.sort; }
 
-#if VHOL
+#if VHOL // TODO
 
   typedef Stack<pair<int, unsigned>> IndexVarStack;
 
