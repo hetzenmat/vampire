@@ -30,6 +30,9 @@ TermList BetaNormaliser::normalise(TermList t)
 
 TermList BetaNormaliser::transformSubterm(TermList t)
 {
+  std::cout << __FUNCTION__ << ": reducing " << t.toString() << std::endl;
+  auto orig = t;
+
   if(t.isLambdaTerm()) return t;
 
   TermList head;
@@ -42,6 +45,7 @@ TermList BetaNormaliser::transformSubterm(TermList t)
     ApplicativeHelper::getHeadAndArgs(t, head, args);
   }
 
+  std::cout << __FUNCTION__ << ": " << orig.toString() << " --> " << t.toString() << std::endl;
   return t;
 }
 
@@ -216,7 +220,8 @@ TermList RedexReducer::reduce(TermList head, TermStack& args)
 
   TermList transformed = transformSubterm(t1);
 
-  if(transformed != t1) return AH::app(t1Sort, transformed, args);
+  if(transformed != t1)
+    return AH::app(t1Sort, transformed, args);
   return AH::app(t1Sort, transform(t1), args);
 }
 
@@ -431,13 +436,11 @@ TermList ApplicativeHelper::app(TermList sort, TermList head, TermStack& terms)
   TermList res = head;
   TermList s1, s2;
 
-  for(auto i = terms.size() - 1;; --i){
+  for(std::size_t i = terms.size(); i > 0; i--){
     s1 = getNthArg(sort, 1);
     s2 = getResultApplieadToNArgs(sort, 1);
-    res = app(s1, s2, res, terms[i]);
+    res = app(s1, s2, res, terms[i-1]);
     sort = s2;
-
-    if (i == 0) break;
   }
 
   return res;
@@ -512,6 +515,10 @@ TermList ApplicativeHelper::getNthArg(TermList arrowSort, unsigned argNum)
 
   TermList res;
   while(argNum >=1){
+    if (!arrowSort.isArrowSort()) {
+      std::cout << arrowSort.toString() << std::endl;
+      std::cout << "";
+    }
     ASS(arrowSort.isArrowSort());
     res = arrowSort.domain();
     arrowSort = arrowSort.result();

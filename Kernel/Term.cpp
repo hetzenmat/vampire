@@ -238,6 +238,11 @@ bool TermList::isArrowSort()
          static_cast<AtomicSort*>(term())->isArrowSort();
 }
 
+bool Term::isArrowSort() const
+{
+  return isSort() && env.signature->isArrowCon(_functor);
+}
+
 bool TermList::isBoolSort()
 {
   return !isVar() && term()->isSort() && 
@@ -861,8 +866,7 @@ vstring TermList::toString(bool topLevel) const
     return Term::variableToString(*this);
   }
 
-#if VHOL
-  if(env.getMainProblem()->isHigherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
+  if(env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
     if(ApplicativeHelper::isTrue(*this)){
       return "⊤";
     }
@@ -870,7 +874,6 @@ vstring TermList::toString(bool topLevel) const
       return "⊥";
     }
   }
-#endif
 
   return term()->toString(topLevel);
 } // TermList::toString
@@ -888,14 +891,14 @@ vstring Term::toString(bool topLevel) const
     return "$tType";
   }
 
-#if VHOL
-  if(env.getMainProblem()->isHigherOrder() && env.options->holPrinting() != Options::HPrinting::RAW) {
+
+  if (env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() != Options::HPrinting::RAW) {
     IndexVarStack st;
     return toString(true, st);
   }
-#endif
 
-  if(!isSpecial() && !isLiteral()){
+
+  if (!isSpecial() && !isLiteral()) {
     if(isSort() && static_cast<AtomicSort*>(const_cast<Term*>(this))->isArrowSort()){
       ASS(arity() == 2);
       vstring res;
@@ -918,12 +921,10 @@ vstring Term::toString(bool topLevel) const
   return s;
 } // Term::toString
 
-#if VHOL
+//#if VHOL
 
 vstring Term::lambdaToString(const SpecialTermData* sd, bool pretty) const
 {
-  CALL("Term::lambdaToString");
-
   VList* vars = sd->getLambdaVars();
   SList* sorts = sd->getLambdaVarSorts();
   TermList lambdaExp = sd->getLambdaExp();
@@ -947,8 +948,6 @@ vstring Term::lambdaToString(const SpecialTermData* sd, bool pretty) const
 
 vstring Term::toString(bool topLevel, IndexVarStack& st) const
 {
-  CALL("Term::toString(bool, ...)");
-
   auto termToStr = [](TermList t, bool top, IndexVarStack& st){
     if (t.isVar()) {
       return Term::variableToString(t);
@@ -1097,8 +1096,6 @@ vstring Term::toString(bool topLevel, IndexVarStack& st) const
   res += (!topLevel && hasArgs) ? ")" : "";
   return res;
 }
-
-#endif
 
 /**
  * Return the result of conversion of a literal into a vstring.
@@ -1934,50 +1931,6 @@ Literal* Literal::create1(unsigned predicate, bool polarity, TermList arg)
 
 Literal* Literal::create2(unsigned predicate, bool polarity, TermList arg1, TermList arg2)
 { return Literal::create(predicate, polarity, { arg1, arg2 }); }
-
-#if VHOL
-
-bool Literal::isFlexFlex() const
-{
-  ASS(isEquality());
-
-  TermList lhs = *nthArgument(0);
-  TermList rhs = *nthArgument(1);
-  return !polarity() && lhs.head().isVar() && rhs.head().isVar();
-}
-
-bool Literal::isFlexRigid() const
-{
-  ASS(isEquality());
-
-  TermList lhs = *nthArgument(0);
-  TermList rhs = *nthArgument(1);
-  TermList lhsHead = lhs.head();
-  TermList rhsHead = rhs.head();
-
-  return (lhsHead.isVar() && !rhsHead.isVar()) ||
-      (rhsHead.isVar() && !lhsHead.isVar());
-}
-
-bool Literal::isRigidRigid() const
-{
-  ASS(isEquality());
-
-  TermList lhs = *nthArgument(0);
-  TermList rhs = *nthArgument(1);
-  return lhs.head().isTerm() && rhs.head().isTerm();
-}
-
-unsigned Literal::numOfAppVarsAndLambdas() const
-{
-  ASS(isEquality());
-
-  TermList lhs = *nthArgument(0);
-  TermList rhs = *nthArgument(1);
-  return lhs.numOfAppVarsAndLambdas() + rhs.numOfAppVarsAndLambdas();
-}
-
-#endif
 
 /** create a new term and copy from t the relevant part of t's content */
 Term::Term(const Term& t) throw()

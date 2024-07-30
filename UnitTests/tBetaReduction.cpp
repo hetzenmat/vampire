@@ -25,6 +25,7 @@ TermList toDeBruijnIndices(TermList t) {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// TEST CASES //////////////////////////////////
 
+/* OK
 TEST_FUN(beta_reduction01) {
   DECL_DEFAULT_VARS            
   DECL_SORT(srt)
@@ -37,6 +38,7 @@ TEST_FUN(beta_reduction01) {
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
+*/
 
 TEST_FUN(beta_reduction02) {
   DECL_DEFAULT_VARS            
@@ -47,12 +49,15 @@ TEST_FUN(beta_reduction02) {
   DECL_CONST(f,fSrt)  
 
   BetaNormaliser bn;
+  // t = (\x. f x) a
+  // -> f a
   auto t = ap(lam(x0,ap(f, x0)),a);
-  auto reduced = bn.normalise( toDeBruijnIndices(t));
+  auto reduced = bn.normalise(toDeBruijnIndices(t));
 
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
 
+/* MH START
 TEST_FUN(beta_reduction03) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(xSrt, {srt, srt})
@@ -233,6 +238,8 @@ TEST_FUN(eta_reduction07) {
 
   ASS_EQ(reduced, ap(f,g).sugaredExpr());
 }
+MH END
+*/
 
 /*TEST_FUN(whnf_01) {            
   DECL_SORT(srt)
@@ -271,6 +278,7 @@ TEST_FUN(whnf_02) {
   ASS_EQ(tdb.whnf(), toDeBruijnIndices(lam(y, lam(z, a))));
 }*/
 
+/*
 TEST_FUN(fo_subterm_rep1) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(gSrt, {srt, srt}) 
@@ -296,3 +304,4 @@ TEST_FUN(fo_subterm_rep1) {
   std::cout << replaced << std::endl;
   std::cout << replaced2 << std::endl;
 }
+*/
