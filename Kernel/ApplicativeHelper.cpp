@@ -33,7 +33,8 @@ TermList BetaNormaliser::normalise(TermList t)
 
 TermList BetaNormaliser::transformSubterm(TermList t)
 {
-  CALL("BetaNormaliser::transformSubterm");
+  LOG("reducing", t.toString());
+  auto orig = t;
 
   if(t.isLambdaTerm()) return t;
 
@@ -46,7 +47,8 @@ TermList BetaNormaliser::transformSubterm(TermList t)
     if(t.isLambdaTerm()) break;
     ApplicativeHelper::getHeadAndArgs(t, head, args);    
   }
-  
+
+  LOG(orig.toString(), "-->", t.toString())
   return t;
 }
 
@@ -220,20 +222,27 @@ TermList RedexReducer::reduce(TermList head, TermStack& args)
   CALL("RedexReducer::reduce");
   ASS(AH::canHeadReduce(head, args));
 
+  LOG(head.toString());
+  for (unsigned i = 0; i < args.size(); ++i) {
+    LOG(args[i]);
+  }
+
   _replace = 0;
   TermList t1 = head.lambdaBody();
   TermList t1Sort = *head.term()->nthArgument(1);
   _t2 = args.pop();
 
   TermList transformed = transformSubterm(t1);
+  LOG("transformed:", transformed.toString());
 
-  if(transformed != t1) return AH::app(t1Sort, transformed, args);  
+  if(transformed != t1)
+    return AH::app(t1Sort, transformed, args);
   return AH::app(t1Sort, transform(t1), args);
 }
 
 TermList RedexReducer::transformSubterm(TermList t)
 {
-  CALL("RedexReducer::transformSubterm");
+  LOG("RedexReducer",t.toString());
 
   if(t.deBruijnIndex().isSome()){
     unsigned index = t.deBruijnIndex().unwrap();

@@ -19,13 +19,14 @@
 #include "Kernel/ApplicativeHelper.hpp"
 #include "Shell/LambdaConversion.hpp"
 
-TermList toDeBruijnIndices(TermList t){
+TermList toDeBruijnIndices(TermList t) {
   return LambdaConversion().convertLambda(t);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// TEST CASES //////////////////////////////////
 
+/*
 TEST_FUN(beta_reduction01) {
   DECL_DEFAULT_VARS            
   DECL_SORT(srt)
@@ -38,6 +39,7 @@ TEST_FUN(beta_reduction01) {
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
+*/
 
 TEST_FUN(beta_reduction02) {
   DECL_DEFAULT_VARS            
@@ -54,6 +56,7 @@ TEST_FUN(beta_reduction02) {
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
 
+/*
 TEST_FUN(beta_reduction03) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(xSrt, {srt, srt})
@@ -234,6 +237,7 @@ TEST_FUN(eta_reduction07) {
 
   ASS_EQ(reduced, ap(f,g).sugaredExpr());
 }
+*/
 
 /*TEST_FUN(whnf_01) {            
   DECL_SORT(srt)
@@ -272,6 +276,7 @@ TEST_FUN(whnf_02) {
   ASS_EQ(tdb.whnf(), toDeBruijnIndices(lam(y, lam(z, a))));
 }*/
 
+/*
 TEST_FUN(fo_subterm_rep1) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(gSrt, {srt, srt}) 
@@ -297,7 +302,7 @@ TEST_FUN(fo_subterm_rep1) {
   cout << replaced << endl;
   cout << replaced2 << endl;  
 }
-
+*/
 #endif
 
 

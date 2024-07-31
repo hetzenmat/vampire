@@ -754,7 +754,9 @@ Option<unsigned> TermList::deBruijnIndex() const {
 
 Option<unsigned> Term::deBruijnIndex() const {
   CALL("Term::deBruijnIndex");
-  return isSort() || isLiteral() || isSpecial() ? Option<unsigned>() : env.signature->getFunction(_functor)->dbIndex();  
+  if (isSort() || isLiteral() || isSpecial())
+    return {};
+  return env.signature->getFunction(_functor)->dbIndex();
 }
 
 #endif

@@ -137,6 +137,19 @@ template<class... A> void Tracer::printDbg(const char* file, int line, const A&.
   std::cout << std::endl; 
 }
 
+template<class... A> void printDbg2(const char* file, const char* func, unsigned line, const A&... msg)
+{
+  const char* slashIdx = nullptr;
+  while (*file != 0) {
+    if (*file == '/') slashIdx = file + 1;
+    ++file;
+  }
+
+  std::cout << "[ debug ] " << slashIdx << ":" << line << " @ " << func << ":";
+  ((std::cout << " " << msg), ...);
+  std::cout << std::endl;
+}
+
 
 } // namespace Debug
 
@@ -145,6 +158,7 @@ template<class... A> void Tracer::printDbg(const char* file, int line, const A&.
 #  define AUX_CALL(SEED,Fun) AUX_CALL_(SEED,Fun)
 #  define CALL(Fun) AUX_CALL(__LINE__,Fun)
 #  define DBG(...) { Debug::Tracer::printDbg(__FILE__, __LINE__, __VA_ARGS__); }
+#  define LOG(...) { Debug::printDbg2(__FILE__, __func__, __LINE__, __VA_ARGS__); }
 #  define DBGE(x) DBG(#x, " = ", x)
 #  define ECHO(x) Debug::Tracer::echoValue(__FILE__, __LINE__, #x " = ", x)
 #  define CALLC(Fun,check) if (check){ AUX_CALL(__LINE__,Fun) }
@@ -158,6 +172,7 @@ template<class... A> void Tracer::printDbg(const char* file, int line, const A&.
 
 #else // ! VDEBUG
 #  define DBG(...) {}
+#  define LOG(...) {}
 #  define DBGE(x) {}
 #  define CALL(Fun) 
 #  define CALLC(Fun,check) 
