@@ -62,13 +62,28 @@ template<class... A> void printDbg(const char* file, int line, const A&... msg)
   std::cout << std::endl; 
 }
 
+template<class... A> void printDbg2(const char* file, const char* func, unsigned line, const A&... msg)
+{
+  const char* slashIdx = nullptr;
+  while (*file != 0) {
+    if (*file == '/') slashIdx = file + 1;
+    ++file;
+  }
+
+  std::cout << "[ debug ] " << slashIdx << ":" << line << " @ " << func << ":";
+  ((std::cout << " " << msg), ...);
+  std::cout << std::endl;
+}
+
 } // namespace Debug
 
 #if VDEBUG
 #  define DBG(...) { Debug::printDbg(__FILE__, __LINE__, __VA_ARGS__); }
+#  define LOG(...) { Debug::printDbg2(__FILE__, __func__, __LINE__, __VA_ARGS__); }
 #  define DBGE(x) DBG(#x, " = ", x)
 #else // ! VDEBUG
 #  define DBG(...) {}
+#  define LOG(...) {}
 #  define DBGE(x) {}
 #endif
 

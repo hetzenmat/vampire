@@ -480,7 +480,8 @@ Option<unsigned> TermList::deBruijnIndex() const {
 }
 
 Option<unsigned> Term::deBruijnIndex() const {
-  if (isSort() || isLiteral() || isSpecial()) return {};
+  if (isSort() || isLiteral() || isSpecial())
+    return {};
   return env.signature->getFunction(_functor)->dbIndex();
 }
 

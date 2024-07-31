@@ -281,9 +281,14 @@ class Signature
     inline void setProxy(Proxy prox){ _prox = prox; }
     inline Proxy proxy(){ return _prox; }
 
-    inline void setDBIndex(int index) { _dbIndex = index; }
+    inline void setDBIndex(int index) {
+      _dbIndex = index;
+    }
+
     inline Option<unsigned> dbIndex() const {
-      return _dbIndex > -1 ? Option<unsigned>(static_cast<unsigned>(_dbIndex)) : Option<unsigned>();
+      if (_dbIndex > -1)
+        return Option<unsigned>((unsigned)_dbIndex);
+      return {};
     }
 
     inline void setComb(Combinator comb){ _comb = comb; }
