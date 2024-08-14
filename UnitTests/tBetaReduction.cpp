@@ -25,7 +25,7 @@ TermList toDeBruijnIndices(TermList t) {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// TEST CASES //////////////////////////////////
 
-/* OK
+
 TEST_FUN(beta_reduction01) {
   DECL_DEFAULT_VARS            
   DECL_SORT(srt)
@@ -38,7 +38,6 @@ TEST_FUN(beta_reduction01) {
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
-*/
 
 TEST_FUN(beta_reduction02) {
   DECL_DEFAULT_VARS            
@@ -52,12 +51,14 @@ TEST_FUN(beta_reduction02) {
   // t = (\x. f x) a
   // -> f a
   auto t = ap(lam(x0,ap(f, x0)),a);
-  auto reduced = bn.normalise(toDeBruijnIndices(t));
+  auto t2 = toDeBruijnIndices(t);
+  LOG("t2 ==", t2.toString());
+  auto reduced = bn.normalise(t2);
 
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
 
-/* MH START
+
 TEST_FUN(beta_reduction03) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(xSrt, {srt, srt})
@@ -71,6 +72,7 @@ TEST_FUN(beta_reduction03) {
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
+
 
 TEST_FUN(beta_reduction04) {            
   DECL_SORT(srt)
@@ -87,6 +89,7 @@ TEST_FUN(beta_reduction04) {
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
 
+
 TEST_FUN(beta_reduction05) {            
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, srt)
@@ -101,6 +104,7 @@ TEST_FUN(beta_reduction05) {
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
 
+/*
 TEST_FUN(beta_reduction06) {            
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, srt)
@@ -117,6 +121,7 @@ TEST_FUN(beta_reduction06) {
 
   ASS_EQ(reduced, res.sugaredExpr());
 }
+
 
 TEST_FUN(eta_reduction01) {            
   DECL_SORT(srt)

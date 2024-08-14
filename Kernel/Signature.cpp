@@ -63,7 +63,7 @@ Signature::Symbol::Symbol(const vstring& nm, unsigned arity, bool interpreted, b
     _computable(1),
     _letBound(0),
     _prox(NOT_PROXY),
-    _comb(NOT_COMB)
+    _dbIndex(-1)
 {
   ASS(!stringConstant || arity==0);
 
@@ -757,7 +757,8 @@ unsigned Signature::getBoolDef(unsigned fn)
 unsigned Signature::getChoice(){
   bool added = false;
   unsigned choice = addFunction("vEPSILON",1, added);      
-  if(added){
+  if(added) {
+    _choiceFun = choice;
     TermList alpha = TermList(0, false);
     TermList bs = AtomicSort::boolSort();
     TermList alphaBs = AtomicSort::arrowSort(alpha, bs);
