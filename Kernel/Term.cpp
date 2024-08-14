@@ -858,7 +858,7 @@ vstring TermList::asArgsToString() const
  * Write as a vstring the head of the term list.
  * @since 27/02/2008 Manchester
  */
-vstring TermList::toString(bool topLevel) const
+vstring TermList::toString(bool topLevel, bool higherOrder) const
 {
   if (isEmpty()) {
     return "<empty TermList>";
@@ -867,7 +867,7 @@ vstring TermList::toString(bool topLevel) const
     return Term::variableToString(*this);
   }
 
-  if(env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
+  if(higherOrder || (env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY)) {
     if(ApplicativeHelper::isTrue(*this)){
       return "⊤";
     }
@@ -876,7 +876,7 @@ vstring TermList::toString(bool topLevel) const
     }
   }
 
-  return term()->toString(topLevel);
+  return term()->toString(topLevel, higherOrder);
 } // TermList::toString
 
 
@@ -884,16 +884,16 @@ vstring TermList::toString(bool topLevel) const
  * Return the result of conversion of a term into a vstring.
  * @since 16/05/2007 Manchester
  */
-vstring Term::toString(bool topLevel) const
+vstring Term::toString(bool topLevel, bool higherOrder) const
 {
   bool printArgs = true;
 
-  if(isSuper()){
+  if (isSuper()) {
     return "$tType";
   }
 
 
-  if (env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() != Options::HPrinting::RAW) {
+  if (higherOrder || (env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() != Options::HPrinting::RAW)) {
     IndexVarStack st;
     return toString(true, st);
   }
@@ -1337,7 +1337,7 @@ Term* Term::createNonShared(unsigned function, unsigned arity, TermList* args)
 
   TermList* curArg = args;
   TermList* argStopper = args+arity;
-  while (curArg!=argStopper) {
+  while (curArg != argStopper) {
     *ss = *curArg;
     --ss;
     ++curArg;

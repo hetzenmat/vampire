@@ -195,7 +195,7 @@ public:
   unsigned defaultHash() const { return DefaultHash::hash(content()); }
   unsigned defaultHash2() const { return content(); }
 
-  vstring toString(bool topLevel = true) const;
+  vstring toString(bool topLevel = true, bool higherOrder = false) const;
 
   friend std::ostream& operator<<(std::ostream& out, Kernel::TermList const& tl);
   /** make the term into an ordinary variable with a given number */
@@ -583,7 +583,7 @@ public:
 
   SpecialFunctor specialFunctor() const 
   { return toSpecialFunctor(functor()); }
-  vstring toString(bool topLevel = true) const;
+  vstring toString(bool topLevel = true, bool higherOrder = false) const;
   friend std::ostream& operator<<(std::ostream& out, Kernel::Term const& tl);
   // auxiliary function to print lambda specials
   vstring lambdaToString(const SpecialTermData* sd, bool pretty = false) const;

@@ -62,9 +62,13 @@ template<class... A> void printDbg(const char* file, int line, const A&... msg)
   std::cout << std::endl; 
 }
 
+struct Indent {
+  static unsigned int value;
+};
+
 template<class... A> void printDbg2(int diffIndent, const char* file, const char* func, unsigned line, const A&... msg)
 {
-  static unsigned int indent = 0;
+  if (diffIndent < 0) Indent::value += diffIndent;
 
   const char* slashIdx = nullptr;
   while (*file != 0) {
@@ -72,14 +76,14 @@ template<class... A> void printDbg2(int diffIndent, const char* file, const char
     ++file;
   }
 
-  for (unsigned i = 0; i < indent; i++)
+  for (unsigned i = 0; i < Indent::value; i++)
     std::cout << " ";
 
-  std::cout << "[ debug ] " << slashIdx << ":" << line << " @ " << func << ":";
+  std::cout << slashIdx << ":" << line << " @ " << func << ":";
   ((std::cout << " " << msg), ...);
   std::cout << std::endl;
 
-  indent += diffIndent;
+  if (diffIndent > 0) Indent::value += diffIndent;
 }
 
 } // namespace Debug

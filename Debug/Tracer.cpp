@@ -84,3 +84,5 @@ void Debug::Tracer::printStack(std::ostream& str) {
   str << "no call stack support for this platform yet" << std::endl;
 #endif
 } // Tracer::printStack (ostream& str)
+
+unsigned int Debug::Indent::value = 0;

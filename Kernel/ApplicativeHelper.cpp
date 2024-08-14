@@ -30,7 +30,7 @@ TermList BetaNormaliser::normalise(TermList t)
 
 TermList BetaNormaliser::transformSubterm(TermList t)
 {
-  LOG("reducing", t.toString())
+  LOG("reducing", t.toString(true, true))
   auto orig = t;
 
   if(t.isLambdaTerm()) return t;
@@ -46,7 +46,7 @@ TermList BetaNormaliser::transformSubterm(TermList t)
     ApplicativeHelper::getHeadAndArgs(t, head, args);
   }
 
-  LOG(orig.toString(), "-->", t.toString())
+  LOG(orig.toString(true, true), "-->", t.toString(true, true))
   return t;
 }
 
@@ -411,15 +411,19 @@ TermList ApplicativeHelper::app2(TermList head, TermList arg1, TermList arg2)
 TermList ApplicativeHelper::app(TermList sort, TermList head, TermList arg)
 {
   LOG_ENTER("AH::app");
-  LOG("sort", sort.toString());
-  LOG("head", head.toString());
-  LOG("arg", arg.toString());
+  LOG("sort =", sort.toString());
+  // LOG("sortIsArrowSort", sort.isArrowSort()); 1
+  LOG("head =", head.toString());
+  LOG("arg =", arg.toString(), arg.isTerm());
 
   TermList s1 = getNthArg(sort, 1);
   TermList s2 = getResultApplieadToNArgs(sort, 1);
-  auto ret = app(s1, s2, head, arg);
+  LOG("s1 =", s1.toString());
+  LOG("s2 =", s2.toString());
 
-  LOG_RETURN("--> AH::app", ret.toString());
+  auto ret = app(s1, s2, head, arg, false); // TODO MH: use sharing 
+
+  LOG_RETURN("-->", ret.toString());
   return ret;
 }
 
@@ -439,7 +443,7 @@ TermList ApplicativeHelper::app(TermList s1, TermList s2, TermList arg1, TermLis
   args.push(arg1);
   args.push(arg2);
   unsigned app = env.signature->getApp();
-  if(shared){
+  if (shared) {
     return TermList(Term::create(app, 4, args.begin()));
   }
   return TermList(Term::createNonShared(app, 4, args.begin()));    

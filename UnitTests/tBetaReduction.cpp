@@ -91,19 +91,31 @@ TEST_FUN(beta_reduction04) {
 */
 
 TEST_FUN(beta_reduction05) {            
+  
+
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, srt)
   DECL_HOL_VAR(y, 1, srt)
   DECL_HOL_VAR(z, 2, srt)  
 
   BetaNormaliser bn;
-  auto tApp = ap(lam(y, lam(z, y) ), x);
-  auto t = lam(x, tApp) ;
+  TermSugar lam_z_y = lam(z, y);
+  TermSugar lam_y_z_y = lam(y, lam_z_y);
+  TermSugar tApp = ap(lam_y_z_y, x);
+  TermSugar t = lam(x, tApp);
+
+  LOG("types");
+  LOG(lam_z_y.sort().toString(true, true));
+  LOG(lam_y_z_y.sort().toString(true, true));
+  LOG(tApp.sort().toString(true, true));
+  LOG(t.sort().toString(true, true));
+  std::cout << "\n";
+
   auto res = lam(x,lam(z, x));
   auto reduced = bn.normalise( toDeBruijnIndices(t) );
 
-  LOG("res", toDeBruijnIndices(res).toString());
-  LOG("reduced", reduced.toString());
+  LOG("res", toDeBruijnIndices(res).toString(true, true));
+  LOG("reduced", reduced.toString(true, true));
 
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }

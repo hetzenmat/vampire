@@ -62,6 +62,8 @@
 
 #include "FMB/ModelCheck.hpp"
 
+#include "Kernel/ApplicativeHelper.hpp"
+
 using namespace std;
 
 /**
@@ -748,62 +750,73 @@ void interactiveMetamode()
   }
 }
 
-void testDHMap() {
-  typedef DHMap<unsigned, unsigned> MyMap;
 
-  MyMap m1;
-  m1.insert(1,1);
-  m1.insert(2,4);
-  m1.insert(3,9);
-  m1.insert(5,25);
+struct Lambda {
+  TermList var;
+  TermList varSort;
+  TermList term;
+  TermList termSort;
 
-  MyMap::Iterator mit(m1);
-
-  while(mit.hasNext())
-  {
-    unsigned k=mit.nextKey();
-    unsigned v;
-    ALWAYS(m1.find(k,v));
+  TermList get() {
+    VList* boundVar = new VList(var.var());
+    SList* boundVarSort = new SList(varSort);
+    Term* lambdaTerm = Term::createLambda(term, boundVar, boundVarSort, termSort);
+    return TermList(lambdaTerm);
   }
-  ASS(!m1.find(4));
-  ASS(m1.find(5));
+};
 
-  m1.reset();
-  MyMap::Iterator mit2(m1);
-  while(mit2.hasNext())
-  {
-    ASSERTION_VIOLATION;
-  }
-
-  ASS(m1.isEmpty());
-  m1.reset();
-  ASS(m1.isEmpty());
-
-  unsigned cnt=10000;
-  for(unsigned i=0;i<cnt;i++) {
-    m1.insert(i,i*i);
-  }
-  ASS_EQ(m1.size(),cnt);
-  for(unsigned i=0;i<cnt;i++) {
-    unsigned v;
-    ALWAYS(m1.find(i,v));
-    ASS_EQ(v,i*i);
-  }
-  ASS(!m1.find(cnt));
-
-  for(unsigned i=1;i<cnt;i+=2) {
-    ALWAYS(m1.remove(i));
-  }
-  NEVER(m1.remove(cnt+1));
-  ASS_EQ(m1.size(), cnt/2+cnt%2);
-  for(unsigned i=0;i<cnt;i++) {
-    unsigned v;
-    bool res=m1.find(i,v);
-
-    ASS(res==(i%2==0));
-    ASS(!res||v==i*i);
-  }
+TermList AP(TermList sort, TermList head, TermList arg) {
+  return ApplicativeHelper::app(sort, head, arg);
 }
+
+void test_beta_reduction05() {
+  TermList srt = TermList(AtomicSort::createConstant("srt"));
+  TermList x = TermList::var(0);
+  TermList y = TermList::var(0);
+  TermList z = TermList::var(0);
+
+  BetaNormaliser bn;
+
+  Lambda lam_z_y_struct = {
+    .var = z, .varSort = srt,
+    .term = y, .termSort = srt
+  };
+  auto lam_z_y = lam_z_y_struct.get();
+  TermList lam_z_y_sort = TermList(AtomicSort::arrowSort(srt, srt));
+
+  Lambda lam_y_z_y_struct = {
+    .var = y, .varSort = srt,
+    .term = lam_z_y, .termSort = lam_z_y_sort
+  };
+  TermList lam_y_z_y = lam_y_z_y_struct.get();
+  TermList lam_y_z_y_sort = TermList(AtomicSort::arrowSort(srt, srt, srt));
+
+  TermList ap_x_lam_y_z_y = AP(lam_y_z_y_sort, lam_y_z_y, x);
+  TermList ap_x_lam_y_z_y_sort = TermList(AtomicSort::arrowSort(srt, srt));
+
+  Lambda t_struct = {
+    .var = x, .varSort = srt,
+    .term = ap_x_lam_y_z_y, .termSort = ap_x_lam_y_z_y_sort
+  };
+  TermList t = t_struct.get();
+
+
+
+
+
+
+  // LOG("tApp", tApp.sugaredExpr().toString(true, true));
+  
+  auto t = lam(x, tApp) ;
+  auto res = lam(x,lam(z, x));
+  auto reduced = bn.normalise( toDeBruijnIndices(t) );
+
+  LOG("res", toDeBruijnIndices(res).toString(true, true));
+  LOG("reduced", reduced.toString(true, true));
+
+  ASS_EQ(reduced, toDeBruijnIndices(res));
+}
+
 
 /**
  * The main function.
