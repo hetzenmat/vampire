@@ -410,9 +410,17 @@ TermList ApplicativeHelper::app2(TermList head, TermList arg1, TermList arg2)
 
 TermList ApplicativeHelper::app(TermList sort, TermList head, TermList arg)
 {
+  LOG_ENTER("AH::app");
+  LOG("sort", sort.toString());
+  LOG("head", head.toString());
+  LOG("arg", arg.toString());
+
   TermList s1 = getNthArg(sort, 1);
   TermList s2 = getResultApplieadToNArgs(sort, 1);
-  return app(s1, s2, head, arg);
+  auto ret = app(s1, s2, head, arg);
+
+  LOG_RETURN("--> AH::app", ret.toString());
+  return ret;
 }
 
 TermList ApplicativeHelper::app(TermList head, TermList arg)

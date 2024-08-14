@@ -62,24 +62,33 @@ template<class... A> void printDbg(const char* file, int line, const A&... msg)
   std::cout << std::endl; 
 }
 
-template<class... A> void printDbg2(const char* file, const char* func, unsigned line, const A&... msg)
+template<class... A> void printDbg2(int diffIndent, const char* file, const char* func, unsigned line, const A&... msg)
 {
+  static unsigned int indent = 0;
+
   const char* slashIdx = nullptr;
   while (*file != 0) {
     if (*file == '/') slashIdx = file + 1;
     ++file;
   }
 
+  for (unsigned i = 0; i < indent; i++)
+    std::cout << " ";
+
   std::cout << "[ debug ] " << slashIdx << ":" << line << " @ " << func << ":";
   ((std::cout << " " << msg), ...);
   std::cout << std::endl;
+
+  indent += diffIndent;
 }
 
 } // namespace Debug
 
 #if VDEBUG
 #  define DBG(...) { Debug::printDbg(__FILE__, __LINE__, __VA_ARGS__); }
-#  define LOG(...) { Debug::printDbg2(__FILE__, __func__, __LINE__, __VA_ARGS__); }
+#  define LOG(...) { Debug::printDbg2(0, __FILE__, __func__, __LINE__, __VA_ARGS__); }
+#  define LOG_ENTER(...) { Debug::printDbg2(4, __FILE__, __func__, __LINE__, __VA_ARGS__); }
+#  define LOG_RETURN(...) { Debug::printDbg2(-4, __FILE__, __func__, __LINE__, __VA_ARGS__); }
 #  define DBGE(x) DBG(#x, " = ", x)
 #else // ! VDEBUG
 #  define DBG(...) {}
