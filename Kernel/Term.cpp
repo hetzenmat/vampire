@@ -350,6 +350,14 @@ TermList AtomicSort::domain(){
   return *nthArgument(0);
 }
 
+std::pair<TermList, TermList> TermList::asPair() {
+  ASS(isArrowSort());
+
+  return { *term()->nthArgument(0)
+         , *term()->nthArgument(1)
+         };
+}
+
 TermList TermList::domain(){
   CALL("TermList::domain");
   ASS(isArrowSort());
@@ -1158,7 +1166,7 @@ vstring TermList::asArgsToString() const
  * Write as a vstring the head of the term list.
  * @since 27/02/2008 Manchester
  */
-vstring TermList::toString() const
+vstring TermList::toString(bool higherOrder) const
 {
   CALL("TermList::toString");
 
@@ -1170,7 +1178,7 @@ vstring TermList::toString() const
   }
 
 #if VHOL
-  if(env.property->higherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY){
+  if(higherOrder || (env.property->higherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY)) {
     if(ApplicativeHelper::isTrue(*this)){
       return "⊤";
     }
@@ -1188,7 +1196,7 @@ vstring TermList::toString() const
  * Return the result of conversion of a term into a vstring.
  * @since 16/05/2007 Manchester
  */
-vstring Term::toString() const
+vstring Term::toString(bool higherOrder) const
 {
   CALL("Term::toString");
 
@@ -1197,7 +1205,7 @@ vstring Term::toString() const
   }
 
 #if VHOL
-  if(env.property->higherOrder() && env.options->holPrinting() != Options::HPrinting::RAW){
+  if(higherOrder || (env.property->higherOrder() && env.options->holPrinting() != Options::HPrinting::RAW)) {
     IndexVarStack st;
     return toString(true, st);
   }
@@ -1648,7 +1656,6 @@ Term* Term::createNonShared(Term* t,TermList* args)
  */
 Term* Term::createNonShared(unsigned function, unsigned arity, TermList* args)
 {
-  CALL("Term::createNonShared/3");
   ASS_EQ(env.signature->functionArity(function), arity);
 
   Term* s = new(arity) Term;

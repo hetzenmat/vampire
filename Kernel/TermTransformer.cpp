@@ -252,18 +252,23 @@ Term* TermTransformer::transformSpecial(Term* term)
 
 TermList TermTransformer::transform(TermList ts)
 {
-  CALL("TermTransformer::transform(TermList ts)");
+  LOG_ENTER("TermTransformer::transform", ts.toString());
+
+  TermList ret;
 
   if (ts.isVar()) {
-    return transformSubterm(ts);
+    ret = transformSubterm(ts);
   } else {
     Term* transformed = transform(ts.term());
     if (transformed != ts.term()) {
-      return TermList(transformed);
+      ret = TermList(transformed);
     } else {
-      return ts;
+      ret = ts;
     }
   }
+
+  LOG_RETURN(ret.toString());
+  return ret;
 }   
 
 TermList SubtermReplacer::transformSubterm(TermList t)

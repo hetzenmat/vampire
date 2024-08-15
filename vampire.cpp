@@ -74,6 +74,9 @@
 #include "FMB/ModelCheck.hpp"
 #include <thread>
 
+#include "Kernel/ApplicativeHelper.hpp"
+#include "Shell/LambdaConversion.hpp"
+
 #if CHECK_LEAKS
 #include "Lib/MemoryLeak.hpp"
 #endif
@@ -647,6 +650,68 @@ void axiomSelectionMode()
   vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
 }
 
+using Type = TermList;
+using TermType = std::pair<TermList, Type>;
+
+TermType LAM(TermType _var, TermType _term) {
+  auto [var, varSort] = _var;
+  auto [term, termSort] = _term;
+  
+  VList* boundVar = new VList(var.var());
+    SList* boundVarSort = new SList(varSort);
+    Term* lambdaTerm = Term::createLambda(term, boundVar, boundVarSort, termSort);
+    return { TermList(lambdaTerm)
+           , TermList(AtomicSort::arrowSort(varSort, termSort))
+           }; 
+}
+
+void require(bool v) {
+  if (!v) {
+    throw std::exception();
+  }
+}
+
+TermType AP(TermType lhs, TermType rhs) {
+  auto [lhsTerm, lhsType] = lhs;
+  auto [rhsTerm, rhsType] = rhs;
+
+  require(lhsType.isArrowSort());
+
+  auto [domain, result] = lhsType.asPair();
+  
+  require(domain == rhsType);
+
+
+  return { ApplicativeHelper::app(lhsType, lhsTerm, rhsTerm)
+         , result
+         };
+}
+
+TermList toDeBruijnIndices(TermList t) {
+  return LambdaConversion().convertLambda(t);
+}
+
+void test_beta_reduction05() {
+  TermList srt = TermList(AtomicSort::createConstant("srt"));
+  TermType x = {TermList::var(0), srt};
+  TermType y = {TermList::var(1), srt};
+  TermType z = {TermList::var(2), srt};
+
+  BetaNormaliser bn;
+
+  auto t1 = AP(LAM(y, LAM(z, y)), x);
+  auto t2 = LAM(x, t1);
+
+  auto result = LAM(x, LAM(z, x));
+
+  LOG("term", t2.first.toString());
+  LOG("result", result.first.toString());
+
+  auto reduced = bn.normalise( toDeBruijnIndices(t2.first) );
+  
+  LOG("reduced", reduced.toString());
+}
+
 /**
  * The main function.
  * @since 03/12/2003 many changes related to logging
@@ -655,10 +720,12 @@ void axiomSelectionMode()
  */
 int main(int argc, char* argv[])
 {
-  CALL ("main");
 
   System::registerArgv0(argv[0]);
   System::setSignalHandlers();
+
+  test_beta_reduction05();
+  return 0;
 
   START_CHECKING_FOR_ALLOCATOR_BYPASSES;
 

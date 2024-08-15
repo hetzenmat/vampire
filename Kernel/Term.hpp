@@ -187,7 +187,7 @@ public:
   unsigned defaultHash() const { return DefaultHash::hash(content()); }
   unsigned defaultHash2() const { return content(); }
 
-  vstring toString() const;
+  vstring toString(bool higherOrder = true) const;
 
   inline VarBank bank() const 
   { return static_cast<VarBank>(_var.bank); }
@@ -272,6 +272,7 @@ public:
   TermList rhs() const; // done
   TermList lambdaBody() const; // done
   TermList head(); // done
+  std::pair<TermList, TermList> asPair();
   TermList domain();
   TermList result();
   TermList finalResult();
@@ -548,7 +549,7 @@ public:
   /** Function or predicate symbol of a term */
   const unsigned functor() const { return _functor; }
 
-  vstring toString() const;
+  vstring toString(bool higherOrder = true) const;
 #if VHOL  
   // auxiliary function to print lambda specials
   vstring lambdaToString(const SpecialTermData* sd, bool pretty = false) const;

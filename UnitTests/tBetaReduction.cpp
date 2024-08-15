@@ -26,7 +26,7 @@ TermList toDeBruijnIndices(TermList t) {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// TEST CASES //////////////////////////////////
 
-/*
+
 TEST_FUN(beta_reduction01) {
   DECL_DEFAULT_VARS            
   DECL_SORT(srt)
@@ -39,7 +39,8 @@ TEST_FUN(beta_reduction01) {
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
-*/
+
+
 
 TEST_FUN(beta_reduction02) {
   DECL_DEFAULT_VARS            
@@ -56,7 +57,8 @@ TEST_FUN(beta_reduction02) {
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
 
-/*
+
+
 TEST_FUN(beta_reduction03) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(xSrt, {srt, srt})
@@ -86,19 +88,29 @@ TEST_FUN(beta_reduction04) {
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
 
-TEST_FUN(beta_reduction05) {            
+
+TEST_FUN(beta_reduction05) {    
+  env.property->forceHigherOrder();
+  env.options->set("pretty_hol_printing","pretty");
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, srt)
   DECL_HOL_VAR(y, 1, srt)
   DECL_HOL_VAR(z, 2, srt)  
 
   BetaNormaliser bn;
-  auto t = lam(x, ap(lam(y, lam(z, y) ), x)) ;
+  auto tApp = ap(lam(y, lam(z, y) ), x);
+  LOG("tApp", tApp.sugaredExpr().toString());
+  auto t = lam(x, tApp);
+
   auto res = lam(x,lam(z, x));
   auto reduced = bn.normalise( toDeBruijnIndices(t) );
 
+  LOG("res", toDeBruijnIndices(res).toString());
+  LOG("reduced", reduced.toString());
+
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
+
 
 TEST_FUN(beta_reduction06) {            
   DECL_SORT(srt)
@@ -237,7 +249,7 @@ TEST_FUN(eta_reduction07) {
 
   ASS_EQ(reduced, ap(f,g).sugaredExpr());
 }
-*/
+
 
 /*TEST_FUN(whnf_01) {            
   DECL_SORT(srt)

@@ -214,4 +214,6 @@ void Tracer::spaces (ostream& str,int n)
   }
 } // Tracer::spaces
 
+unsigned int Debug::Indent::value = 0;
+
 #endif // VDEBUG
