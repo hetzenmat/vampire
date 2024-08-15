@@ -63,6 +63,7 @@
 #include "FMB/ModelCheck.hpp"
 
 #include "Kernel/ApplicativeHelper.hpp"
+#include "Shell/LambdaConversion.hpp"
 
 using namespace std;
 
@@ -751,70 +752,67 @@ void interactiveMetamode()
 }
 
 
-struct Lambda {
-  TermList var;
-  TermList varSort;
-  TermList term;
-  TermList termSort;
 
-  TermList get() {
-    VList* boundVar = new VList(var.var());
+using Type = TermList;
+using TermType = std::pair<TermList, Type>;
+
+TermType LAM(TermType _var, TermType _term) {
+  auto [var, varSort] = _var;
+  auto [term, termSort] = _term;
+  
+  VList* boundVar = new VList(var.var());
     SList* boundVarSort = new SList(varSort);
     Term* lambdaTerm = Term::createLambda(term, boundVar, boundVarSort, termSort);
-    return TermList(lambdaTerm);
-  }
-};
+    return { TermList(lambdaTerm)
+           , TermList(AtomicSort::arrowSort(varSort, termSort))
+           }; 
+}
 
-TermList AP(TermList sort, TermList head, TermList arg) {
-  return ApplicativeHelper::app(sort, head, arg);
+void require(bool v) {
+  if (!v) {
+    throw std::exception();
+  }
+}
+
+TermType AP(TermType lhs, TermType rhs) {
+  auto [lhsTerm, lhsType] = lhs;
+  auto [rhsTerm, rhsType] = rhs;
+
+  require(lhsType.isArrowSort());
+
+  auto [domain, result] = lhsType.asPair();
+  
+  require(domain == rhsType);
+
+
+  return { ApplicativeHelper::app(lhsType, lhsTerm, rhsTerm)
+         , result
+         };
+}
+
+TermList toDeBruijnIndices(TermList t) {
+  return LambdaConversion().convertLambda(t);
 }
 
 void test_beta_reduction05() {
   TermList srt = TermList(AtomicSort::createConstant("srt"));
-  TermList x = TermList::var(0);
-  TermList y = TermList::var(0);
-  TermList z = TermList::var(0);
+  TermType x = {TermList::var(0), srt};
+  TermType y = {TermList::var(1), srt};
+  TermType z = {TermList::var(2), srt};
 
   BetaNormaliser bn;
 
-  Lambda lam_z_y_struct = {
-    .var = z, .varSort = srt,
-    .term = y, .termSort = srt
-  };
-  auto lam_z_y = lam_z_y_struct.get();
-  TermList lam_z_y_sort = TermList(AtomicSort::arrowSort(srt, srt));
+  auto t1 = AP(LAM(y, LAM(z, y)), x);
+  auto t2 = LAM(x, t1);
 
-  Lambda lam_y_z_y_struct = {
-    .var = y, .varSort = srt,
-    .term = lam_z_y, .termSort = lam_z_y_sort
-  };
-  TermList lam_y_z_y = lam_y_z_y_struct.get();
-  TermList lam_y_z_y_sort = TermList(AtomicSort::arrowSort(srt, srt, srt));
+  auto result = LAM(x, LAM(z, x));
 
-  TermList ap_x_lam_y_z_y = AP(lam_y_z_y_sort, lam_y_z_y, x);
-  TermList ap_x_lam_y_z_y_sort = TermList(AtomicSort::arrowSort(srt, srt));
+  LOG("term", t2.first.toString(true, true));
+  LOG("result", result.first.toString(true, true));
 
-  Lambda t_struct = {
-    .var = x, .varSort = srt,
-    .term = ap_x_lam_y_z_y, .termSort = ap_x_lam_y_z_y_sort
-  };
-  TermList t = t_struct.get();
-
-
-
-
-
-
-  // LOG("tApp", tApp.sugaredExpr().toString(true, true));
+  auto reduced = bn.normalise( toDeBruijnIndices(t2.first) );
   
-  auto t = lam(x, tApp) ;
-  auto res = lam(x,lam(z, x));
-  auto reduced = bn.normalise( toDeBruijnIndices(t) );
-
-  LOG("res", toDeBruijnIndices(res).toString(true, true));
   LOG("reduced", reduced.toString(true, true));
-
-  ASS_EQ(reduced, toDeBruijnIndices(res));
 }
 
 
@@ -829,8 +827,8 @@ int main(int argc, char* argv[])
   System::registerArgv0(argv[0]);
   System::setSignalHandlers();
 
-  //testDHMap();
-  //return 0;
+  test_beta_reduction05();
+  return 0;
 
   try {
     Options& opts = *env.options;

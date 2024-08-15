@@ -23,17 +23,26 @@ using namespace Shell;
 
 TermList BetaNormaliser::normalise(TermList t)
 {
+
+  LOG_ENTER("BetaNormaliser::normalise", t.toString());
+
   // term transformer does not work at the top level...
   t = transformSubterm(t);
-  return transform(t);
+  auto ret = transform(t);
+
+  LOG_RETURN(ret.toString());
+
+  return ret;
 }
 
 TermList BetaNormaliser::transformSubterm(TermList t)
 {
-  LOG("reducing", t.toString(true, true))
-  auto orig = t;
+  LOG_ENTER("BetaNormaliser::transformSubterm", t.toString());
 
-  if(t.isLambdaTerm()) return t;
+  if(t.isLambdaTerm()) {
+    LOG_RETURN("isLambdaTerm", t.toString());
+    return t;
+  }
 
   TermList head;
   TermStack args;
@@ -46,7 +55,7 @@ TermList BetaNormaliser::transformSubterm(TermList t)
     ApplicativeHelper::getHeadAndArgs(t, head, args);
   }
 
-  LOG(orig.toString(true, true), "-->", t.toString(true, true))
+  LOG_RETURN(t.toString());
   return t;
 }
 
@@ -234,30 +243,43 @@ TermList RedexReducer::reduce(TermList head, TermStack& args)
 
 TermList RedexReducer::transformSubterm(TermList t)
 {
-  LOG("RedexReducer", t.toString());
-  if(t.deBruijnIndex().isSome()){
+  LOG_ENTER("RedexReducer::transformSubterm", t.toString());
+
+  if(t.deBruijnIndex().isSome()) {
+    
     unsigned index = t.deBruijnIndex().unwrap();
-    if(index == _replace){
+    LOG("isSome", index, _replace);
+    if(index == _replace) {
       // any free indices in _t2 need to be lifted by the number of extra lambdas
       // that now surround them
-      return TermShifter().shift(_t2, _replace);
+      auto ret = TermShifter().shift(_t2, _replace);
+      LOG_RETURN(ret.toString());
+      return ret;
     }
     if(index > _replace){
       // free index. replace by index 1 less as now surrounded by one fewer lambdas
       TermList sort = SortHelper::getResultSort(t.term());
-      return ApplicativeHelper::getDeBruijnIndex(index - 1, sort);
+      auto ret = ApplicativeHelper::getDeBruijnIndex(index - 1, sort);
+      LOG_RETURN(ret.toString());
+      return ret;
     }
   }
+
+  LOG_RETURN(t.toString()); 
   return t;
 }
 
 void RedexReducer::onTermEntry(Term* t)
 {
+  LOG("RedexReducer::onTermEntry", t->toString());
+
   if(t->isLambdaTerm()) _replace++;
 }
 
 void RedexReducer::onTermExit(Term* t)
 {
+  LOG("RedexReducer::onTermExit", t->toString());
+
   if(t->isLambdaTerm()) _replace--;
 }
 
@@ -421,7 +443,7 @@ TermList ApplicativeHelper::app(TermList sort, TermList head, TermList arg)
   LOG("s1 =", s1.toString());
   LOG("s2 =", s2.toString());
 
-  auto ret = app(s1, s2, head, arg, false); // TODO MH: use sharing 
+  auto ret = app(s1, s2, head, arg);
 
   LOG_RETURN("-->", ret.toString());
   return ret;

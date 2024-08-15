@@ -120,6 +120,9 @@ Term* TermTransformerCommon::transformSpecial(Term* term)
  */
 Term* TermTransformer::transform(Term* term)
 {
+
+  onTermEntry(term);
+
   if (term->isSpecial()) {
     return transformSpecial(term);
   }
@@ -147,6 +150,9 @@ Term* TermTransformer::transform(Term* term)
         break;
       }
       Term* orig = terms.pop();
+
+      onTermExit(orig);
+
       ASS(!orig->isSpecial());
       if (!modified.pop()) {
         args.truncate(args.length() - orig->arity());
@@ -159,15 +165,9 @@ Term* TermTransformer::transform(Term* term)
       //&top()-2, etc...
       TermList *argLst = &args.top() - (orig->arity() - 1);
       args.truncate(args.length() - orig->arity()); // potentially evil. Calls destructors on the truncated objects, which we are happily reading just below
-      Term* newTrm;
-      if(orig->isSort()){
-        //For most applications we probably dont want to transform sorts.
-        //However, we don't enforce that here, inheriting classes can decide
-        //for themselves
-        newTrm=AtomicSort::create(static_cast<AtomicSort*>(orig), argLst);
-      } else {
-        newTrm=Term::create(orig,argLst);
-      }
+      Term* newTrm = orig->isSort() ? 
+        create<AtomicSort> (orig, argLst, _sharedResult) :
+        create<Term>       (orig, argLst, _sharedResult) ;
       args.push(TermList(newTrm));
       modified.setTop(true);
       continue;
@@ -176,6 +176,15 @@ Term* TermTransformer::transform(Term* term)
     }
 
     TermList tl = *tt;
+
+    // We still transform sort and term variables ...
+    // It is difficult to avoid this though
+    if (tl.isTerm() && tl.term()->isSort() && _dontTransformSorts) {
+      args.push(tl);
+      continue;      
+    }
+
+
     if (tl.isTerm() && tl.term()->isSpecial()) {
       Term* td = transformSpecial(tl.term());
       if (td != tl.term()) {
@@ -187,17 +196,18 @@ Term* TermTransformer::transform(Term* term)
 
     TermList dest = transformSubterm(tl);
     if (tl != dest) {
-      args.push(dest);
       modified.setTop(true);
-      continue;
     }
-    if (tl.isVar()) {
-      args.push(tl);
+    if (dest.isVar() || !exploreSubterms(tl, dest)) {
+      args.push(dest);
       continue;
     }
 
-    ASS(tl.isTerm());
-    Term* t = tl.term();
+    ASS(dest.isTerm());
+    Term* t = dest.term();
+    
+    onTermEntry(t);
+    
     ASS(!t->isSpecial());
     terms.push(t);
     modified.push(false);
@@ -218,28 +228,63 @@ Term* TermTransformer::transform(Term* term)
   //&top()-2, etc...
   TermList* argLst = &args.top() - (term->arity() - 1);
 
-  if (term->isLiteral()) {
-    return Literal::create(static_cast<Literal*>(term), argLst);
-  } else {
-    return Term::create(term, argLst);
+  if(term->isLiteral()){
+    Literal* lit = static_cast<Literal*>(term);
+    if(lit->isEquality() && argLst[0].isVar() && argLst[1].isVar() && !_dontTransformSorts){
+      return Literal::createEquality(lit->polarity(), argLst[0], argLst[1], 
+        transform(SortHelper::getEqualityArgumentSort(lit)));
+    }
+    return create<Literal> (term, argLst, _sharedResult);
+  } else if (term->isSort()){
+    return create<AtomicSort>(term, argLst, _sharedResult);
   }
+  return create<Term>(term, argLst, _sharedResult);
 }
 
 TermList TermTransformer::transform(TermList ts)
 {
+  /*
+  LOG_ENTER("TermTransformer::transform", ts.toString());
+
+  
+  TermList ret;
+
   // first let's try transforming ts directly
   TermList transformed = transformSubterm(ts);
   if (transformed != ts) {
     // we did transform, so we are done
-    return transformed;
+    ret = transformed;
   } else if (ts.isVar()) {
     // we didn't transform, but it's a var (no way to recurse)
-    return ts;
+    ret = ts;
   } else {
     // try transform subterms
     ASS(ts.isTerm());
-    return TermList(transform(ts.term()));
+    ret = TermList(transform(ts.term()));
   }
+
+  LOG_RETURN(ret.toString());
+  return ret;
+*/
+
+
+  LOG_ENTER("TermTransformer::transform", ts.toString());
+
+  TermList ret;
+
+  if (ts.isVar()) {
+    ret = transformSubterm(ts);
+  } else {
+    Term* transformed = transform(ts.term());
+    if (transformed != ts.term()) {
+      ret = TermList(transformed);
+    } else {
+      ret = ts;
+    }
+  }
+
+  LOG_RETURN(ret.toString());
+  return ret;
 }
 
 Formula* TermTransformer::transform(Formula* f)

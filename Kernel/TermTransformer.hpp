@@ -74,6 +74,11 @@ protected:
 
   bool _sharedResult;
   bool _dontTransformSorts;
+
+  private:
+  template<class T>
+  Term* create(Term* t, TermList* argLst, bool shared)
+  {  return shared ? T::create(static_cast<T*>(t), argLst) :  T::createNonShared(static_cast<T*>(t), argLst); }  
 };
 
 class SubtermReplacer : public TermTransformer {

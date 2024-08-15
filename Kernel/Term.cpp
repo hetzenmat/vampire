@@ -307,6 +307,14 @@ TermList TermList::head() {
   return term()->head();
 }
 
+std::pair<TermList, TermList> TermList::asPair() {
+  ASS(isArrowSort());
+
+  return { *term()->nthArgument(0)
+         , *term()->nthArgument(1)
+         };
+}
+
 TermList TermList::domain() {
   ASS(isArrowSort());
 
@@ -1776,6 +1784,19 @@ AtomicSort* AtomicSort::create2(unsigned tc, TermList arg1, TermList arg2)
   return AtomicSort::create(tc, 2, args);
 }
 
+
+AtomicSort* AtomicSort::createNonShared(AtomicSort const* sort,TermList* args)
+{
+  int arity = sort->arity();
+  AtomicSort* s = new(arity) AtomicSort(*sort);
+
+  TermList* ss = s->args();
+  for (int i = 0;i < arity;i++) {
+    ASS(!args[i].isEmpty());
+    *ss-- = args[i];
+  }
+  return s;  
+}
 
 /** Create a new complex sort, and do not insert it into the sharing
  *  structure.

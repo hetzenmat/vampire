@@ -195,7 +195,7 @@ public:
   unsigned defaultHash() const { return DefaultHash::hash(content()); }
   unsigned defaultHash2() const { return content(); }
 
-  vstring toString(bool topLevel = true, bool higherOrder = false) const;
+  vstring toString(bool topLevel = true, bool higherOrder = true) const;
 
   friend std::ostream& operator<<(std::ostream& out, Kernel::TermList const& tl);
   /** make the term into an ordinary variable with a given number */
@@ -289,6 +289,7 @@ public:
   TermList rhs() const;
   TermList lambdaBody() const;
   TermList head();
+  std::pair<TermList, TermList> asPair();
   TermList domain();
   TermList result();
   TermList finalResult();
@@ -583,7 +584,7 @@ public:
 
   SpecialFunctor specialFunctor() const 
   { return toSpecialFunctor(functor()); }
-  vstring toString(bool topLevel = true, bool higherOrder = false) const;
+  vstring toString(bool topLevel = true, bool higherOrder = true) const;
   friend std::ostream& operator<<(std::ostream& out, Kernel::Term const& tl);
   // auxiliary function to print lambda specials
   vstring lambdaToString(const SpecialTermData* sd, bool pretty = false) const;
@@ -1141,6 +1142,7 @@ public:
   static AtomicSort* create(unsigned typeCon, unsigned arity, const TermList* args);
   static AtomicSort* create2(unsigned tc, TermList arg1, TermList arg2);
   static AtomicSort* create(AtomicSort const* t,TermList* args);
+  static AtomicSort* createNonShared(AtomicSort const* sort,TermList* args);
   static AtomicSort* createConstant(unsigned typeCon) { return create(typeCon,0,0); }
   static AtomicSort* createConstant(const vstring& name); 
 
@@ -1175,6 +1177,7 @@ public:
 
 private:
 
+  
   static AtomicSort* createNonShared(unsigned typeCon, unsigned arity, TermList* arg);
   static AtomicSort* createNonSharedConstant(unsigned typeCon) { return createNonShared(typeCon,0,0); }
 };

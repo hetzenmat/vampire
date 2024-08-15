@@ -25,7 +25,7 @@ TermList toDeBruijnIndices(TermList t) {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// TEST CASES //////////////////////////////////
 
-/*
+
 TEST_FUN(beta_reduction01) {
   DECL_DEFAULT_VARS            
   DECL_SORT(srt)
@@ -52,10 +52,11 @@ TEST_FUN(beta_reduction02) {
   // -> f a
   auto t = ap(lam(x0,ap(f, x0)),a);
   auto t2 = toDeBruijnIndices(t);
-  LOG("t2 ==", t2.toString());
+  
   auto reduced = bn.normalise(t2);
+  auto result = ap(f, a).sugaredExpr();
 
-  ASS_EQ(reduced, ap(f, a).sugaredExpr());
+  ASS_EQ(reduced, result);
 }
 
 
@@ -88,11 +89,9 @@ TEST_FUN(beta_reduction04) {
 
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
-*/
+
 
 TEST_FUN(beta_reduction05) {            
-  
-
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, srt)
   DECL_HOL_VAR(y, 1, srt)
@@ -104,23 +103,13 @@ TEST_FUN(beta_reduction05) {
   TermSugar tApp = ap(lam_y_z_y, x);
   TermSugar t = lam(x, tApp);
 
-  LOG("types");
-  LOG(lam_z_y.sort().toString(true, true));
-  LOG(lam_y_z_y.sort().toString(true, true));
-  LOG(tApp.sort().toString(true, true));
-  LOG(t.sort().toString(true, true));
-  std::cout << "\n";
-
   auto res = lam(x,lam(z, x));
   auto reduced = bn.normalise( toDeBruijnIndices(t) );
-
-  LOG("res", toDeBruijnIndices(res).toString(true, true));
-  LOG("reduced", reduced.toString(true, true));
 
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
 
-/*
+
 TEST_FUN(beta_reduction06) {            
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, srt)
@@ -154,6 +143,7 @@ TEST_FUN(eta_reduction01) {
 
   ASS_EQ(reduced, f.sugaredExpr());
 }
+
 
 TEST_FUN(eta_reduction02) {            
   DECL_SORT(srt)
@@ -190,6 +180,7 @@ TEST_FUN(eta_reduction03) {
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
 
+
 TEST_FUN(eta_reduction04) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(xSrt, {srt, srt, srt})    
@@ -221,6 +212,7 @@ TEST_FUN(eta_reduction05) {
 
   ASS_EQ(reduced, tdb);
 }
+
 
 TEST_FUN(eta_reduction06) {     
   env.getMainProblem()->forceHigherOrder();
@@ -259,8 +251,6 @@ TEST_FUN(eta_reduction07) {
 
   ASS_EQ(reduced, ap(f,g).sugaredExpr());
 }
-MH END
-*/
 
 /*TEST_FUN(whnf_01) {            
   DECL_SORT(srt)

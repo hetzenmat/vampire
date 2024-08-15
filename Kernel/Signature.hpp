@@ -283,11 +283,11 @@ class Signature
 
     inline void setDBIndex(int index) {
       _dbIndex = index;
-      LOG("name", _name, "value", _dbIndex);
+      //LOG("name", _name, "value", _dbIndex);
     }
 
     inline Option<unsigned> dbIndex() const {
-      LOG("name", _name, "value", _dbIndex);
+      //LOG("name", _name, "value", _dbIndex);
       if (_dbIndex > -1)
         return Option<unsigned>((unsigned)_dbIndex);
       return {};
