@@ -184,6 +184,11 @@ Term* TermSharing::insert(Term* t)
 
     //poly function works for mono as well, but is slow
     //it is fine to use for debug
+
+    LOG("_wellSortednessCheckingDisabled", _wellSortednessCheckingDisabled);
+    LOG("SortHelper::areImmediateSortsValidPoly(t)", SortHelper::areImmediateSortsValidPoly(t));
+    LOG("t->toString()", t->toString());
+
     ASS_REP(_wellSortednessCheckingDisabled || SortHelper::areImmediateSortsValidPoly(t), t->toString());
     if (!_wellSortednessCheckingDisabled && !_poly && !SortHelper::areImmediateSortsValidMono(t)){
       USER_ERROR("Immediate (shared) subterms of  term/literal "+t->toString()+" have different types/not well-typed!");

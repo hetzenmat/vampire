@@ -1248,6 +1248,9 @@ vstring Term::lambdaToString(const SpecialTermData* sd, bool pretty) const
 
 vstring Term::toString(bool topLevel, IndexVarStack& st) const
 {
+  if (isLiteral()) { // TODO MH
+    return "";
+  }
   CALL("Term::toString(bool, ...)");
 
   auto termToStr = [](TermList t, bool top, IndexVarStack& st){

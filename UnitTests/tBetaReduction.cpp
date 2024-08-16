@@ -214,13 +214,16 @@ TEST_FUN(eta_reduction05) {
 
 TEST_FUN(eta_reduction06) {     
   env.property->forceHigherOrder();
-  env.options->set("pretty_hol_printing","pretty");
+  // env.options->set("pretty_hol_printing","pretty");
 
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, arrow(srt,srt))
   DECL_HOL_VAR(y, 1, srt)  
   // TODO wierd stuff below...      
   DECL_CONST(f, arrow(arrow(srt,srt),srt)) 
+
+
+
 
   EtaNormaliser en;
   auto t = lam(x, ap(f, lam(y, ap(x,y))));
@@ -247,7 +250,7 @@ TEST_FUN(eta_reduction07) {
 
   auto reduced = en.normalise( tdb );
 
-  ASS_EQ(reduced, ap(f,g).sugaredExpr());
+  ASS_EQ(reduced, ap(f,g).sugaredExpr()); 
 }
 
 
@@ -288,7 +291,7 @@ TEST_FUN(whnf_02) {
   ASS_EQ(tdb.whnf(), toDeBruijnIndices(lam(y, lam(z, a))));
 }*/
 
-/*
+
 TEST_FUN(fo_subterm_rep1) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(gSrt, {srt, srt}) 
@@ -314,7 +317,7 @@ TEST_FUN(fo_subterm_rep1) {
   cout << replaced << endl;
   cout << replaced2 << endl;  
 }
-*/
+
 #endif
 
 
