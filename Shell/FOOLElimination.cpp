@@ -204,8 +204,6 @@ FormulaUnit* FOOLElimination::apply(FormulaUnit* unit) {
 //#if VHOL
 Formula* FOOLElimination::convertToProxified(Formula* formula)
 {
-  LambdaConversion lc;
-
   Formula* processedFormula;
   if(formula->connective() == LITERAL){
     // don't proxify the equality itself, as this blocks definition rewriting
@@ -213,12 +211,12 @@ Formula* FOOLElimination::convertToProxified(Formula* formula)
     Literal* literal = formula->literal();
     TermList lhs = *literal->nthArgument(0);
     TermList rhs = *literal->nthArgument(1);
-    lhs = lc.convertLambda(lhs);
-    rhs = lc.convertLambda(rhs);
+    lhs = LambdaConversion::convertLambda(lhs);
+    rhs = LambdaConversion::convertLambda(rhs);
     literal = Literal::createEquality(literal->polarity(), lhs, rhs, SortHelper::getEqualityArgumentSort(literal));
     processedFormula = new AtomicFormula(literal);
   } else {
-    TermList proxifiedFormula = lc.convertLambda(formula);
+    TermList proxifiedFormula = LambdaConversion::convertLambda(formula);
     processedFormula = toEquality(proxifiedFormula);
   }
 
@@ -803,13 +801,13 @@ void FOOLElimination::process(Term* term, Context context, TermList& termResult,
 
           termResult = freshSymbolApplication;
         } else {
-          termResult = LambdaConversion().convertLambda(sd->getFormula());
+          termResult = LambdaConversion::convertLambda(sd->getFormula());
         }
         break;
       }
       case SpecialFunctor::LAMBDA: {
         // Lambda terms using named representation are converted to nameless De Bruijn representation
-        termResult = LambdaConversion().convertLambda(term);
+        termResult = LambdaConversion::convertLambda(term);
         break;
       }
 

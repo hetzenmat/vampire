@@ -58,7 +58,7 @@ class TermSubstitutionTree
   Indexing::SubstitutionTree<LeafData_> _inner;
 public:
   using LeafData = LeafData_;
-  
+
   TermSubstitutionTree()
     : _inner()
     { }
@@ -66,7 +66,14 @@ public:
   void handle(LeafData d, bool insert) final override
   { _inner.handle(std::move(d), insert); }
 
+  void setLog(std::function<void(const char*, unsigned, const LeafData_&)> _log) {
+    _inner.setLog(_log);
+    log = _log;
+  }
+
 private:
+
+  std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {};
 
   template<class Iterator, class... Args>
   auto getResultIterator(TypedTermList query, bool retrieveSubstitutions, Args... args)

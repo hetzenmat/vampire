@@ -31,31 +31,31 @@ using namespace Shell;
 class LambdaConversion {
 public:
 
- typedef std::pair<int,TermList> IndexSortPair;
- typedef DHMap<unsigned, IndexSortPair> VarToIndexMap;
+    typedef std::pair<int,TermList> IndexSortPair;
+    typedef DHMap<unsigned, IndexSortPair> VarToIndexMap;
 
- LambdaConversion() {};
+    LambdaConversion() = delete;
  //  LambdaElimination(DHMap<unsigned,TermList> varSorts) : _varSorts(varSorts){};
 
- TermList convertLambda(Term* lambdaTerm);
- TermList convertLambda(TermList term);
- TermList convertLambda(Formula*);
+    static TermList convertLambda(Term* lambdaTerm);
+    static TermList convertLambda(TermList term);
+    static TermList convertLambda(Formula*);
 
  //void addFunctionExtensionalityAxioms(UnitList*& units);
  //void addBooleanExtensionalityAxiom(UnitList*& units);
 
- static void addProxyAxioms(Problem& prb);
- static void addFunctionExtensionalityAxiom(Problem& prb);
- static void addChoiceAxiom(Problem& prb);
- static Literal* toEquality(TermList booleanTerm, bool polarity);
+    static void addProxyAxioms(Problem& prb);
+    static void addFunctionExtensionalityAxiom(Problem& prb);
+    static void addChoiceAxiom(Problem& prb);
+    static Literal* toEquality(TermList booleanTerm, bool polarity);
 
 private:
 
- TermList convertLambda(TermList term, VarToIndexMap& map);
- TermList convertLambda(VList* vars, SList* sorts, TermList body, TermList bodySort, VarToIndexMap& map);
- TermList convertLambda(Formula*, VarToIndexMap& map);
+    static TermList convertLambda(TermList term, VarToIndexMap& map);
+    static TermList convertLambda(VList* vars, SList* sorts, TermList body, TermList bodySort, VarToIndexMap& map);
+    static TermList convertLambda(Formula*, VarToIndexMap& map);
 
- TermList sortOf(TermList t);
+    static TermList sortOf(TermList t);
 };
 
 //#endif

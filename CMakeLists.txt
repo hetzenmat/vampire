@@ -734,6 +734,7 @@ set(UNIT_TESTS
     UnitTests/tFunctionDefinitionHandler.cpp
     UnitTests/tFunctionDefinitionRewriting.cpp
     UnitTests/tBetaReduction.cpp
+    UnitTests/tHOLMatching.cpp
 )
 source_group(unit_tests FILES ${UNIT_TESTS})
 

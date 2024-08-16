@@ -33,6 +33,12 @@ public:
 
   friend std::ostream& operator<<(std::ostream& out, TypedTermList const& self) 
   { return out << (TermList const&) self << ": " << self._sort; }
+
+  std::string toString() const {
+    std::stringstream buffer;
+    buffer << (static_cast<TermList>(*this)).toString() << ": " << _sort.toString();
+    return buffer.str();
+  }
 };
 
 } // namespace Kernel 

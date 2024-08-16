@@ -791,7 +791,7 @@ TermType AP(TermType lhs, TermType rhs) {
 }
 
 TermList toDeBruijnIndices(TermList t) {
-  return LambdaConversion().convertLambda(t);
+  return LambdaConversion::convertLambda(t);
 }
 
 void test_beta_reduction05() {

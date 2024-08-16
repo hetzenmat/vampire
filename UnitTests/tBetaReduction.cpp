@@ -19,7 +19,7 @@
 #include "Shell/LambdaConversion.hpp"
 
 TermList toDeBruijnIndices(TermList t) {
-  return LambdaConversion().convertLambda(t);
+  return LambdaConversion::convertLambda(t);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

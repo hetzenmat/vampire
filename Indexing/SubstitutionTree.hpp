@@ -170,6 +170,10 @@ public:
 
   SubstitutionTree() : _nextVar(0), _root(nullptr) {}
 
+  void setLog(std::function<void(const char*, unsigned, const LeafData_&)> _log) {
+    log = _log;
+  }
+
   ~SubstitutionTree()
   {
     ASS_EQ(_iterCnt,0);
@@ -563,6 +567,9 @@ public:
 
     void handle(LeafData ld, bool doInsert)
     {
+      LOG("doInsert", doInsert);
+      LOGFN(ld);
+      
       auto norm = Renaming::normalize(ld.key());
       Recycled<BindingMap> bindings;
       createBindings(norm, /* reversed */ false,
@@ -580,6 +587,7 @@ public:
 
     /** Number of the next variable */
     int _nextVar = 0;
+    std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {};
     Node* _root = nullptr;
     Cntr _iterCnt;
 
