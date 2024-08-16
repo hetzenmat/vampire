@@ -215,8 +215,8 @@ TEST_FUN(eta_reduction05) {
 
 
 TEST_FUN(eta_reduction06) {     
-  env.getMainProblem()->forceHigherOrder();
-  env.options->set("pretty_hol_printing","pretty");
+  //env.getMainProblem()->forceHigherOrder();
+  //env.options->set("pretty_hol_printing","pretty");
 
   DECL_SORT(srt)
   DECL_HOL_VAR(x, 0, arrow(srt,srt))
@@ -232,6 +232,24 @@ TEST_FUN(eta_reduction06) {
 
   ASS_EQ(reduced, f.sugaredExpr());
 }
+
+/*TEST_FUN(eta_test) {
+
+  TermList srt = TermList(AtomicSort::createConstant("srt"));
+  TermList gSrt = TermList(AtomicSort::arrowSort(srt, srt));
+  TermList fSrt = TermList(AtomicSort::arrowSort(gSrt, srt, srt));
+
+  unsigned _f = env.signature->addFunction("f" ,0);
+  env.signature->getFunction(_f)->setType(OperatorType::getFunctionType({}, fSrt));
+    
+  TermList f = TermList(Term::createConstant(_f));
+    
+  std::cout << "\n\n";
+
+  TermList sort = SortHelper::getResultSort(f.term());
+  LOG(sort.toString());
+  LOG(SortHelper::areImmediateSortsValidPoly(f.term()));
+}*/
 
 TEST_FUN(eta_reduction07) {            
   DECL_SORT(srt)
@@ -249,7 +267,7 @@ TEST_FUN(eta_reduction07) {
 
   auto reduced = en.normalise( tdb );
 
-  ASS_EQ(reduced, ap(f,g).sugaredExpr());
+  ASS_EQ(reduced, ap(f,g).sugaredExpr()); 
 }
 
 /*TEST_FUN(whnf_01) {            
@@ -289,7 +307,7 @@ TEST_FUN(whnf_02) {
   ASS_EQ(tdb.whnf(), toDeBruijnIndices(lam(y, lam(z, a))));
 }*/
 
-/*
+
 TEST_FUN(fo_subterm_rep1) {            
   DECL_SORT(srt)
   DECL_ARROW_SORT(gSrt, {srt, srt}) 
@@ -302,8 +320,8 @@ TEST_FUN(fo_subterm_rep1) {
   DECL_CONST(g, gSrt)     
   DECL_CONST(a, arrow(srt,srt))     
 
-  env.options->setHolPrinting(Options::HPrinting::PRETTY);
-  env.getMainProblem()->forceHigherOrder();
+  //env.options->setHolPrinting(Options::HPrinting::PRETTY);
+  //env.getMainProblem()->forceHigherOrder();
 
   ToPlaceholders sr;
   auto t = ap(ap(f,g), ap(y, x));
@@ -315,4 +333,3 @@ TEST_FUN(fo_subterm_rep1) {
   std::cout << replaced << std::endl;
   std::cout << replaced2 << std::endl;
 }
-*/

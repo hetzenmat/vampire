@@ -359,9 +359,14 @@ public:
     if(as_.isEmpty()){
       _sugaredExpr = TermList(AtomicSort::createConstant(name));
     } else {
+      //AYB TODO, we don't need this now that we have the arrow sort creation functions
       Stack<SortId> as;     
       for (auto a : as_){ as.push(a.sugaredExpr()); }
-      _sugaredExpr = AtomicSort::arrowSort(as, as.pop());      
+      auto res = as.pop();
+      // reverse arguments. Bit of a hack really
+      Stack<SortId> as2;        
+      while(!as.isEmpty()){ as2.push(as.pop()); }
+      _sugaredExpr = AtomicSort::arrowSort(as2, res);   
     }
   }
 
