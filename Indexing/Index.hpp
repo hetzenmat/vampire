@@ -171,7 +171,7 @@ struct QueryRes
   friend std::ostream& operator<<(std::ostream& out, QueryRes const& self)
   { 
     return out 
-      << "{ data: " << self.data()
+      << "{ data: " << *self.data
       << ", unifier: " << self.unifier
       << "}";
   }

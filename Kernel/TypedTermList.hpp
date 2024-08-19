@@ -39,6 +39,8 @@ public:
     buffer << (static_cast<TermList>(*this)).toString() << ": " << _sort.toString();
     return buffer.str();
   }
+
+  
 };
 
 } // namespace Kernel 

@@ -56,19 +56,14 @@ OperatorType* SortHelper::getType(Term const* t)
  */
 bool SortHelper::getTypeSub(const Term* t, Substitution& subst)
 {
-  LOG(t->toString());
-
   TermList* typeArg;
   OperatorType* ot       = getType(const_cast<Term*>(t)); //sym->fnType();
   unsigned typeArgsArity = ot->numTypeArguments();
-  LOG("ot", ot->toString());
-  LOG("typeArgsArity", typeArgsArity);
   //cout << "typeArgsArity " << typeArgsArity << endl;
 
   bool resultShared = true;
   typeArg = const_cast<TermList*>(t->args());
   for (unsigned i = 0; i < typeArgsArity; i++) {
-    LOG("tyArg", i, typeArg[i].toString());
 
     TermList var = ot->quantifiedVar(i);
     ASS_REP(var.isVar(), t->toString());
@@ -882,8 +877,6 @@ bool SortHelper::tryGetVariableSortTerm(TermList var, Term* t0, TermList& result
  */
 bool SortHelper::areImmediateSortsValidPoly(Term* t)
 {
-  LOG_ENTER("SortHelper::areImmediateSortsValidPoly", t->toString());
-
   ASS(!t->isSuper());  
 
   if (t->isLiteral() && static_cast<Literal*>(t)->isEquality()) {
@@ -895,11 +888,9 @@ bool SortHelper::areImmediateSortsValidPoly(Term* t)
       Term* ta = arg.term();
       TermList argSort = getResultSort(ta);
       if (eqSrt != argSort) {
-        LOG_RETURN(false);
         return false;
       }
     }
-    LOG_RETURN(true);
     return true;
   }
     
@@ -908,8 +899,6 @@ bool SortHelper::areImmediateSortsValidPoly(Term* t)
   Substitution subst;
   getTypeSub(t, subst);
 
-  LOG("subst", subst.toString());
-
   for (unsigned i=0; i<arity; i++) {
     TermList arg = *t->nthArgument(i);
     if (!arg.isTerm()) { continue; }
@@ -917,11 +906,9 @@ bool SortHelper::areImmediateSortsValidPoly(Term* t)
     TermList argSort = getResultSort(ta);
     TermList instantiatedTypeSort = SubstHelper::apply(type->arg(i), subst);
     if (instantiatedTypeSort != argSort) {
-      LOG_RETURN(false);
       return false;
     }
   }
-  LOG_RETURN(true);
   return true;
 }
 

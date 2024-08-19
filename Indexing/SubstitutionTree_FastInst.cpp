@@ -194,6 +194,8 @@ void SubstitutionTree<LeafData_>::InstMatcher::backtrack()
 template<class LeafData_>
 bool SubstitutionTree<LeafData_>::InstMatcher::matchNext(unsigned specVar, TermList nodeTerm, bool separate)
 {
+  LOG("SubstitutionTree::InstMatcher::matchNext", specVar, nodeTerm, separate);
+
   if(separate) {
     _boundVars.push(TermList::empty());
   }
@@ -222,15 +224,17 @@ bool SubstitutionTree<LeafData_>::InstMatcher::matchNext(unsigned specVar, TermL
 template<class LeafData_>
 bool SubstitutionTree<LeafData_>::InstMatcher::matchNextAux(TermList queryTerm, TermList nodeTerm, bool separate)
 {
+  LOG("SubstitutionTree::InstMatcher::matchNextAux", queryTerm, nodeTerm, separate);
+
   unsigned specVar;
   TermSpec tsBinding;
 
   TermSpec tsNode(false, nodeTerm);
 
-  if(queryTerm.isSpecialVar()){
+  if (queryTerm.isSpecialVar()) {
     specVar = queryTerm.var();
     if(!findSpecVarBinding(specVar,tsBinding)) {
-      bind(TermList(specVar,true), tsNode);
+      bind(TermList(specVar, true), tsNode);
       return true;
     }
   } else {

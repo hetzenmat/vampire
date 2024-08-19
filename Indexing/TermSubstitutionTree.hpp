@@ -104,6 +104,18 @@ public:
 
   VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getUnifications(TypedTermList t, bool retrieveSubstitutions) override
   { return pvi(getResultIterator<typename SubstitutionTree::template Iterator<RetrievalAlgorithms::RobUnification>>(t, retrieveSubstitutions)); }
+
+  VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLUnifiers(TypedTermList t) final override {
+    throw "TODO MH";
+  }
+
+  VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLInstances(TypedTermList t, bool retrieveSubstitutions = true) final override {
+    return pvi(getResultIterator<FastInstancesIterator>(t, retrieveSubstitutions));
+  }
+
+  VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLGeneralizations(TypedTermList t) final override {
+    throw "TODO MH";
+  }
 };
 
 } // namespace Indexing

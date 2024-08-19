@@ -147,7 +147,6 @@ void Signature::Symbol::addToDistinctGroup(unsigned group,unsigned this_number)
  */
 void Signature::Symbol::setType(OperatorType* type)
 {
-  LOG("name", _name, "type", type->toString());
   ASS_REP(!_type || _type == type, _type->toString());
 
   // this is copied out to the Symbol for convenience

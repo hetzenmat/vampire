@@ -66,9 +66,15 @@ struct Indent {
   static unsigned int value;
 };
 
-template<class... A> void printDbg2(int diffIndent, const char* file, const char* func, unsigned line, const A&... msg)
+template<class... A> void printDbg2(int diffIndent, const char* file, unsigned line, const A&... msg)
 {
-  if (diffIndent < 0) Indent::value += diffIndent;
+  if (diffIndent < 0) {
+    if (static_cast<unsigned>(-diffIndent) > Indent::value) {
+      std::cout << "LOG Indent error" << std::endl;
+      throw std::underflow_error("LOG Indent");
+    }
+    Indent::value += diffIndent;
+  }
 
   const char* slashIdx = nullptr;
   while (*file != 0) {
@@ -79,7 +85,7 @@ template<class... A> void printDbg2(int diffIndent, const char* file, const char
   for (unsigned i = 0; i < Indent::value; i++)
     std::cout << " ";
 
-  std::cout << slashIdx << ":" << line << " @ " << func << ":";
+  std::cout << slashIdx << " @ " << line << ":";
   ((std::cout << " " << msg), ...);
   std::cout << std::endl;
 
@@ -90,9 +96,9 @@ template<class... A> void printDbg2(int diffIndent, const char* file, const char
 
 #if VDEBUG
 #  define DBG(...) { Debug::printDbg(__FILE__, __LINE__, __VA_ARGS__); }
-#  define LOG(...) { Debug::printDbg2(0, __FILE__, __func__, __LINE__, __VA_ARGS__); }
-#  define LOG_ENTER(...) { Debug::printDbg2(4, __FILE__, __func__, __LINE__, __VA_ARGS__); }
-#  define LOG_RETURN(...) { Debug::printDbg2(-4, __FILE__, __func__, __LINE__, __VA_ARGS__); }
+#  define LOG(...) { Debug::printDbg2(0, __FILE__, __LINE__, __VA_ARGS__); }
+#  define LOG_ENTER(...) { Debug::printDbg2(4, __FILE__, __LINE__, __VA_ARGS__); }
+#  define LOG_RETURN(...) { Debug::printDbg2(-4, __FILE__, __LINE__, __VA_ARGS__); }
 #define LOGFN(...) log(__FILE__, __LINE__, __VA_ARGS__)
 #  define DBGE(x) DBG(#x, " = ", x)
 #else // ! VDEBUG

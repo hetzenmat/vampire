@@ -151,9 +151,6 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
 
     //poly function works for mono as well, but is slow
     //it is fine to use for debug
-    LOG("_wellSortednessCheckingDisabled", _wellSortednessCheckingDisabled);
-    LOG("SortHelper::areImmediateSortsValidPoly(t)", SortHelper::areImmediateSortsValidPoly(t));
-    LOG("t->toString()", t->toString());
 
     ASS_REP(_wellSortednessCheckingDisabled || SortHelper::areImmediateSortsValidPoly(t), t->toString());
     if (!_wellSortednessCheckingDisabled && !_poly && !SortHelper::areImmediateSortsValidMono(t)){
