@@ -85,7 +85,7 @@ template<class... A> void printDbg2(int diffIndent, const char* file, unsigned l
   for (unsigned i = 0; i < Indent::value; i++)
     std::cout << " ";
 
-  std::cout << slashIdx << " @ " << line << ":";
+  std::cout << slashIdx << ":" << line << " @ ";
   ((std::cout << " " << msg), ...);
   std::cout << std::endl;
 

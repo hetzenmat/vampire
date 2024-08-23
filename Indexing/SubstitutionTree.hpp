@@ -949,6 +949,10 @@ public:
 
         bool q;
         TermList t;
+
+        friend std::ostream& operator<<(std::ostream& out, TermSpec const& self) {
+          return out << "q: " << self.q << " t: " << self.t;
+        }
       };
 
       /**

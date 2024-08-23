@@ -243,6 +243,7 @@ bool SubstitutionTree<LeafData_>::InstMatcher::matchNextAux(TermList queryTerm, 
 
   if(tsBinding.q && tsBinding.t.isOrdinaryVar() && !isBound(tsBinding.t)) {
     bind(tsBinding.t, tsNode);
+    LOG("bind", "tsBinding.t", tsBinding.t, "tsNode", tsNode);
     return true;
   }
 
@@ -272,7 +273,11 @@ bool SubstitutionTree<LeafData_>::InstMatcher::matchNextAux(TermList queryTerm, 
       TermList dt2=disarg.second;
 
       bool dt1Bindable= !dt1.isTerm() && (ts1.q || !dt1.isOrdinaryVar());
+      if (dt1.isOrdinaryVar() && dt2.containsLooseIndex())
+        dt1Bindable = false;
       bool dt2Bindable= !dt2.isTerm() && (ts2.q || !dt2.isOrdinaryVar());
+      if (dt2.isOrdinaryVar() && dt1.containsLooseIndex())
+        dt2Bindable = false;
 
       if(!dt1Bindable && !dt2Bindable) {
 	success=false;
@@ -284,11 +289,13 @@ bool SubstitutionTree<LeafData_>::InstMatcher::matchNextAux(TermList queryTerm, 
       //children when entering a node (a term to bind the special variable
       //may come later, so we want to keep it unbound)
 
-      if(ts1.q && dt1.isOrdinaryVar() && !isBound(dt1)) {
+      if(ts1.q && dt1.isOrdinaryVar() && !isBound(dt1) && !dt2.containsLooseIndex()) {
+        LOG("bind", "dt1", dt1, "TermSpec(ts2.q, dt2)", TermSpec(ts2.q,dt2));
 	bind(dt1, TermSpec(ts2.q,dt2));
 	continue;
       }
-      if(ts2.q && dt2.isOrdinaryVar() && !isBound(dt2)) {
+      if(ts2.q && dt2.isOrdinaryVar() && !isBound(dt2) && !dt1.containsLooseIndex()) {
+        LOG("bind", dt2, TermSpec(ts1.q,dt1));
 	bind(dt2, TermSpec(ts1.q,dt1));
 	continue;
       }

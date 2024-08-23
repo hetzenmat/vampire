@@ -1027,7 +1027,7 @@ vstring Term::toString(bool topLevel, IndexVarStack& st) const
     bvar = pretty ?
                   bvar + " : " + termToStr(*nthArgument(0),true,st) :
                   "[" + bvar + " : " + termToStr(*nthArgument(0),true,st) + "]";
-    bvar = db ? "" : bvar;
+    bvar = db ? "db" + Int::toString(v) + " : " + termToStr(*nthArgument(0),true,st) : bvar;
 
     IndexVarStack newSt(st);
     incrementAll(newSt);
