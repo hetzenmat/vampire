@@ -1676,17 +1676,20 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     // fsd should be performed after forward subsumption,
     // because every successful forward subsumption will lead to a (useless) match in fsd.
     if (opt.forwardSubsumptionDemodulation()) {
-      res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation(false));
-    }
+        if(prb.isHigherOrder()) {
+          res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation<DemodulationSubtermIt>(false));
+        } else {
+          res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation<NonVariableNonTypeIterator>(false));
+        }
   }
   if (prb.hasEquality()) {
     switch(opt.forwardDemodulation()) {
     case Options::Demodulation::ALL:
     case Options::Demodulation::PREORDERED:
-      if(opt.combinatorySup()){
-        res->addForwardSimplifierToFront(new ForwardDemodulationImpl<true>());
+      if(prb.isHigherOrder()) {
+        res->addForwardSimplifierToFront(new ForwardDemodulation<DemodulationSubtermIt>());
       } else {
-        res->addForwardSimplifierToFront(new ForwardDemodulationImpl<false>());
+        res->addForwardSimplifierToFront(new ForwardDemodulation<NonVariableNonTypeIterator>());
       }
       break;
     case Options::Demodulation::OFF:
@@ -1698,14 +1701,9 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     }
   }
   if (opt.forwardSubsumption()) {
-    if (opt.forwardSubsumptionResolution()) {
-      //res->addForwardSimplifierToFront(new CTFwSubsAndRes(true));
-      res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(true));
-    }
-    else {
-      //res->addForwardSimplifierToFront(new CTFwSubsAndRes(false));
-      res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(false));
-    }
+    //res->addForwardSimplifierToFront(new CTFwSubsAndRes(true));
+    bool withResolution = opt.forwardSubsumptionResolution();
+    res->addForwardSimplifierToFront(new ForwardSubsumptionAndResolution(withResolution));
   }
   else if (opt.forwardSubsumptionResolution()) {
     USER_ERROR("Forward subsumption resolution requires forward subsumption to be enabled.");

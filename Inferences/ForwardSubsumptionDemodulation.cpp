@@ -41,8 +41,8 @@ using namespace Lib;
 using namespace Inferences;
 using namespace Saturation;
 
-
-void ForwardSubsumptionDemodulation::attach(SaturationAlgorithm* salg)
+template <class SubtermIterator>
+void ForwardSubsumptionDemodulation<SubtermIterator>::attach(SaturationAlgorithm* salg)
 {
   ForwardSimplificationEngine::attach(salg);
 
@@ -56,15 +56,15 @@ void ForwardSubsumptionDemodulation::attach(SaturationAlgorithm* salg)
   }
 }
 
-
-void ForwardSubsumptionDemodulation::detach()
+template <class SubtermIterator>
+void ForwardSubsumptionDemodulation<SubtermIterator>::detach()
 {
   _index.release();
   ForwardSimplificationEngine::detach();
 }
 
-
-bool ForwardSubsumptionDemodulation::perform(Clause* cl, Clause*& replacement, ClauseIterator& premises)
+template <class SubtermIterator>
+bool ForwardSubsumptionDemodulation<SubtermIterator>::perform(Clause* cl, Clause*& replacement, ClauseIterator& premises)
 {
   //                        cl
   //                 vvvvvvvvvvvvvvvv
@@ -94,7 +94,10 @@ bool ForwardSubsumptionDemodulation::perform(Clause* cl, Clause*& replacement, C
   // Subsumption by unit clauses
   if (_doSubsumption) {
     for (unsigned sqli = 0; sqli < cl->length(); ++sqli) {
-      auto rit = _unitIndex->getGeneralizations((*cl)[sqli], false, false);
+      auto rit =  env.getMainProblem()->isHigherOrder() 
+        ? _unitIndex->getHOLGeneralizations((*cl)[sqli], false, false)
+        : _unitIndex->getGeneralizations((*cl)[sqli], false, false);
+
       while (rit.hasNext()) {
         Clause* premise = rit.next().data->clause;
 
@@ -124,7 +127,10 @@ bool ForwardSubsumptionDemodulation::perform(Clause* cl, Clause*& replacement, C
     /**
      * Step 1: find candidate clauses for subsumption
      */
-    auto rit = _index->getGeneralizations(subsQueryLit, false, false);
+    auto rit = env.getMainProblem()->isHigherOrder() 
+               ? _index->getHOLGeneralizations(subsQueryLit, false, false) 
+               : _index->getGeneralizations(subsQueryLit, false, false);
+
     while (rit.hasNext()) {
       auto res = rit.next();
       Clause* mcl = res.data->clause;  // left premise of FSD
@@ -400,10 +406,7 @@ bool ForwardSubsumptionDemodulation::perform(Clause* cl, Clause*& replacement, C
             continue;
           }
 
-          // TODO higher-order support not yet implemented; see forward demodulation
-          //      (maybe it's enough to just use the different iterator)
-          ASS(!env.options->combinatorySup());
-          NonVariableNonTypeIterator nvi(dlit);
+          SubtermIterator nvi(dlit);
           while (nvi.hasNext()) {
             TypedTermList lhsS = nvi.next();  // named 'lhsS' because it will be matched against 'lhs'
 
@@ -593,7 +596,7 @@ isRedundant:
               /**
                * Step 4: found application of FSD; now create the conclusion
                */
-              Literal* newLit = EqHelper::replace(dlit, lhsS, rhsS);
+              Literal* newLit = SubtermReplacer(lhsS,rhsS).transform(dlit);
               ASS_EQ(ordering.compare(lhsS, rhsS), Ordering::GREATER);
 #if VDEBUG
               if (getOptions().literalComparisonMode() != Options::LiteralComparisonMode::REVERSE) {

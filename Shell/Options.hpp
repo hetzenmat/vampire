@@ -2305,14 +2305,14 @@ public:
   //Higher-order Options
 
   // TODO MH
-  void setMaxXX(unsigned max) { throw "TODO MH"; }
-  bool addCombAxioms() const { throw "TODO MH"; }
-  bool combinatorySup() const { throw "TODO MH"; }
-  bool complexVarCondition() const { throw "TODO MH"; }
-  bool lambdaFreeHol() const { throw "TODO MH"; }
-  int maxXXNarrows() const { throw "TODO MH"; }
-  bool prioritiseClausesProducedByLongReduction() const { throw "TODO MH"; }
-  Narrow narrow() const { throw "TODO MH"; }
+  void setMaxXX(unsigned max) { THROW_MH(); }
+  bool addCombAxioms() const { THROW_MH(); }
+  bool combinatorySup() const { THROW_MH(); }
+  bool complexVarCondition() const { THROW_MH(); }
+  bool lambdaFreeHol() const { THROW_MH(); }
+  int maxXXNarrows() const { THROW_MH(); }
+  bool prioritiseClausesProducedByLongReduction() const { THROW_MH(); }
+  Narrow narrow() const { THROW_MH(); }
 
 
 

@@ -827,8 +827,9 @@ int main(int argc, char* argv[])
   System::registerArgv0(argv[0]);
   System::setSignalHandlers();
 
-  test_beta_reduction05();
-  return 0;
+  // TODO MH: Remove
+  //test_beta_reduction05();
+  //return 0;
 
   try {
     Options& opts = *env.options;
