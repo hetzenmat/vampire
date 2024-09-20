@@ -74,11 +74,14 @@ struct ApplicatorWithEqSort : SubstApplicator {
 
 } // end namespace
 
-void ForwardDemodulation::attach(SaturationAlgorithm* salg)
+template <class SubtermIterator>
+void ForwardDemodulation<SubtermIterator>::attach(SaturationAlgorithm* salg)
 {
   ForwardSimplificationEngine::attach(salg);
-  _index=static_cast<DemodulationLHSIndex*>(
-	  _salg->getIndexManager()->request(DEMODULATION_LHS_CODE_TREE) );
+  _index = static_cast<DemodulationLHSIndex*>(
+    env.getMainProblem()->isHigherOrder()
+    ? _salg->getIndexManager()->request(DEMODULATION_LHS_SUBST_TREE)
+    : _salg->getIndexManager()->request(DEMODULATION_LHS_CODE_TREE) );
 
   auto opt = getOptions();
   _preorderedOnly = opt.forwardDemodulation()==Options::Demodulation::PREORDERED;
@@ -88,15 +91,20 @@ void ForwardDemodulation::attach(SaturationAlgorithm* salg)
   _helper = DemodulationHelper(opt, &_salg->getOrdering());
 }
 
-void ForwardDemodulation::detach()
+template <class SubtermIterator>
+void ForwardDemodulation<SubtermIterator>::detach()
 {
-  _index=0;
-  _salg->getIndexManager()->release(DEMODULATION_LHS_CODE_TREE);
+  _index = nullptr;
+  IndexType toRelase = env.getMainProblem()->isHigherOrder()
+  ? DEMODULATION_LHS_SUBST_TREE
+  : DEMODULATION_LHS_CODE_TREE;
+
+  _salg->getIndexManager()->release(toRelase);
   ForwardSimplificationEngine::detach();
 }
 
-template <bool combinatorySupSupport>
-bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*& replacement, ClauseIterator& premises)
+template <class SubtermIterator>
+bool ForwardDemodulation<SubtermIterator>::perform(Clause* cl, Clause*& replacement, ClauseIterator& premises)
 {
   TIME_TRACE("forward demodulation");
 
@@ -109,21 +117,19 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
   static DHSet<TermList> attempted;
   attempted.reset();
 
-  unsigned cLen=cl->length();
-  for(unsigned li=0;li<cLen;li++) {
-    Literal* lit=(*cl)[li];
+  unsigned cLen = cl->length();
+  for (unsigned li = 0; li < cLen; li++) {
+    Literal* lit= (*cl)[li];
     if (lit->isAnswerLiteral()) {
       continue;
     }
     if (_skipNonequationalLiterals && !lit->isEquality()) {
       continue;
     }
-    typename std::conditional<!combinatorySupSupport,
-      NonVariableNonTypeIterator,
-      FirstOrderSubtermIt>::type it(lit);
-    while(it.hasNext()) {
+    SubtermIterator it(lit);
+    while (it.hasNext()) {
       TypedTermList trm = it.next();
-      if(!attempted.insert(trm)) {
+      if (!attempted.insert(trm)) {
         //We have already tried to demodulate the term @b trm and did not
         //succeed (otherwise we would have returned from the function).
         //If we have tried the term @b trm, we must have tried to
@@ -134,7 +140,11 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
 
       bool redundancyCheck = _helper.redundancyCheckNeededForPremise(cl, lit, trm);
 
-      auto git = _index->getGeneralizations(trm.term(), /* retrieveSubstitutions */ true);
+      auto git =
+        env.getMainProblem()->isHigherOrder()
+        ? _index->getHOLGeneralizations(TypedTermList(trm.term()))
+        : _index->getGeneralizations(TypedTermList(trm.term()), /* retrieveSubstitutions */ true);
+
       while(git.hasNext()) {
         auto qr=git.next();
         ASS_EQ(qr.data->clause->length(),1);
@@ -145,20 +155,25 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
 
         auto lhs = qr.data->term;
 
-        // TODO:
-        // to deal with polymorphic matching
-        // Ideally, we would like to extend the substitution
-        // returned by the index to carry out the sort match.
-        // However, ForwardDemodulation uses a CodeTree as its
-        // indexing mechanism, and it is not clear how to extend
-        // the substitution returned by a code tree.
         static RobSubstitution eqSortSubs;
-        if(lhs.isVar()){
-          eqSortSubs.reset();
-          TermList querySort = trm.sort();
-          TermList eqSort = qr.data->term.sort();
-          if(!eqSortSubs.match(eqSort, 0, querySort, 1)){
-            continue;
+        // in higher-order case, we use a substitution tree for
+        // index which does sort checking internally
+        if(!env.getMainProblem()->isHigherOrder()) {
+          // TODO:
+          // to deal with polymorphic matching
+          // Ideally, we would like to extend the substitution
+          // returned by the index to carry out the sort match.
+          // However, ForwardDemodulation uses a CodeTree as its
+          // indexing mechanism, and it is not clear how to extend
+          // the substitution returned by a code tree.
+
+          if(lhs.isVar()){
+            eqSortSubs.reset();
+            TermList querySort = trm.sort();
+            TermList eqSort = qr.data->term.sort();
+            if(!eqSortSubs.match(eqSort, 0, querySort, 1)){
+              continue;
+            }
           }
         }
 
@@ -203,7 +218,7 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
           continue;
         }
 
-        Literal* resLit = EqHelper::replace(lit,trm,rhsS);
+        Literal* resLit = SubtermReplacer(trm, rhsS).transformLiteral(lit);
         if(EqHelper::isEqTautology(resLit)) {
           env.statistics->forwardDemodulationsToEqTaut++;
           premises = pvi( getSingletonIterator(qr.data->clause));
@@ -235,9 +250,9 @@ bool ForwardDemodulationImpl<combinatorySupSupport>::perform(Clause* cl, Clause*
   return false;
 }
 
-// This is necessary for templates defined in cpp files.
-// We are happy to do it for ForwardDemodulationImpl, since it (at the moment) has only two specializations:
-template class ForwardDemodulationImpl<false>;
-template class ForwardDemodulationImpl<true>;
+//#if VHOL
+template class ForwardDemodulation<DemodulationSubtermIt>;
+//#endif
+template class ForwardDemodulation<NonVariableNonTypeIterator>;
 
 }

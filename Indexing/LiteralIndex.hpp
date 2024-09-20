@@ -48,6 +48,12 @@ public:
   size_t getUnificationCount(Literal* lit, bool complementary)
   { return _is->getUnificationCount(lit, complementary); }
 
+  VirtualIterator<QueryRes<ResultSubstitutionSP, LiteralClause>> getHOLInstances(Literal* lit, bool complementary, bool retrieveSubstitutions = true)
+  { return _is->getHOLInstances(lit, complementary, retrieveSubstitutions); }
+
+  VirtualIterator<QueryRes<ResultSubstitutionSP, LiteralClause>> getHOLGeneralizations(Literal* lit,
+    bool complementary, bool retrieveSubstitutions = true)
+  { return _is->getHOLGeneralizations(lit, complementary, retrieveSubstitutions);  }
 
   friend std::ostream& operator<<(std::ostream& out,                 LiteralIndex const& self) { return out << *self._is; }
   friend std::ostream& operator<<(std::ostream& out, OutputMultiline<LiteralIndex>const& self) { return out << multiline(*self.self._is, self.indent); }

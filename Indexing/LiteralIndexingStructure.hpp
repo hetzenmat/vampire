@@ -41,6 +41,9 @@ public:
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getInstances(Literal* lit, bool complementary, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getVariants(Literal* lit, bool complementary, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
 
+  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLGeneralizations(Literal* lit, bool complementary, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
+  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLInstances(Literal* lit, bool complementary, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
+  
   virtual size_t getUnificationCount(Literal* lit, bool complementary)
   {
     return countIteratorElements(getUnifications(lit, complementary, false));

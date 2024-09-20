@@ -157,13 +157,15 @@ Index* IndexManager::create(IndexType t)
     break; 
 
   case DEMODULATION_SUBTERM_SUBST_TREE: {
-    auto tis = new TermSubstitutionTree();
-    if (env.options->combinatorySup()) {
-      throw "TODO MH";
-      //res = new DemodulationSubtermIndexImpl<true>(tis,_alg->getOptions());
+    auto tis =
+      env.getMainProblem()->isHigherOrder()
+      ? new TermSubstitutionTree(SplittingAlgo::HOL_MATCH)
+      : new TermSubstitutionTree();
+
+    if (env.getMainProblem()->isHigherOrder()) {
+      res = new DemodulationSubtermIndex<DemodulationSubtermIt>(tis);
     } else {
-      throw "TODO MH";
-      //res = new DemodulationSubtermIndexImpl<false>(tis,_alg->getOptions());
+      res = new DemodulationSubtermIndex<NonVariableNonTypeIterator>(tis);
     }
     isGenerating = false;
     break;

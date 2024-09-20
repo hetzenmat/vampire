@@ -596,7 +596,7 @@ isRedundant:
               /**
                * Step 4: found application of FSD; now create the conclusion
                */
-              Literal* newLit = SubtermReplacer(lhsS,rhsS).transform(dlit);
+              Literal* newLit = SubtermReplacer(lhsS,rhsS).transformLiteral(dlit);
               ASS_EQ(ordering.compare(lhsS, rhsS), Ordering::GREATER);
 #if VDEBUG
               if (getOptions().literalComparisonMode() != Options::LiteralComparisonMode::REVERSE) {
@@ -672,4 +672,12 @@ isRedundant:
   }  // for (li)
 
   return false;
+}
+
+namespace Inferences
+{
+//#if VHOL
+template class ForwardSubsumptionDemodulation<DemodulationSubtermIt>;
+//#endif
+template class ForwardSubsumptionDemodulation<NonVariableNonTypeIterator>;
 }

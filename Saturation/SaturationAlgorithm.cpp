@@ -1676,11 +1676,12 @@ SaturationAlgorithm* SaturationAlgorithm::createFromOptions(Problem& prb, const 
     // fsd should be performed after forward subsumption,
     // because every successful forward subsumption will lead to a (useless) match in fsd.
     if (opt.forwardSubsumptionDemodulation()) {
-        if(prb.isHigherOrder()) {
-          res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation<DemodulationSubtermIt>(false));
-        } else {
-          res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation<NonVariableNonTypeIterator>(false));
-        }
+      if(prb.isHigherOrder()) {
+        res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation<DemodulationSubtermIt>(false));
+      } else {
+        res->addForwardSimplifierToFront(new ForwardSubsumptionDemodulation<NonVariableNonTypeIterator>(false));
+      }
+    }
   }
   if (prb.hasEquality()) {
     switch(opt.forwardDemodulation()) {

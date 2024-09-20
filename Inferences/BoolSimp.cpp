@@ -59,7 +59,7 @@ substitution:
 
   for (unsigned i = 0; i < conclusion->length(); i++) {
     (*conclusion)[i] = i == literalPosition ?
-                                            SubtermReplacer(subTerm, simpedSubTerm).transformLit((*premise)[i]) :
+                                            SubtermReplacer(subTerm, simpedSubTerm).transformLiteral((*premise)[i]) :
                                             (*premise)[i];
   }
 

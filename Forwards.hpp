@@ -153,6 +153,13 @@ class TermSharing;
 
 class ResultSubstitution;
 typedef Lib::SmartPtr<ResultSubstitution> ResultSubstitutionSP;
+
+enum class SplittingAlgo {
+  NONE,
+  HOL_MATCH,
+  HOL_UNIF
+};
+
 };
 
 namespace Saturation

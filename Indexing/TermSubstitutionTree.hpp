@@ -59,9 +59,13 @@ class TermSubstitutionTree
 public:
   using LeafData = LeafData_;
 
-  TermSubstitutionTree()
-    : _inner()
-    { }
+  explicit TermSubstitutionTree(SplittingAlgo algo = SplittingAlgo::NONE)
+  : _inner(), _extra(false), _algo(algo)
+  {
+
+  }
+//
+
 
   void handle(LeafData d, bool insert) final override
   { _inner.handle(std::move(d), insert); }
@@ -72,6 +76,18 @@ public:
   }
 
 private:
+
+  /*
+   * The extra flag is a higher-order concern. it is set to true when
+   * we require the term query result to include two terms, the result term
+   * and another.
+   *
+   * The main use case is to store a different term in the leaf to the one indexed
+   * in the tree. This is used for example in Skolemisation on the fly where we
+   * store Terms of type $o (formulas) in the tree, but in the leaf we store
+   * the skolem terms used to witness them (to facilitate the reuse of Skolems)
+   */
+  bool _extra;
 
   std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {};
 

@@ -92,13 +92,6 @@ public:
 
   TermList transformSubterm(TermList t) override;
 
-  Literal* transformLit(Literal* lit)
-  {
-    Term* t = transform(static_cast<Term*>(lit));
-    ASS(t->isLiteral());
-    return static_cast<Literal*>(t);
-  }
-
 // #if VHOL
   void onTermEntry(Term* t) override;
   void onTermExit(Term* t) override;
