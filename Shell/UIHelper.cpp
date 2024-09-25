@@ -384,13 +384,6 @@ Problem* UIHelper::getInputProblem()
   // NB this must happen immediately, as the Property relies on it
   res->setSMTLIBLogic(topPiece._smtLibLogic);
 
-  if(res->isHigherOrder())
-    USER_ERROR(
-      "This version of Vampire is not yet HOLy.\n\n"
-      "Support for higher-order logic is currently on the ahmed-new-hol branch.\n"
-      "HOL should be coming to mainline 'soon'."
-    );
-
   env.setMainProblem(res);
   return res;
 }

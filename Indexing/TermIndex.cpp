@@ -94,11 +94,11 @@ void DemodulationSubtermIndex<SubtermIterator>::handleClause(Clause* c, bool add
         continue;
       }
       if (adding) {
-        throw "TODO MH";
+        THROW_MH();
         // _is->insert(TypedTermList(t), lit, c);
       }
       else {
-        throw "TODO MH";
+        THROW_MH();
         // _is->remove(TypedTermList(t), lit, c);
       }
     }

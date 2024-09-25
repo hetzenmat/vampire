@@ -23,24 +23,14 @@ using namespace Shell;
 
 TermList BetaNormaliser::normalise(TermList t)
 {
-
-  LOG_ENTER("BetaNormaliser::normalise", t.toString());
-
   // term transformer does not work at the top level...
   t = transformSubterm(t);
-  auto ret = transform(t);
-
-  LOG_RETURN(ret.toString());
-
-  return ret;
+  return transform(t);
 }
 
 TermList BetaNormaliser::transformSubterm(TermList t)
 {
-  LOG_ENTER("BetaNormaliser::transformSubterm", t.toString());
-
   if(t.isLambdaTerm()) {
-    LOG_RETURN("isLambdaTerm", t.toString());
     return t;
   }
 
@@ -55,7 +45,6 @@ TermList BetaNormaliser::transformSubterm(TermList t)
     ApplicativeHelper::getHeadAndArgs(t, head, args);
   }
 
-  LOG_RETURN(t.toString());
   return t;
 }
 
@@ -66,16 +55,17 @@ bool BetaNormaliser::exploreSubterms(TermList orig, TermList newTerm)
 
 TermSpec WHNFDeref::normalise(TermSpec t)
 {
+  THROW_MH();
   _index = t.index;
   // term transformer does not work at the top level...
   auto transformed = transformSubterm(t.term);
-  throw "TODO MH";
+
   // return transformed.isLambdaTerm() ? transform(transformed) : transformed;
 }
 
 TermList WHNFDeref::transformSubterm(TermList t)
 {
-  throw "TODO MH";
+  THROW_MH();
 
   /*if(t.isLambdaTerm()) return t;
 
@@ -350,7 +340,7 @@ TermSpec SortDeref::deref(TermList term)
 
 TermList SortDeref::transformSubterm(TermList t)
 {
-  throw "TODO MH";
+  THROW_MH();
   /*
   if(t.isVar() && _positions.top() < _typeArities.top()) {
     t = _sub->derefBound(t);

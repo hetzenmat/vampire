@@ -42,7 +42,7 @@ class LiteralSubstitutionTree
   using LeafIterator                = typename SubstitutionTree::LeafIterator;
 
 public:
-  LiteralSubstitutionTree()
+  LiteralSubstitutionTree(SplittingAlgo algo = SplittingAlgo::NONE)
     : _trees(env.signature->predicates() * 2)
     { }
 
@@ -167,6 +167,7 @@ private:
     return *_trees[idx];
   }
 
+  SplittingAlgo _algo;
   Stack<std::unique_ptr<SubstitutionTree>> _trees;
 };
 

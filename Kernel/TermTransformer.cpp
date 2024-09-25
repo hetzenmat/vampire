@@ -268,8 +268,6 @@ TermList TermTransformer::transform(TermList ts)
 */
 
 
-  LOG_ENTER("TermTransformer::transform", ts.toString());
-
   TermList ret;
 
   if (ts.isVar()) {
@@ -283,7 +281,6 @@ TermList TermTransformer::transform(TermList ts)
     }
   }
 
-  LOG_RETURN(ret.toString());
   return ret;
 }
 

@@ -467,37 +467,37 @@ inline AutoDerefTermSpec::AutoDerefTermSpec(TermSpec const& t, RobSubstitution c
 class RobSubstitutionTL {
 public:
   TermList derefBound(TermList x) {
-    throw "TODO MH";
+    THROW_MH();
   }
 
   TermList apply(TermList, int) {
-    throw "TODO MH";
+    THROW_MH();
   }
 
   Literal* apply(Literal *, int) {
-    throw "TODO MH";
+    THROW_MH();
   }
 
   bool unify(TermList, TermList) {
-    throw "TODO MH";
+    THROW_MH();
   }
   bool unify(TermList, int, TermList, int) {
-    throw "TODO MH";
+    THROW_MH();
   }
 
-  bool match(TermList, TermList, int) {throw "TODO MH";}
+  bool match(TermList, TermList, int) {THROW_MH();}
 
 
-  void reset() { throw "TODO MH"; }
+  void reset() { THROW_MH(); }
 };
 
 // TODO MH
 class RobSubstitutionTS {
 public:
   void reset() {}
-  bool unify(TermList a, int b, TermList c, int d) { throw "TODO MH"; }
-  TermList apply(TermList a, int b) { throw "TODO MH"; }
-  Literal* apply(Literal* a, int b) { throw "TODO MH"; }
+  bool unify(TermList a, int b, TermList c, int d) { THROW_MH(); }
+  TermList apply(TermList a, int b) { THROW_MH(); }
+  Literal* apply(Literal* a, int b) { THROW_MH(); }
 };
 
 };

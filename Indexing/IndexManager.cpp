@@ -112,11 +112,11 @@ Index* IndexManager::create(IndexType t)
     isGenerating = true;
     break;
   case BACKWARD_SUBSUMPTION_SUBST_TREE:
-    res = new BackwardSubsumptionIndex(new LiteralSubstitutionTree());
+    res = new BackwardSubsumptionIndex(new LiteralSubstitutionTree(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE)));
     isGenerating = false;
     break;
   case FW_SUBSUMPTION_UNIT_CLAUSE_SUBST_TREE:
-    res = new UnitClauseLiteralIndex(new LiteralSubstitutionTree());
+    res = new UnitClauseLiteralIndex(new LiteralSubstitutionTree(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE)));
     isGenerating = false;
     break;
   case URR_UNIT_CLAUSE_SUBST_TREE:
@@ -124,30 +124,31 @@ Index* IndexManager::create(IndexType t)
     isGenerating = true;
     break;
   case URR_UNIT_CLAUSE_WITH_AL_SUBST_TREE:
-    res=new UnitClauseWithALLiteralIndex(new LiteralSubstitutionTree());
+    res = new UnitClauseWithALLiteralIndex(new LiteralSubstitutionTree());
     isGenerating = true;
     break;
   case URR_NON_UNIT_CLAUSE_SUBST_TREE:
-    res  =new NonUnitClauseLiteralIndex(new LiteralSubstitutionTree());
+    res = new NonUnitClauseLiteralIndex(new LiteralSubstitutionTree());
     isGenerating = true;
     break;
   case URR_NON_UNIT_CLAUSE_WITH_AL_SUBST_TREE:
-    res=new NonUnitClauseWithALLiteralIndex(new LiteralSubstitutionTree());
+    res = new NonUnitClauseWithALLiteralIndex(new LiteralSubstitutionTree());
     isGenerating = true;
     break;
 
   case SUPERPOSITION_SUBTERM_SUBST_TREE:
-    res = new SuperpositionSubtermIndex(new TermSubstitutionTree(), _alg->getOrdering());
+    res = new SuperpositionSubtermIndex(new TermSubstitutionTree(IF_HOL(SplittingAlgo::HOL_UNIF, SplittingAlgo::NONE)), _alg->getOrdering());
     isGenerating = true;
     break;
+
   case SUPERPOSITION_LHS_SUBST_TREE:
-    res = new SuperpositionLHSIndex(new TermSubstitutionTree(), _alg->getOrdering(), _alg->getOptions());
+    res = new SuperpositionLHSIndex(new TermSubstitutionTree(IF_HOL(SplittingAlgo::HOL_UNIF, SplittingAlgo::NONE)), _alg->getOrdering(), _alg->getOptions());
     isGenerating = true;
     break;
 
   
   case SKOLEMISING_FORMULA_INDEX:
-    res = new SkolemisingFormulaIndex(new Indexing::TermSubstitutionTree<TermWithValue<Kernel::TermList>>());
+    res = new SkolemisingFormulaIndex(new Indexing::TermSubstitutionTree<TermWithValue<Kernel::TermList>>(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE), IF_HOL(true, false)));
     isGenerating = false;
     break;
 
@@ -156,24 +157,27 @@ Index* IndexManager::create(IndexType t)
     isGenerating = true;
     break; 
 
-  case DEMODULATION_SUBTERM_SUBST_TREE: {
-    auto tis =
-      env.getMainProblem()->isHigherOrder()
-      ? new TermSubstitutionTree(SplittingAlgo::HOL_MATCH)
-      : new TermSubstitutionTree();
-
+  case DEMODULATION_SUBTERM_SUBST_TREE:
     if (env.getMainProblem()->isHigherOrder()) {
-      res = new DemodulationSubtermIndex<DemodulationSubtermIt>(tis);
+      res = new DemodulationSubtermIndex<DemodulationSubtermIt>(new TermSubstitutionTree(SplittingAlgo::HOL_MATCH));
     } else {
-      res = new DemodulationSubtermIndex<NonVariableNonTypeIterator>(tis);
+      res = new DemodulationSubtermIndex<NonVariableNonTypeIterator>(new TermSubstitutionTree());
     }
     isGenerating = false;
     break;
-  }
+
   case DEMODULATION_LHS_CODE_TREE:
     res = new DemodulationLHSIndex(new CodeTreeTIS<DemodulatorData>(), _alg->getOrdering(), _alg->getOptions());
     isGenerating = false;
     break;
+
+    case DEMODULATION_LHS_SUBST_TREE:
+      res = new DemodulationLHSIndex(new Indexing::TermSubstitutionTree<DemodulatorData>(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE)),
+      _alg->getOrdering(),
+      _alg->getOptions());
+
+      isGenerating = false;
+      break;
 
   case FW_SUBSUMPTION_CODE_TREE:
     res = new CodeTreeSubsumptionIndex();
@@ -181,17 +185,17 @@ Index* IndexManager::create(IndexType t)
     break;
 
   case FW_SUBSUMPTION_SUBST_TREE:
-    res = new FwSubsSimplifyingLiteralIndex(new LiteralSubstitutionTree());
+    res = new FwSubsSimplifyingLiteralIndex(new LiteralSubstitutionTree(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE)));
     isGenerating = false;
     break;
 
   case FSD_SUBST_TREE:
-    res = new FSDLiteralIndex(new LiteralSubstitutionTree());
+    res = new FSDLiteralIndex(new LiteralSubstitutionTree(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE)));
     isGenerating = false;
     break;
 
   case REWRITE_RULE_SUBST_TREE:
-    res = new RewriteRuleIndex(new LiteralSubstitutionTree(), _alg->getOrdering());
+    res = new RewriteRuleIndex(new LiteralSubstitutionTree(IF_HOL(SplittingAlgo::HOL_MATCH, SplittingAlgo::NONE)), _alg->getOrdering());
     isGenerating = false;
     break;
 

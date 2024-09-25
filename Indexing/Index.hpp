@@ -128,12 +128,15 @@ struct DemodulatorData
 #endif
   }
 
+  DemodulatorData(const DemodulatorData& d) :term(d.term), rhs(d.rhs), clause(d.clause), preordered(d.preordered) {}
+
   // lhs, the identifier is required to be `term` by CodeTree
   TypedTermList term;
   TermList rhs;
   Clause* clause;
   bool preordered; // whether term > rhs
   OrderingComparatorUP comparator; // owned comparator for whether term > rhs
+
 
   TypedTermList const& key() const { return term; }
 

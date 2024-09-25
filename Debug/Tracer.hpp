@@ -94,6 +94,8 @@ template<class... A> void printDbg2(int diffIndent, const char* file, unsigned l
 
 } // namespace Debug
 
+
+#define IF_HOL(TRUE, FALSE) env.getMainProblem()->isHigherOrder() ? (TRUE) : (FALSE)
 #define THROW_MH(...) do { Debug::printDbg2(0, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__); throw "TODO MH";  } while (0)
 
 #if VDEBUG
