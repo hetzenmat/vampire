@@ -1398,7 +1398,7 @@ public:
         void bindQuerySpecialVar(unsigned var, TermList term)
         { _subs.bindSpecialVar(var, term, QUERY_BANK); }
 
-        /** we intrementally traverse the tree, and at every code we call this retrieval algorithm to check 
+        /** we incrementally traverse the tree, and at every code we call this retrieval algorithm to check
          * whether it is okay to bind a new special variable to some term in the tree.
          * This function returns true if the retrieval condition (like in this case unifyability) can still 
          * be achieved, or false if not. Depending on that the iterator will backtrack or continue to traverse 
@@ -1417,7 +1417,7 @@ public:
         void denormalize(Renaming& norm)
         { _subs.denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); }
 
-        /** whenever we arrive at a leave we return the currrent witness for the current leave term to unify
+        /** whenever we arrive at a leave we return the current witness for the current leave term to unify
          * with the query term. The unifier is queried using this function.  */
         Unifier unifier() { return ResultSubstitution::fromSubstitution(&_subs, QUERY_BANK, RESULT_BANK); }
 
@@ -1431,7 +1431,7 @@ public:
          * The function can do a final check whether the current state of the retrieved witness (e.g. substitution) 
          * is really unifying or not. 
          * If it returns true the leaf is returned, if it returns false the leaf is filtered out.
-         * This is useful in the case of unificaiton with abstraction, where we overapproximate the 
+         * This is useful in the case of unification with abstraction, where we overapproximate the
          * set of potential unifiers. With this function we can filter out unnecessary unifiers that would be 
          * sound but are not needed. For examples and a bit more of an explanation have a look at the paper
          * Refining Unification with Abstraction from LPAR2023

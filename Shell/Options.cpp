@@ -1533,10 +1533,6 @@ void Options::init()
     _backwardSubsumptionDemodulation.tag(OptionTag::INFERENCES);
     _backwardSubsumptionDemodulation.onlyUsefulWith(ProperSaturationAlgorithm());
     _backwardSubsumptionDemodulation.addProblemConstraint(hasEquality());
-    // _backwardSubsumptionDemodulation.onlyUsefulWith(_combinatorySuperposition.is(equal(false)));  // higher-order support is not yet implemented
-    // _backwardSubsumptionDemodulation.addHardConstraint(onlyFirstOrder());
-    _backwardSubsumptionDemodulation.addProblemConstraint(onlyFirstOrder()); // TOOD MH: convert to hard constraint or only
-
 
     _backwardSubsumptionDemodulationMaxMatches = UnsignedOptionValue("backward_subsumption_demodulation_max_matches", "bsdmm", 0);
     _backwardSubsumptionDemodulationMaxMatches.description = "Maximum number of multi-literal matches to consider in backward subsumption demodulation. 0 means to try all matches (until first success).";
@@ -1723,8 +1719,6 @@ void Options::init()
     _forwardSubsumptionDemodulation.onlyUsefulWith(ProperSaturationAlgorithm());
     _forwardSubsumptionDemodulation.tag(OptionTag::INFERENCES);
     _forwardSubsumptionDemodulation.addProblemConstraint(hasEquality());
-    //_forwardSubsumptionDemodulation.onlyUsefulWith(_combinatorySuperposition.is(equal(false)));  // higher-order support is not yet implemented
-    _forwardSubsumptionDemodulation.addProblemConstraint(onlyFirstOrder()); // TODO MH: convert to onlyUsefulWith
 
     _forwardSubsumptionDemodulationMaxMatches = UnsignedOptionValue("forward_subsumption_demodulation_max_matches", "fsdmm", 0);
     _forwardSubsumptionDemodulationMaxMatches.description = "Maximum number of multi-literal matches to consider in forward subsumption demodulation. 0 means to try all matches (until first success).";
@@ -1948,28 +1942,12 @@ void Options::init()
     _positiveExt.onlyUsefulWith(_functionExtensionality.is(notEqual(FunctionExtensionality::AXIOM)));
     _positiveExt.tag(OptionTag::HIGHER_ORDER);
 
-    /*_lambdaFreeHol = BoolOptionValue("lam_free_hol","lfh",false);
-    _lambdaFreeHol.description=
-    "Reason about lambda-free hol. See paper by Vukmirovic et al.";
-    _lookup.insert(&_lambdaFreeHol);
-    _lambdaFreeHol.addProblemConstraint(hasHigherOrder());
-    _lambdaFreeHol.tag(OptionTag::HIGHER_ORDER);*/
-
     _iffXorRewriter = BoolOptionValue("iff_xor_rewriter","ixr",true);
     _iffXorRewriter.description=
         "Rewrites p <=> q = $true to p <=> q and the like. It does this as an immediate simplification.";
     _lookup.insert(&_iffXorRewriter);
     _iffXorRewriter.addProblemConstraint(hasHigherOrder());
     _iffXorRewriter.tag(OptionTag::HIGHER_ORDER);
-
-
-    /*_complexVarCondition = BoolOptionValue("complex_var_cond","cvc",false);
-    _complexVarCondition.description=
-    "Use the more complex variable condition provided in the SKIKBO paper.\n"
-    "More terms are comparable with this ordering, but it has worst case"
-    "exponential complexity";
-    _lookup.insert(&_complexVarCondition);
-    _complexVarCondition.tag(OptionTag::HIGHER_ORDER);*/
 
     _holPrinting = ChoiceOptionValue<HPrinting>("pretty_hol_printing","php",HPrinting::TPTP,
                                                 {"raw","db","pretty","tptp"});
@@ -3487,7 +3465,7 @@ vstring Options::generateEncodedOptions() const
  */
 bool Options::complete(const Problem& prb) const
 {
-  if(prb.isHigherOrder()){
+  if (prb.isHigherOrder()) {
     //safer for competition
     return false;
   }
@@ -3540,21 +3518,6 @@ bool Options::complete(const Problem& prb) const
   bool hasEquality = (prop.equalityAtoms() != 0);
 
   if (hasEquality && !_superposition.actualValue) return false;
-
-  /*
-  TODO MH: check the following conditions
-  if((prop.hasCombs() || prop.hasAppliedVar())  &&
-    !_addCombAxioms.actualValue && !_combinatorySuperposition.actualValue) {
-    //TODO make a more complex more precise case here
-    //There are instance where we are complete
-    return false;
-  }
-
-  //TODO update once we have another method of dealing with bools
-  if((prop.hasLogicalProxy() || prop.hasBoolVar())  && !_addProxyAxioms.actualValue){
-    return false;
-  }
-   */
 
   if (!unitEquality) {
     if (_selection.actualValue <= -1000 || _selection.actualValue >= 1000) return false;

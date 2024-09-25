@@ -109,10 +109,6 @@ Ordering* Ordering::tryGetGlobalOrdering()
  */
 Ordering* Ordering::create(Problem& prb, const Options& opt)
 {
-  /*if(env.options->combinatorySup() || env.options->lambdaFreeHol()){
-    return new SKIKBO(prb, opt, env.options->lambdaFreeHol());
-  }*/
-
   Ordering* out;
   switch (env.options->termOrdering()) {
   case Options::TermOrdering::KBO:

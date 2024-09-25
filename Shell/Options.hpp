@@ -774,14 +774,6 @@ public:
     TPTP = 3
   };
 
-  enum class Narrow : unsigned int {
-    ALL = 0,
-    SK = 1,
-    SKI = 2,
-    OFF = 3
-  };
-
-
     //==========================================================
     // The Internals
     //==========================================================
@@ -2303,19 +2295,6 @@ public:
   ArithmeticSimplificationMode arithmeticSubtermGeneralizations() const { return  _highSchool.actualValue ? ArithmeticSimplificationMode::CAUTIOUS : _arithmeticSubtermGeneralizations.actualValue; }
 
   //Higher-order Options
-
-  // TODO MH
-  void setMaxXX(unsigned max) { THROW_MH(); }
-  bool addCombAxioms() const { THROW_MH(); }
-  bool combinatorySup() const { THROW_MH(); }
-  bool complexVarCondition() const { THROW_MH(); }
-  bool lambdaFreeHol() const { THROW_MH(); }
-  int maxXXNarrows() const { THROW_MH(); }
-  bool prioritiseClausesProducedByLongReduction() const { THROW_MH(); }
-  Narrow narrow() const { THROW_MH(); }
-
-
-
   bool addProxyAxioms() const { return _addProxyAxioms.actualValue; }
   bool choiceAxiom() const { return _choiceAxiom.actualValue; }
   bool injectivityReasoning() const { return _injectivity.actualValue; }
@@ -2332,10 +2311,7 @@ public:
   bool cases() const { return _cases.actualValue; }
   bool newTautologyDel() const { return _newTautologyDel.actualValue; }
   bool positiveExtensionality() const { return _positiveExt.actualValue; }
-  // bool lambdaFreeHol() const { return _lambdaFreeHol.actualValue; }
   bool iffXorRewriter() const { return _iffXorRewriter.actualValue; }
-  // TODO doesn't do anyhting currently
-  // bool complexVarCondition() const { return _complexVarCondition.actualValue; }
   HPrinting holPrinting() const { return _holPrinting.actualValue; }
   void setHolPrinting(HPrinting setting) { _holPrinting.actualValue = setting; }
   bool heuristicInstantiation() const { return _heuristicInstantiation.actualValue; }
@@ -2779,9 +2755,7 @@ private:
   BoolOptionValue _cases;
   BoolOptionValue _newTautologyDel;
   BoolOptionValue _positiveExt;
-  BoolOptionValue _lambdaFreeHol;
   BoolOptionValue _iffXorRewriter;
-  // BoolOptionValue _complexVarCondition;
   ChoiceOptionValue<HPrinting> _holPrinting;
   UnsignedOptionValue _higherOrderUnifDepth;
   UnsignedOptionValue _takeNUnifiersOnly;

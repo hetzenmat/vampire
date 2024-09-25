@@ -140,7 +140,9 @@ public:
   }
 
   VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLGeneralizations(TypedTermList t) final override {
-    return pvi(getResultIterator<SubstitutionTree::TreeIterator<HOLGenAlgo>>(t, true));
+    std::cout << multiline(*this, 4) << std::endl;
+    return pvi(getResultIterator<FastInstancesIterator>(t, true));
+    // return pvi(getResultIterator<SubstitutionTree::TreeIterator<HOLGenAlgo>>(t, true));
   }
 };
 

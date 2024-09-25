@@ -212,13 +212,10 @@ void Inference::updateStatistics()
         */
       } else if (_ptr2 == nullptr) {
         _inductionDepth = static_cast<Unit*>(_ptr1)->inference().inductionDepth();
-        _XXNarrows = static_cast<Unit*>(_ptr1)->inference().xxNarrows();
         _reductions = static_cast<Unit*>(_ptr1)->inference().reductions();
       } else {
         _inductionDepth = max(static_cast<Unit*>(_ptr1)->inference().inductionDepth(),
             static_cast<Unit*>(_ptr2)->inference().inductionDepth());
-        _XXNarrows = max(static_cast<Unit*>(_ptr1)->inference().xxNarrows(),
-            static_cast<Unit*>(_ptr2)->inference().xxNarrows());
         _reductions = max(static_cast<Unit*>(_ptr1)->inference().reductions(),
             static_cast<Unit*>(_ptr2)->inference().reductions());
       }
@@ -227,12 +224,10 @@ void Inference::updateStatistics()
     case Kind::INFERENCE_MANY:
     case Kind::INFERENCE_FROM_SAT_REFUTATION:
       _inductionDepth = 0;
-      _XXNarrows = 0;
       _reductions = 0;
       UnitList* it= static_cast<UnitList*>(_ptr1);
       while(it) {
         _inductionDepth = max(_inductionDepth,it->head()->inference().inductionDepth());
-        _XXNarrows = max(_XXNarrows,it->head()->inference().xxNarrows());
         _reductions = max(_reductions,it->head()->inference().reductions());
         it=it->tail();
       }
@@ -259,21 +254,12 @@ std::ostream& Kernel::operator<<(std::ostream& out, Inference const& self)
 
   out << ", incl: " << self._included;
   out << ", ptd: " << self._isPureTheoryDescendant;
-  if(env.options->addCombAxioms()){
-    out << ", cad: " << self._combAxiomsDescendant;
-  }
   if(env.options->addProxyAxioms()){
-     out << ", pad: " << self._proxyAxiomsDescendant;
-  }
-  if(env.options->addCombAxioms() && env.options->addProxyAxioms()){
     out << ", had: " << self._holAxiomsDescendant;
   }
   out << ", id: " << self._inductionDepth;
-  if(env.options->maxXXNarrows() > 0){
-    out << ", xxNarrs " << self._XXNarrows;
-  }
-  if(env.options->prioritiseClausesProducedByLongReduction()){
-    out << ", redLen " << self._reductions;
+  if(env.options->addProxyAxioms()){
+    out << ", pad: " << self._proxyAxiomsDescendant;
   }
   out << ", sl: " << self._sineLevel;
   out << ", age: " << self._age;
@@ -294,10 +280,7 @@ void Inference::init0(UnitInputType inputType, InferenceRule r)
   computeTheoryRunningSums();
 
   _isPureTheoryDescendant = isTheoryAxiom();
-  _combAxiomsDescendant = isCombinatorAxiom();
   _proxyAxiomsDescendant = isProxyAxiom();
-  _holAxiomsDescendant = _combAxiomsDescendant || _proxyAxiomsDescendant;
-
   //_inductionDepth = 0 from initDefault (or set externally)
   //_sineLevel = MAX from initDefault (or set externally)
 }
@@ -352,34 +335,28 @@ void Inference::initMany(InferenceRule r, UnitList* premises)
   _ptr2 = nullptr;
 
   UnitList* it= premises;
-  while(it) {
+  while (it) {
     it->head()->incRefCnt();
-    it=it->tail();
+    it = it->tail();
   }
 
   computeTheoryRunningSums();
 
   if (premises) {
     _isPureTheoryDescendant = true;
-    _combAxiomsDescendant = true;
     _proxyAxiomsDescendant = true;
-    _holAxiomsDescendant = true;
-    it=premises;
-    while(it) {
+    it = premises;
+    while (it) {
       const Inference& inf = it->head()->inference();
       _inputType = getInputType(_inputType,inf.inputType());
       _isPureTheoryDescendant &= inf.isPureTheoryDescendant();
-      _combAxiomsDescendant &= inf.isCombAxiomsDescendant();
       _proxyAxiomsDescendant &= inf.isProxyAxiomsDescendant();
-      _holAxiomsDescendant &= inf.isHolAxiomsDescendant();
       _sineLevel = min(_sineLevel,inf.getSineLevel());
-      it=it->tail();
+      it = it->tail();
     }
   } else {
     _isPureTheoryDescendant = isTheoryAxiom();
-    _combAxiomsDescendant = isCombinatorAxiom();
     _proxyAxiomsDescendant = isProxyAxiom();
-    _holAxiomsDescendant = _combAxiomsDescendant || _proxyAxiomsDescendant;
   }
 
   updateStatistics();
@@ -878,8 +855,6 @@ vstring Kernel::ruleName(InferenceRule rule)
     return "generalized induction hyperresolution";
   case InferenceRule::GAUSSIAN_VARIABLE_ELIMINIATION:
     return "gaussian variable elimination";
-  case InferenceRule::COMBINATOR_AXIOM:
-    return "combinator axiom";
   case InferenceRule::FUNC_EXT_AXIOM:
     return "functional extensionality axiom";
   case InferenceRule::EQUALITY_PROXY_AXIOM:

@@ -309,7 +309,6 @@ enum class InferenceRule : unsigned char {
   /* argument congruence: t = t' => tx = t'x*/
   ARG_CONG,
 
-
   INJECTIVITY,
 
   PRIMITIVE_INSTANTIATION,
@@ -513,9 +512,7 @@ enum class InferenceRule : unsigned char {
   /** one of two axioms of FOOL (distinct constants or finite domain) */
   FOOL_AXIOM_TRUE_NEQ_FALSE,
   FOOL_AXIOM_ALL_IS_TRUE_OR_FALSE,
- 
-  COMBINATOR_AXIOM,
-  
+
   FUNC_EXT_AXIOM,
 
   /** beginning of proxy funxtion axioms marker --*/
@@ -714,7 +711,6 @@ private:
     _rule = r;
     _included = false;
     _inductionDepth = 0;
-    _XXNarrows = 0;
     _reductions = 0;
     _sineLevel = std::numeric_limits<decltype(_sineLevel)>::max();
     _splits = nullptr;
@@ -940,11 +936,6 @@ public:
   unsigned inductionDepth() const { return _inductionDepth; }
   void setInductionDepth(unsigned d) { _inductionDepth = d; }
 
-  unsigned xxNarrows() const { return _XXNarrows; }
-  /** used to propagate in AVATAR **/
-  void setXXNarrows(unsigned n) { _XXNarrows = n; }
-  void incXXNarrows(){ if(_XXNarrows < 8){ _XXNarrows++; } }
-
   unsigned reductions() const { return _reductions; }
   void setReductions(unsigned r) { _reductions = r; } 
   void increaseReductions(unsigned n){ _reductions += n; }
@@ -976,12 +967,8 @@ private:
 
   /** track whether all leafs were theory axioms only */
   bool _isPureTheoryDescendant : 1;
-  /** Clause is a combinator axiom descendant */
-  unsigned _combAxiomsDescendant : 1;
   /** */
   unsigned _proxyAxiomsDescendant : 1;
-  /** clause is descended only from proxy or combinator axioms */
-  unsigned _holAxiomsDescendant : 1;
   /** Induction depth **/
   unsigned _inductionDepth : 5;
 
@@ -990,9 +977,8 @@ private:
    **/
   unsigned char _sineLevel : 8; // updated as the minimum from parents to children
 
-  /** number of XX' narrows carried out on clause */
-  unsigned _XXNarrows : 3;
-  /** number of weak reductions in the history of this clause */
+  // AYB TODO currently unused
+  /** number of beta reductions in the history of this clause */
   unsigned _reductions : 30;
 
   // aligned to 64 bits

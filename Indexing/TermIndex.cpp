@@ -41,11 +41,11 @@ void SuperpositionSubtermIndex::handleClause(Clause* c, bool adding)
 {
   TIME_TRACE("backward superposition index maintenance");
 
-  unsigned selCnt=c->numSelected();
-  for (unsigned i=0; i<selCnt; i++) {
+  unsigned selCnt = c->numSelected();
+  for (unsigned i = 0; i < selCnt; i++) {
     Literal* lit=(*c)[i];
-    auto rsti = env.options->combinatorySup() ? EqHelper::getFoSubtermIterator(lit,_ord)
-                                              : EqHelper::getSubtermIterator(lit,_ord);
+    auto rsti = IF_HOL(EqHelper::getSubtermIterator(lit, _ord), EqHelper::getFoSubtermIterator(lit, _ord));
+
     while (rsti.hasNext()) {
       auto tt = TypedTermList(rsti.next());
       ((TermSubstitutionTree<TermLiteralClause>*)&*_is)->handle(TermLiteralClause{ tt, lit, c }, adding);
@@ -94,12 +94,10 @@ void DemodulationSubtermIndex<SubtermIterator>::handleClause(Clause* c, bool add
         continue;
       }
       if (adding) {
-        THROW_MH();
-        // _is->insert(TypedTermList(t), lit, c);
+        _is->insert({ TypedTermList(t), lit, c });
       }
       else {
-        THROW_MH();
-        // _is->remove(TypedTermList(t), lit, c);
+        _is->remove({ TypedTermList(t), lit, c });
       }
     }
   }

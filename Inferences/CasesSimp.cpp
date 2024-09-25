@@ -118,7 +118,6 @@ ClauseIterator CasesSimp::simplifyMany(Clause* premise)
 
   auto it3 = getMapAndFlattenIterator(it2,RewriteableSubtermsFn());
 
-  //Perform  Narrow
   auto it4 = getMapAndFlattenIterator(it3,ResultFn(premise, *this));
 
   return pvi( it4 );
