@@ -575,7 +575,7 @@ inline bool isInternalTheoryAxiomRule(InferenceRule r) {
 }
 
 inline bool isCombinatorAxiomRule(InferenceRule r) {
-  return r == InferenceRule::COMBINATOR_AXIOM;
+  THROW_MH();
 }
 
 inline bool isProxyAxiomRule(InferenceRule r) {
@@ -924,14 +924,14 @@ public:
   /** This is how AVATAR sets it... */
   void setPureTheoryDescendant(bool val) { _isPureTheoryDescendant = val; }
 
-  bool isCombAxiomsDescendant() const { return _combAxiomsDescendant; }
-  void setCombAxiomsDescendant(bool val) { _combAxiomsDescendant=val; }
+  bool isCombAxiomsDescendant() const { THROW_MH(); }
+  void setCombAxiomsDescendant(bool val) { THROW_MH(); }
 
   bool isProxyAxiomsDescendant() const { return _proxyAxiomsDescendant; }
   void setProxyAxiomsDescendant(bool val) { _proxyAxiomsDescendant=val; }
 
-  bool isHolAxiomsDescendant() const { return _holAxiomsDescendant; }
-  void setHolAxiomsDescendant(bool val) { _holAxiomsDescendant=val; }  
+  bool isHolAxiomsDescendant() const { THROW_MH(); }
+  void setHolAxiomsDescendant(bool val) { THROW_MH(); }
 
   unsigned inductionDepth() const { return _inductionDepth; }
   void setInductionDepth(unsigned d) { _inductionDepth = d; }

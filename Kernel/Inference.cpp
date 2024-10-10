@@ -254,9 +254,6 @@ std::ostream& Kernel::operator<<(std::ostream& out, Inference const& self)
 
   out << ", incl: " << self._included;
   out << ", ptd: " << self._isPureTheoryDescendant;
-  if(env.options->addProxyAxioms()){
-    out << ", had: " << self._holAxiomsDescendant;
-  }
   out << ", id: " << self._inductionDepth;
   if(env.options->addProxyAxioms()){
     out << ", pad: " << self._proxyAxiomsDescendant;
@@ -297,9 +294,7 @@ void Inference::init1(InferenceRule r, Unit* premise)
 
   computeTheoryRunningSums();
   _isPureTheoryDescendant = premise->isPureTheoryDescendant();
-  _combAxiomsDescendant = premise->isCombAxiomsDescendant();
   _proxyAxiomsDescendant = premise->isProxyAxiomsDescendant();
-  _holAxiomsDescendant = premise->isHolAxiomsDescendant();
   _sineLevel = premise->getSineLevel();
 
   updateStatistics();
@@ -318,9 +313,7 @@ void Inference::init2(InferenceRule r, Unit* premise1, Unit* premise2)
 
   computeTheoryRunningSums();
   _isPureTheoryDescendant = premise1->isPureTheoryDescendant() && premise2->isPureTheoryDescendant();
-  _combAxiomsDescendant = premise1->isCombAxiomsDescendant() && premise2->isCombAxiomsDescendant() ;
-  _proxyAxiomsDescendant = premise1->isProxyAxiomsDescendant() && premise2->isProxyAxiomsDescendant();  
-  _holAxiomsDescendant = premise1->isHolAxiomsDescendant() && premise2->isHolAxiomsDescendant();
+  _proxyAxiomsDescendant = premise1->isProxyAxiomsDescendant() && premise2->isProxyAxiomsDescendant();
   _sineLevel = min(premise1->getSineLevel(),premise2->getSineLevel());
 
   updateStatistics();
