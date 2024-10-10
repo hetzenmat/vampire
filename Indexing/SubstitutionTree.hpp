@@ -1471,6 +1471,57 @@ public:
 
       };
 
+      class HOLUnification { 
+        AbstractingUnifier _unif;
+      public:
+        using Unifier = AbstractingUnifier*;
+
+        HOLUnification(AbstractionOracle ao) 
+          : _unif(AbstractingUnifier::empty(ao)) 
+        {}
+
+        void init(AbstractionOracle ao, bool fixedPointIteration) { 
+          _unif.init(ao);
+        }
+
+        // TODO
+        VirtualIterator<std::tuple<>> associate(unsigned specialVar, TermList node)
+        { THROW_MH(); }
+
+        Unifier unifier()
+        { return &_unif; }
+
+        void bindQuerySpecialVar(unsigned var, TermList term)
+        { _unif.subs().bindSpecialVar(var, term, QUERY_BANK); }
+
+        void bdRecord(BacktrackData& bd)
+        { _unif.subs().bdRecord(bd); }
+
+        void bdDone()
+        { _unif.subs().bdDone(); }
+
+        void denormalize(Renaming& norm)
+        { _unif.subs().denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); }
+
+        bool doFinalLeafCheck()
+        { return true; }
+
+        template<class LD>
+        static typename SubstitutionTree<LD>::NodeIterator _selectPotentiallyUnifiableChildren(typename SubstitutionTree<LD>::IntermediateNode* n, AbstractingUnifier& unif)
+        {
+          // TODO make this more efficient
+          return n->allChildren();
+        }
+
+        template<class LD>
+        typename SubstitutionTree<LD>::NodeIterator selectPotentiallyUnifiableChildren(typename SubstitutionTree<LD>::IntermediateNode* n)
+        { return _selectPotentiallyUnifiableChildren<LD>(n, _unif); }
+
+        friend std::ostream& operator<<(std::ostream& out, HOLUnification const& self)
+        { return out << self._unif; }
+      };
+
+
       class UnificationWithAbstraction { 
         AbstractingUnifier _unif;
         bool _fixedPointIteration;
