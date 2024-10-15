@@ -265,7 +265,7 @@ bool RobSubstitution::occurs(VarSpec const& toFind, TermSpec const& ts)
 
 bool RobSubstitution::unify(TermSpec s, TermSpec t)
 {
-#define DEBUG_UNIFY(lvl, ...) if (lvl < 0) DBG("unify: ", __VA_ARGS__)
+#define DEBUG_UNIFY(lvl, ...) if (lvl < 1) DBG("unify: ", __VA_ARGS__)
   DEBUG_UNIFY(0, *this, ".unify(", s, ",", t, ")")
 
 

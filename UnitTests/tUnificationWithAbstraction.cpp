@@ -191,30 +191,31 @@ struct LiteralIndexTest {
 };
 
 
-#define INT_SUGAR                                                                                   \
-   __ALLOW_UNUSED(                                                                                  \
-      DECL_DEFAULT_VARS                                                                             \
-      DECL_VAR(x0, 0)                                                                               \
-      DECL_VAR(x1, 1)                                                                               \
-      DECL_VAR(x2, 2)                                                                               \
-      DECL_VAR(x3, 3)                                                                               \
-      NUMBER_SUGAR(Int)                                                                             \
-      DECL_PRED(p, {Int})                                                                           \
-      DECL_FUNC(f, {Int}, Int)                                                                      \
-      DECL_FUNC(g, {Int}, Int)                                                                      \
-      DECL_FUNC(f2, {Int, Int}, Int)                                                                \
-      DECL_FUNC(g2, {Int, Int}, Int)                                                                \
-      DECL_CONST(a, Int)                                                                            \
-      DECL_CONST(b, Int)                                                                            \
-      DECL_CONST(c, Int)                                                                            \
-    )                                                                                               \
+#define INT_SUGAR                                                                         \
+   __ALLOW_UNUSED(                                                                        \
+      DECL_DEFAULT_VARS                                                                   \
+      DECL_VAR(x0, 0)                                                                     \
+      DECL_VAR(x1, 1)                                                                     \
+      DECL_VAR(x2, 2)                                                                     \
+      DECL_VAR(x3, 3)                                                                     \
+      NUMBER_SUGAR(Int)                                                                   \
+      DECL_PRED(p, {Int})                                                                 \
+      DECL_PRED(p2, {Int,Int})                                                                 \
+      DECL_FUNC(f, {Int}, Int)                                                            \
+      DECL_FUNC(g, {Int}, Int)                                                            \
+      DECL_FUNC(f2, {Int, Int}, Int)                                                      \
+      DECL_FUNC(g2, {Int, Int}, Int)                                                      \
+      DECL_CONST(a, Int)                                                                  \
+      DECL_CONST(b, Int)                                                                  \
+      DECL_CONST(c, Int)                                                                  \
+    )                                                                                     \
  
 
-#define RUN_TEST(name, sugar, ...)                                                                  \
-  TEST_FUN(name) {                                                                                  \
-       __ALLOW_UNUSED(sugar)                                                                        \
-       __VA_ARGS__.run();                                                                           \
-  }                                                                                                 \
+#define RUN_TEST(name, sugar, ...)                                                        \
+  TEST_FUN(name) {                                                                        \
+       __ALLOW_UNUSED(sugar)                                                              \
+       __VA_ARGS__.run();                                                                 \
+  }                                                                                       \
 
 RUN_TEST(term_indexing_one_side_interp_01,
     INT_SUGAR,
@@ -554,22 +555,22 @@ TEST_FUN(term_indexing_poly_01)
 }
 
 
-#define POLY_INT_SUGAR                                                                              \
-  DECL_DEFAULT_VARS                                                                                 \
-  DECL_DEFAULT_SORT_VARS                                                                            \
-  NUMBER_SUGAR(Int)                                                                                 \
-  DECL_POLY_CONST(b, 1, alpha)                                                                      \
-  DECL_POLY_CONST(a, 1, alpha)                                                                      \
-  DECL_POLY_FUNC(f, 1, {alpha}, alpha)                                                              \
-  DECL_SORT(A)                                                                                      \
-  DECL_CONST(someA, A)                                                                              \
+#define POLY_INT_SUGAR                                                                    \
+  DECL_DEFAULT_VARS                                                                       \
+  DECL_DEFAULT_SORT_VARS                                                                  \
+  NUMBER_SUGAR(Int)                                                                       \
+  DECL_POLY_CONST(b, 1, alpha)                                                            \
+  DECL_POLY_CONST(a, 1, alpha)                                                            \
+  DECL_POLY_FUNC(f, 1, {alpha}, alpha)                                                    \
+  DECL_SORT(A)                                                                            \
+  DECL_CONST(someA, A)                                                                    \
 
 
-#define HOL_SUGAR(...)                                                                              \
-  DECL_DEFAULT_VARS                                                                                 \
-  DECL_DEFAULT_SORT_VARS                                                                            \
-  NUMBER_SUGAR(Int)                                                                                 \
-  DECL_SORT(srt)                                                                                    \
+#define HOL_SUGAR(...)                                                                    \
+  DECL_DEFAULT_VARS                                                                       \
+  DECL_DEFAULT_SORT_VARS                                                                  \
+  NUMBER_SUGAR(Int)                                                                       \
+  DECL_SORT(srt)                                                                          \
   __VA_ARGS__
 
  
@@ -676,22 +677,22 @@ RUN_TEST(hol_03,
       }
     })
 
-#define RUN_TEST_hol_04(idx, ...)                                                                   \
-  RUN_TEST(hol_04_ ## idx,                                                                          \
-    HOL_SUGAR(                                                                                      \
-      DECL_FUNC(f3, {srt, srt, srt}, srt)                                                           \
-      DECL_POLY_CONST(c1, 1, alpha)                                                                 \
-      DECL_POLY_CONST(c2, 1, alpha)                                                                 \
-      DECL_POLY_CONST(h, 2, arrow(alpha, beta))                                                     \
-    ),                                                                                              \
-    IndexTest {                                                                                     \
-      .index = getTermIndexHOL(),                                                \
-      .uwa = Options::UnificationWithAbstraction::FUNC_EXT, \
-      .insert = {                                                                                   \
-               ap(h(arrow(srt, srt), srt), c1(arrow(srt, srt))),                                    \
-               ap(h(srt            , srt), c1(srt)),                                                \
-      },                                                                                            \
-      __VA_ARGS__                                                                                   \
+#define RUN_TEST_hol_04(idx, ...)                                                         \
+  RUN_TEST(hol_04_ ## idx,                                                                \
+    HOL_SUGAR(                                                                            \
+      DECL_FUNC(f3, {srt, srt, srt}, srt)                                                 \
+      DECL_POLY_CONST(c1, 1, alpha)                                                       \
+      DECL_POLY_CONST(c2, 1, alpha)                                                       \
+      DECL_POLY_CONST(h, 2, arrow(alpha, beta))                                           \
+    ),                                                                                    \
+    IndexTest {                                                                           \
+      .index = getTermIndexHOL(),                                                         \
+      .uwa = Options::UnificationWithAbstraction::FUNC_EXT,                               \
+      .insert = {                                                                         \
+               ap(h(arrow(srt, srt), srt), c1(arrow(srt, srt))),                          \
+               ap(h(srt            , srt), c1(srt)),                                      \
+      },                                                                                  \
+      __VA_ARGS__                                                                         \
     })
 
 
@@ -716,22 +717,22 @@ RUN_TEST_hol_04(02,
     )
 
 
-#define RUN_TEST_hol_05(idx, ...)                                                                   \
-  RUN_TEST(hol_05_ ## idx,                                                                          \
-    HOL_SUGAR(                                                                                      \
-      DECL_FUNC(f3, {srt, srt, srt}, srt)                                                           \
-      DECL_POLY_CONST(c1, 1, alpha)                                                                 \
-      DECL_POLY_CONST(c2, 1, alpha)                                                                 \
-      DECL_POLY_CONST(h, 2, arrow(alpha, beta))                                                     \
-    ),                                                                                              \
-    IndexTest {                                                                                     \
-      .index = getTermIndexHOL(),                                                \
-      .uwa = Options::UnificationWithAbstraction::FUNC_EXT, \
-      .insert = {                                                                                   \
-               ap(h(arrow(srt, srt), srt), c1(arrow(srt, srt))),                                    \
-               ap(h(srt            , srt), c2(srt)),                                                \
-      },                                                                                            \
-      __VA_ARGS__                                                                                   \
+#define RUN_TEST_hol_05(idx, ...)                                                         \
+  RUN_TEST(hol_05_ ## idx,                                                                \
+    HOL_SUGAR(                                                                            \
+      DECL_FUNC(f3, {srt, srt, srt}, srt)                                                 \
+      DECL_POLY_CONST(c1, 1, alpha)                                                       \
+      DECL_POLY_CONST(c2, 1, alpha)                                                       \
+      DECL_POLY_CONST(h, 2, arrow(alpha, beta))                                           \
+    ),                                                                                    \
+    IndexTest {                                                                           \
+      .index = getTermIndexHOL(),                                                         \
+      .uwa = Options::UnificationWithAbstraction::FUNC_EXT,                               \
+      .insert = {                                                                         \
+               ap(h(arrow(srt, srt), srt), c1(arrow(srt, srt))),                          \
+               ap(h(srt            , srt), c2(srt)),                                      \
+      },                                                                                  \
+      __VA_ARGS__                                                                         \
     })
 
 
@@ -1038,19 +1039,19 @@ void checkRobUnifyFail(TypedTermList a, TypedTermList b, Options::UnificationWit
   }
 }
 
-#define ROB_UNIFY_TEST(name, opt, fixedPointIteration, lhs, rhs, ...)                                          \
-  TEST_FUN(name)                                                                                    \
-  {                                                                                                 \
-    INT_SUGAR                                                                                       \
-    checkRobUnify(lhs, rhs, opt, fixedPointIteration, __VA_ARGS__ );                                           \
-  }                                                                                                 \
+#define ROB_UNIFY_TEST(name, opt, fixedPointIteration, lhs, rhs, ...)                     \
+  TEST_FUN(name)                                                                          \
+  {                                                                                       \
+    INT_SUGAR                                                                             \
+    checkRobUnify(lhs, rhs, opt, fixedPointIteration, __VA_ARGS__ );                      \
+  }                                                                                       \
 
-#define ROB_UNIFY_TEST_FAIL(name, opt, fixedPointIteration, lhs, rhs)                                          \
-  TEST_FUN(name)                                                                                    \
-  {                                                                                                 \
-    INT_SUGAR                                                                                       \
-    checkRobUnifyFail(lhs, rhs, opt, fixedPointIteration);                                                     \
-  }                                                                                                 \
+#define ROB_UNIFY_TEST_FAIL(name, opt, fixedPointIteration, lhs, rhs)                     \
+  TEST_FUN(name)                                                                          \
+  {                                                                                       \
+    INT_SUGAR                                                                             \
+    checkRobUnifyFail(lhs, rhs, opt, fixedPointIteration);                                \
+  }                                                                                       \
 
 ROB_UNIFY_TEST(rob_unif_test_01,
     Options::UnificationWithAbstraction::ONE_INTERP,
@@ -1387,6 +1388,41 @@ RUN_TEST(literal_tree_test_02,
           { .querySigma  = x < 1 + (x + 1),
             .resultSigma = x < 1 + (x + 1),
             .constraints = Stack<Literal*>{} }, 
+
+      },
+    })
+
+
+RUN_TEST(plain_unification_test_01,
+    INT_SUGAR,
+    LiteralIndexTest {
+      .index = getLiteralIndex(),
+      .uwa = Options::UnificationWithAbstraction::OFF,
+      .fixedPointIteration = true,
+      .insert = {
+        p2(x,x),
+        p2(x,y),
+        p2(y,b),
+        p2(a,a),
+      },
+      .query = p2(a,b),
+      .expected = Stack<LiteralUnificationResultSpec>{ 
+
+
+          LiteralUnificationResultSpec 
+          { .querySigma  = p2(a,b),
+            .resultSigma = p2(a,b),
+            .constraints = Stack<Literal*>{} }, 
+
+          LiteralUnificationResultSpec 
+          { .querySigma  = p2(a,b),
+            .resultSigma = p2(a,b),
+            .constraints = Stack<Literal*>{} }, 
+
+          // LiteralUnificationResultSpec 
+          // { .querySigma  = p2(a,b),
+          //   .resultSigma = p2(a,b),
+          //   .constraints = Stack<Literal*>{} }, 
 
       },
     })

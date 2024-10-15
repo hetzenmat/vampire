@@ -19,8 +19,10 @@
 
 #include <utility>
 
+#include "Debug/Assertion.hpp"
 #include "Forwards.hpp"
 
+#define DEBUG_QUERY(lvl, ...) if (lvl < 2) DBG(__VA_ARGS__)
 #include "Kernel/UnificationWithAbstraction.hpp"
 #include "Lib/Exception.hpp"
 #include "Lib/Reflection.hpp"
@@ -567,9 +569,6 @@ public:
 
     void handle(LeafData ld, bool doInsert)
     {
-      LOG("doInsert", doInsert);
-      LOGFN(ld);
-      
       auto norm = Renaming::normalize(ld.key());
       Recycled<BindingMap> bindings;
       createBindings(norm, /* reversed */ false,
@@ -1193,16 +1192,16 @@ public:
         _normalizationRecording = false;
         _iterCntr = InstanceCntr(parent->_iterCnt);
 
-#define DEBUG_QUERY(lvl, ...) if (lvl < 0) DBG(__VA_ARGS__)
         if(!root) {
           return;
         }
 
         parent->createBindings(query, reversed, 
             [&](unsigned var, TermList t) { _algo.bindQuerySpecialVar(var, t); });
-        DEBUG_QUERY(1, "query: ", _algo)
+        DEBUG_QUERY(0, "query: ", _algo)
 
-        pushNode(root);
+        pushNode(root, iterTraits(VirtualIterator<std::tuple<>>::getEmpty()), BacktrackData());
+        // pushNode(root, iterTraits(pvi(iterItems(std::tuple<>()))));
       }
 
       template<class TermOrLit, class...AlgoArgs>
@@ -1279,84 +1278,140 @@ public:
       { return runRecording(_frames.top().bd, std::move(f)); }
 
       // bool inLeaf() const { return _leafData.isSome(); }
+      void printState() {
+
+      }
 
       bool findNextLeaf()
       {
+        printState();
         do {
           do {
+            // _frames.top().bd.backtrack();
+            DBG("loop start ")
             while (!_frames.isEmpty() 
-                && (_frames.top().unifIter.isNone() || !_frames.top().unifIter->hasNext())
-                && !_frames.top().children.hasNext()) {
-              _frames.pop().bd.backtrack();
+                && !_frames.top().children.hasNext()
+                && [&]() {
+                    return runRecording([&]{ return !_frames.top().unifIter.hasNext(); });
+                  }()
+                ) {
+              auto frame = _frames.pop();
+              frame.bd.backtrack();
+              DEBUG_QUERY(1, "exiting node: S", frame.node->childVar)
             }
+
             if (_frames.isEmpty())  {
               return false;
 
-            } else if (_frames.top().unifIter.isSome() && _frames.top().unifIter->hasNext()) {
-              runRecording([&](){
-                _frames.top().unifIter->next();
-              });
-
-            } else {
+            } else if (_frames.top().children.hasNext()) {
+              DEBUG_QUERY(1, "next child at: S", _frames.top().node->childVar)
               ASS(_frames.top().children.hasNext())
               auto child = *_frames.top().children.next();
-              pushNode(child);
-              // static_assert(std::is_same_v<decltype(_algo.associate(_frames.top().var, child->term())), 
-              //                              decltype(_frames.top().unifIter)>);
-              _frames.top().unifIter = some(runRecording([&](){ return _algo.associate(_frames.top().var, child->term()); }));
+              // _frames.top().bd.backtrack();
+              auto unif = iterTraits(pvi(_algo.associate(_frames.top().node->childVar, child->term())));
+              auto bd = BacktrackData();
+              if (runRecording(bd, [&]{ return unif.hasNext(); })) {
+                runRecording(bd, [&]{ return unif.next(); });
+                pushNode(child, unif, std::move(bd));
+              }
 
+            } else if (_frames.top().unifIter.hasNext()) {
+              DEBUG_QUERY(1, "next unification at: S", _frames.top().node->childVar)
+              runRecording([&]() { _frames.top().unifIter.next(); });
+              resetChildren();
+
+            } else {
+              ASSERTION_VIOLATION
             }
           } while(_leafData.isNone());
         } while (!runRecording([&](){ return _algo.doFinalLeafCheck(); }));
         return true;
       }
+      RetrievalAlgorithm _algo;
 
-      void pushNode(Node* n) {
+      using UnifIter = IterTraits<VirtualIterator<std::tuple<>>>; // TODO
+      struct Frame {
+        /* is already unified */
+        IntermediateNode* node;
+        /* get next child of current node */
+        NodeIterator children;
+        /* go to next unification of current node */
+        UnifIter unifIter;
+        /* backtrack to state before this node was unified */
+        BacktrackData bd;
+      };
+
+      void resetChildren() {
+        auto& f  = _frames.top();
+        f.children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(f.node);
+      }
+
+      Stack<Frame> _frames;
+      bool _retrieveSubstitution;
+      Option<LDIterator> _leafData;
+      bool _normalizationRecording;
+      BacktrackData _normalizationBacktrackData;
+      InstanceCntr _iterCntr;
+
+      void pushNode(Node* n, UnifIter unifIter, BacktrackData bd) {
         if(n->isLeaf()) {
           _leafData = some(static_cast<Leaf*>(n)->allChildren());
         } else {
           _leafData = {};
           IntermediateNode* inode=static_cast<IntermediateNode*>(n);
-
-          auto var = inode->childVar;
-          DEBUG_QUERY(1, "entering node: S", _frames.top().var)
-          auto children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(inode);
           _frames.push(Frame {
-              .var = var,
-              .children = children,
-              .unifIter = decltype(Frame::unifIter)(),
-              .bd = BacktrackData(),
+              .node = inode,
+              // .var = inode->childVar,
+              // .children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(inode),
+              .unifIter = std::move(unifIter),
+              .bd = bd,
           });
+          resetChildren();
+          DEBUG_QUERY(1, "entering node: S", _frames.top().node->childVar)
 
-          // auto var = inode->childVar;
-          // DEBUG_QUERY(1, "entering node: S", _frames.top().var)
-          // auto children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(inode);
-          // if (children.hasNext()) {
-          //   auto c = children.next();
-          //   auto bd = BacktrackData();
-          //
-          //   auto unifIter = runRecording(bd, [&](){ return _algo.associate(var, c); });
-          //   if (unifIter.hasNext()) {
-          //     runRecording(bd, [&](){ return unifIter.next(); });
-          //     _frames.push(Frame {
-          //         .var = var,
-          //         .bd = bd,
-          //         .children = children,
-          //         .unifIter = unifIter,
-          //     });
-          //     pushNode(c);
-          //   }
-          // } else {
-          //   _frames.push(Frame {
-          //       .var = var,
-          //       .bd = BacktrackData(),
-          //       .children = children,
-          //       .unifIter = decltype(Frame::unifIter)::getEmpty(),
-          //   });
-          // }
-          //
         }
       }
+
+      // void pushNode(Node* n) {
+      //   if(n->isLeaf()) {
+      //     _leafData = some(static_cast<Leaf*>(n)->allChildren());
+      //   } else {
+      //     _leafData = {};
+      //     IntermediateNode* inode=static_cast<IntermediateNode*>(n);
+      //       _frames.push(Frame {
+      //           .var = inode->childVar,
+      //           .children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(inode),
+      //           // .unifIter = iterTraits(VirtualIterator<std::tuple<>>::getEmpty()),
+      //           .unifIter = iterTraits(pvi(iterItems(std::make_tuple()))),
+      //           .bd = BacktrackData(),
+      //       });
+      //
+      //     // auto var = inode->childVar;
+      //     // auto children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(inode);
+      //     // auto cs = iterTraits(_algo.template selectPotentiallyUnifiableChildren<LeafData>(inode)).template collect<Stack>();
+      //     // DBGE(cs)
+      //     //
+      //     // if (children.hasNext()) {
+      //     //   auto child = *children.next();
+      //     //   _frames.push(Frame {
+      //     //       .var = var,
+      //     //       .children = std::move(children),
+      //     //       .unifIter = iterTraits(pvi(_algo.associate(var, child->term()))),
+      //     //       .bd = BacktrackData(),
+      //     //   });
+      //     // } else {
+      //     //   _frames.push(Frame {
+      //     //       .var = var,
+      //     //       .children = std::move(children),
+      //     //       .unifIter = iterTraits(VirtualIterator<std::tuple<>>::getEmpty()),
+      //     //       .bd = BacktrackData(),
+      //     //   });
+      //     // }
+      //
+      //     DEBUG_QUERY(1, "entering node: S", _frames.top().var)
+      //
+      //   }
+      // }
 
       // /** if `n` is a leaf _ldIterator is prepared 
       //  * if `n` is internal, the next special variable is put on svStack and the children it should be unified with are being put on _nodeIterators
@@ -1384,30 +1439,12 @@ public:
       //   }
       // }
 
-      RetrievalAlgorithm _algo;
-      struct Frame {
-        unsigned var;
-        Option<Node*> curChild;
-        NodeIterator children;
-        Option<decltype(_algo.associate(0, TermList()))> unifIter;
-        // VirtualIterator<std::tuple<>> unifIter;
-        BacktrackData bd;
-      };
-      Stack<Frame> _frames;
-      bool _retrieveSubstitution;
-      // VarStack _svStack;
-      // bool _retrieveSubstitution;
-      Option<LDIterator> _leafData;
-      // Stack<NodeIterator> _nodeIterators;
-      // Stack<BacktrackData> _bdStack;
-      bool _normalizationRecording;
-      BacktrackData _normalizationBacktrackData;
-      InstanceCntr _iterCntr;
 
     public:
       bool keepRecycled() const 
       { return _frames.keepRecycled(); }
     };
+
     /** * A generic iterator over a substitution tree that can be used to retrieve elements stored in the tree that match a certain retrieval condition R.
      * The most simple retrieval condition would be `R(x) <=> x unifies with query`.
      * Similarly we could have retrieval conditions that, find instances, generalizations, unification with 
@@ -1454,7 +1491,6 @@ public:
         _normalizationRecording = false;
         _iterCntr = InstanceCntr(parent->_iterCnt);
 
-#define DEBUG_QUERY(lvl, ...) if (lvl < 0) DBG(__VA_ARGS__)
         if(!root) {
           return;
         }
@@ -1509,7 +1545,7 @@ public:
             _algo.denormalize(normalizer);
         }
 
-        DEBUG_QUERY(1, "leaf data: ", *ld)
+        DEBUG_QUERY(0, "leaf data: ", *ld)
         return QueryRes(_algo.unifier(), ld);
       }
 
