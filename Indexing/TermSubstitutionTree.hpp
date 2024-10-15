@@ -69,7 +69,7 @@ public:
     if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
       // replace higher-order terms with placeholder constants
       //tt = TypedTermList(ToPlaceholders().replace(tt), tt.sort());
-      THROW_MH();
+      THROW_MH("");
     }
 
     _inner.handle(std::move(d), insert);
@@ -132,7 +132,7 @@ public:
   { return pvi(getResultIterator<typename SubstitutionTree::template Iterator<RetrievalAlgorithms::RobUnification>>(t, retrieveSubstitutions)); }
 
   VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLUnifiers(TypedTermList t) final override {
-    THROW_MH();
+    THROW_MH("");
   }
 
   VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLInstances(TypedTermList t, bool retrieveSubstitutions = true) final override {

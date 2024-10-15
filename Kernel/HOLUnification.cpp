@@ -28,7 +28,7 @@ class HOLUnification::HigherOrderUnifiersIt: public IteratorCore<RobSubstitution
 public:
 
   TermList applyTypeSub(TermList t){
-    THROW_MH(); // Do we need to deal with type substitutions for TH0?
+    THROW_MH(""); // Do we need to deal with type substitutions for TH0?
     // in the monomorphic case, should be cheap
     // return SortDeref(_subst).deref(t);
   }
@@ -587,7 +587,7 @@ SubstIterator HOLUnification::postprocess(RobSubstitution* sub, TermList t, Term
   // are not helpful here (but cannot be erased either!)
   TypedTermList res = ToBank(VarBank::RESULT_BANK).toBank(TypedTermList(t,sort));
 
-  THROW_MH();
+  THROW_MH("");
   // return vi(new HigherOrderUnifiersItWrapper(_origQuery, _origQuerySort, res, res.sort(), _funcExt));
 }
 

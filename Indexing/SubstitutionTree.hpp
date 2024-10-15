@@ -1773,7 +1773,7 @@ public:
 
         // TODO
         VirtualIterator<std::tuple<>> associate(unsigned specialVar, TermList node)
-        { THROW_MH(); }
+        { THROW_MH(""); }
 
         Unifier unifier()
         { return &_unif; }
