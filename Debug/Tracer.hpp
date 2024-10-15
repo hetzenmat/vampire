@@ -100,9 +100,9 @@ template<class... A> void printDbg2(int diffIndent, const char* file, unsigned l
 
 #if VDEBUG
 #  define DBG(...) { Debug::printDbg(__FILE__, __LINE__, __VA_ARGS__); }
-#  define LOG(...) { Debug::printDbg2(0, __FILE__, __LINE_, __VA_ARGS__); }
-#  define LOG_ENTER(...) { Debug::printDbg2(4, __FILE__, __LINE_, __VA_ARGS__); }
-#  define LOG_RETURN(...) { Debug::printDbg2(-4, __FILE__, __LINE_, __VA_ARGS__); }
+#  define LOG(...) { Debug::printDbg2(0, __FILE__, __LINE__, __VA_ARGS__); }
+#  define LOG_ENTER(...) { Debug::printDbg2(4, __FILE__, __LINE__, __VA_ARGS__); }
+#  define LOG_RETURN(...) { Debug::printDbg2(-4, __FILE__, __LINE__, __VA_ARGS__); }
 #define LOGFN(...) log(__FILE__, __LINE__, __VA_ARGS__)
 #  define DBGE(x) DBG(#x, " = ", x)
 #else // ! VDEBUG
