@@ -69,11 +69,11 @@ public:
 
 
   void handle(LeafData d, bool insert) final override {
-    if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
-      // replace higher-order terms with placeholder constants
-      //tt = TypedTermList(ToPlaceholders().replace(tt), tt.sort());
-      THROW_MH("");
-    }
+    // if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
+    //   // replace higher-order terms with placeholder constants
+    //   //tt = TypedTermList(ToPlaceholders().replace(tt), tt.sort());
+    //   THROW_MH("");
+    // }
 
     _inner.handle(std::move(d), insert);
   }

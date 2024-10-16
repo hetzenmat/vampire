@@ -22,7 +22,7 @@
 #include "Debug/Assertion.hpp"
 #include "Forwards.hpp"
 
-#define DEBUG_QUERY(lvl, ...) if (lvl < 2) DBG(__VA_ARGS__)
+#define DEBUG_QUERY(lvl, ...) if (lvl < 0) DBG(__VA_ARGS__)
 #include "Kernel/UnificationWithAbstraction.hpp"
 #include "Lib/Exception.hpp"
 #include "Lib/Reflection.hpp"
