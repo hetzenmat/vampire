@@ -1266,7 +1266,8 @@ public:
             _algo.denormalize(normalizer);
         }
 
-        DEBUG_QUERY(1, "leaf data: ", *ld)
+        DEBUG_QUERY(1, indent(), "leaf data: ", *ld)
+        // DEBUG_QUERY(1, "leaf data: ", *ld)
         return QueryRes(_algo.unifier(), ld);
       }
 
@@ -1301,28 +1302,35 @@ public:
 
       }
 
+      auto indent() 
+      { return outputInterleaved("", range(0, _frames.size()).map([](auto) { return "  "; })); }
+
       bool findNextLeaf()
       {
+        if (_leafData) {
+          _leafData = {};
+          _leafBD.take()->backtrack();
+        }
         printState();
         do {
           do {
-            DBG("loop start ")
+            DBG(indent(), "loop start ")
             while (!_frames.isEmpty() 
                 && !_frames.top().children.hasNext()
                 && [&]() {
                     return runRecording([&]{ return !_frames.top().unifIter.hasNext(); });
                   }()
                 ) {
+              DEBUG_QUERY(1, indent(), "exiting node: S", _frames.top().node->childVar)
               auto frame = _frames.pop();
               frame.bd.backtrack();
-              DEBUG_QUERY(1, "exiting node: S", frame.node->childVar)
             }
 
             if (_frames.isEmpty())  {
               return false;
 
             } else if (_frames.top().children.hasNext()) {
-              DEBUG_QUERY(1, "next child at: S", _frames.top().node->childVar)
+              DEBUG_QUERY(1, indent(), "next child at: S", _frames.top().node->childVar)
               ASS(_frames.top().children.hasNext())
               auto child = *_frames.top().children.next();
               // _frames.top().bd.backtrack();
@@ -1334,7 +1342,7 @@ public:
               }
 
             } else if (_frames.top().unifIter.hasNext()) {
-              DEBUG_QUERY(1, "next unification at: S", _frames.top().node->childVar)
+              DEBUG_QUERY(1, indent(), "next unification at: S", _frames.top().node->childVar)
               runRecording([&]() { _frames.top().unifIter.next(); });
               resetChildren();
 
@@ -1367,6 +1375,7 @@ public:
       Stack<Frame> _frames;
       bool _retrieveSubstitution;
       Option<LDIterator> _leafData;
+      Option<BacktrackData> _leafBD;
       bool _normalizationRecording;
       BacktrackData _normalizationBacktrackData;
       InstanceCntr _iterCntr;
@@ -1374,6 +1383,7 @@ public:
       void pushNode(Node* n, UnifIter unifIter, BacktrackData bd) {
         if(n->isLeaf()) {
           _leafData = some(static_cast<Leaf*>(n)->allChildren());
+          _leafBD = some(std::move(bd));
         } else {
           _leafData = {};
           IntermediateNode* inode=static_cast<IntermediateNode*>(n);
@@ -1382,10 +1392,10 @@ public:
               // .var = inode->childVar,
               // .children = _algo.template selectPotentiallyUnifiableChildren<LeafData>(inode),
               .unifIter = std::move(unifIter),
-              .bd = bd,
+              .bd = std::move(bd),
           });
           resetChildren();
-          DEBUG_QUERY(1, "entering node: S", _frames.top().node->childVar)
+          DEBUG_QUERY(1, indent(), "entering node: S", _frames.top().node->childVar)
 
         }
       }

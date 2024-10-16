@@ -88,6 +88,7 @@ struct SubsTreeTest {
     DECL_FUNC(f, {alpha}, alpha)                                                               \
     DECL_FUNC(g, {alpha}, alpha)                                                               \
     DECL_FUNC(h, {alpha}, alpha)                                                               \
+    DECL_FUNC(f2, {alpha, alpha}, alpha)                                                               \
  
 
 #define RUN_TEST(name, sugar, ...)                                                        \
@@ -124,5 +125,55 @@ RUN_TEST(tree_test_02,
       }),
       .query = f(x),
       .expected = { { .data = 0 },{ .data = 1 }, },
+    })
+
+
+RUN_TEST(tree_test_03,
+    TEST_SUGAR,
+    SubsTreeTest {
+      .tree = subsTree(0, { 
+          internal(f2(S(1), a), 1, {
+            leaf(TermList(a), { termWithValue(f(a), 0), }),
+            leaf(TermList(b), { termWithValue(f(b), 1), }),
+          }),
+          internal(f(S(1)), 1, {
+            leaf(TermList(a), { termWithValue(f(a), 2), }),
+          })
+      }),
+      .query = f2(x, x),
+      .expected = { { .data = 0 }, },
+    })
+
+RUN_TEST(tree_test_04,
+    TEST_SUGAR,
+    SubsTreeTest {
+      .tree = subsTree(0, { 
+          leaf(TermList(a), { termWithValue(a, 1), }),
+          internal(f2(S(1), a), 1, {
+            leaf(TermList(a), { termWithValue(f(a), 0), }),
+            leaf(TermList(y), { termWithValue(f(y), 1), }),
+          }),
+          internal(f(S(1)), 1, {
+            leaf(TermList(a), { termWithValue(f(a), 2), }),
+          })
+      }),
+      .query = f2(x, x),
+      .expected = { { .data = 0 },  { .data = 1 }, },
+    })
+
+RUN_TEST(tree_test_05,
+    TEST_SUGAR,
+    SubsTreeTest {
+      .tree = subsTree(0, { 
+          leaf(TermList(a), { termWithValue(a, 1), }),
+          internal(f2(S(1), a), 1, {
+            leaf(TermList(y), { termWithValue(f(y), 1), }),
+          }),
+          internal(f(S(1)), 1, {
+            leaf(TermList(a), { termWithValue(f(a), 2), }),
+          })
+      }),
+      .query = f2(x, x),
+      .expected = { { .data = 1 }, },
     })
 

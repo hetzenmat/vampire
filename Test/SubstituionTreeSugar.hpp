@@ -118,7 +118,7 @@ namespace SubsTreeBuilder  {
   TermSubstitutionTree<Data> termSubsTree(unsigned var, std::initializer_list<Node<Data>> children) 
   { return TermSubstitutionTree<Data>(subsTree(var, std::move(children)), SplittingAlgo::NONE, /*extra=*/ false); }
 
-  TermList S(unsigned i) 
+  inline TermList S(unsigned i) 
   { return TermList::specialVar(i); }
 
 } // namespace SubsTreeBuilder
