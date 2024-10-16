@@ -176,4 +176,3 @@ RUN_TEST(tree_test_05,
       .query = f2(x, x),
       .expected = { { .data = 1 }, },
     })
-
