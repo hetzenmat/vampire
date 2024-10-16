@@ -71,7 +71,29 @@ using namespace Kernel;
 
 namespace Indexing {
 
-  // TODO document
+  /** Unification iterator classes are used inside the SubstitionTree::Iterator. 
+   * They provide only one function that proceeds to the next valid unification and returns true, or 
+   * returns false if no unification can be performed anymore. 
+   *
+   * The data to be unified is to be initialized in the constructor of this class.
+   *
+   * The unifier (e.g. the substitution) that is a witness for the unification, is referenced by the 
+   * unifaction iterator, and its state is changed on every `nextUnifier` call.
+   *
+   * At every call of `nextUnifier` you can expect that the unifier did not change (or all changes have been 
+   * backtracked) since the last call of `nextUnifier`.
+   *
+   * All mutations performed on the unifier are to be recorded on the `BacktrackData&` passed as an argument to `nextUnifier`.
+   *
+   * see @RetrievalAlgorithms for more details 
+   */
+  struct DummyUnifIter {
+    bool nextUnifier(BacktrackData& bd) { ASSERTION_VIOLATION_REP("not yet implemented") }
+  };
+
+
+  /** A singleton unifiaction iterator that only calls the function `F` once on the first `nextUnifier` call
+   * to return its result, and returns false on every successive `nextUnifier` call */
   template<class F>
   struct CallOnceUnifIter {
     Option<F> _fun;
@@ -81,7 +103,7 @@ namespace Indexing {
     { return _fun.isSome() && _fun.take().unwrap().operator()(bd); }
   };
 
-  // TODO document
+  /** Behaves either as the Unification iterator `Inner` or as an empty unifiaction iterator, debending on what it is being initalized with */
   template<class Inner>
   struct OptionUnifIter {
     Option<Inner> _inner;
@@ -1207,11 +1229,29 @@ public:
      * - We do not use subtyping but parametric polymorphism for them, as subtyping polymorphsim would require us to 
      *   have the same element type for all of them, which is not what we want.
      *
-     *   TODO update documentation 
+     * see the namespace RetrievalAlgorithms for concrete implemenations of RetrievalAlgorithm and more documentation
      */
     template<class RetrievalAlgorithm>
     class Iterator final
     {
+      RetrievalAlgorithm _algo;
+      using UnifIter = OptionUnifIter<decltype(_algo.createUnifIter(0, TermList()))>; // TODO
+      struct Frame {
+        /* is already unified */
+        IntermediateNode* node;
+        /* get next child of current node */
+        NodeIterator leftChildren;
+        /* go to next unification of current node */
+        UnifIter leftUnifs;
+        /* backtrack to state before this node was unified */
+        BacktrackData bd;
+      };
+      Stack<Frame> _frames;
+      bool _retrieveSubstitution;
+      Option<std::pair<LDIterator, BacktrackData>> _leafData;
+      Option<BacktrackData> _normalizationBacktrackData;
+      InstanceCntr _iterCntr;
+
     public:
       Iterator(Iterator&&) = default;
       Iterator& operator=(Iterator&&) = default;
@@ -1344,30 +1384,11 @@ public:
         } while (!_algo.doFinalLeafCheck(_frames.top().bd));
         return true;
       }
-      RetrievalAlgorithm _algo;
-
-      using UnifIter = OptionUnifIter<decltype(_algo.createUnifIter(0, TermList()))>; // TODO
-      struct Frame {
-        /* is already unified */
-        IntermediateNode* node;
-        /* get next child of current node */
-        NodeIterator leftChildren;
-        /* go to next unification of current node */
-        UnifIter leftUnifs;
-        /* backtrack to state before this node was unified */
-        BacktrackData bd;
-      };
 
       void resetChildren() {
         auto& f  = _frames.top();
         f.leftChildren = _algo.template selectPotentiallyUnifiableChildren<LeafData>(f.node);
       }
-
-      Stack<Frame> _frames;
-      bool _retrieveSubstitution;
-      Option<std::pair<LDIterator, BacktrackData>> _leafData;
-      Option<BacktrackData> _normalizationBacktrackData;
-      InstanceCntr _iterCntr;
 
       void pushNode(Node* n, UnifIter leftUnifs, BacktrackData bd) {
         if(n->isLeaf()) {
@@ -1433,32 +1454,24 @@ public:
         void bindQuerySpecialVar(unsigned var, TermList term)
         { _subs.bindSpecialVar(var, term, QUERY_BANK); }
 
-        /** we incrementally traverse the tree, and at every code we call this retrieval algorithm to check
-         * whether it is okay to bind a new special variable to some term in the tree.
-         * This function returns true if the retrieval condition (like in this case unifyability) can still 
-         * be achieved, or false if not. Depending on that the iterator will backtrack or continue to traverse 
-         * deeper into the tree.
+        /** we incrementally traverse the tree, and at every node we call this retrieval algorithm to check
+         * give us an iterator `iter` (of some `It` that provides the same interface as `DummyUnifIter`) over all 
+         * the unifications possible if we bind a new special variable `specialVar` to some term `node` that 
+         * occures at some node in the tree.
+         * When `iter.nextUnifier(BacktrackData&)` is called it changes the substitution's state to be the next 
+         * unifier, for the pair `(specialVar, node)`, and returns true, or returns false if there are no (more) 
+         * unifiers.  
+         * (Note that in the case of normal unification there is only one unifier, thus `nextUnifier` will return 
+         * either always false, or once true and then false, while other unification algorithms like higher order
+         * unification can return multiple unifiers.)
+         * If `iter.nextUnifier(...)` returns true the `SubstitutionTree::Iterator` will continue to traverse the 
+         * tree deeper, or backtrack otherwise.
+         * 
+         * On call of this function `createUnifIter` NO MUTATION IS PERFORMED yet. The iterator is only 
+         * constructed, and unification must only start on the first call to `nextUnifier`. This is crutial for 
+         * the backtracking to work properly.
          *
-         * On insert into a substitution tree the inserted terms are first normalized (the names of the variables)
-         * Therefore the namespace of the variables passed here is different from the ones of the actually inserted 
-         * terms. 
-         * Matching them up again is done by the function denormalize.
-         *
-         * TODO update documentation
-         * TODO remove
          */
-        // auto associate(unsigned specialVar, TermList node)
-        // { 
-        //   return unfoldIter([=, init = false]() mutable { 
-        //       if (!init) {
-        //         init = true;
-        //         return someIf(_subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK), [](){ return std::make_tuple(); });  
-        //       } else {
-        //         return Option<std::tuple<>>();
-        //       }
-        //   });
-        // }
-
         // TODO document
         auto createUnifIter(unsigned specialVar, TermList node)
         { 
@@ -1470,7 +1483,12 @@ public:
           });
         }
 
-        /** @see associate */
+        /**
+         * On insert into a substitution tree the inserted terms are first normalized (the names of the variables)
+         * Therefore the namespace of the variables passed here is different from the ones of the actually inserted 
+         * terms. 
+         * Matching them up again is done by the function denormalize.
+         */
         void denormalize(Renaming& norm, BacktrackData& bd)
         { 
           _subs.bdRecord(bd);
@@ -1527,12 +1545,6 @@ public:
 
       };
 
-
-      struct DummyUnifIter {
-        // TODO document
-        bool nextUnifier() { ASSERTION_VIOLATION_REP("not yet implemented") }
-      };
-
       class HOLUnification { 
         AbstractingUnifier _unif;
       public:
@@ -1542,11 +1554,9 @@ public:
           : _unif(AbstractingUnifier::empty()) 
         {}
 
-        void init(AbstractionOracle ao) { 
-          _unif.init();
-        }
+        void init() { _unif.init(); }
 
-        // TODO
+        // TODO implement
         DummyUnifIter createUnifIter(unsigned specialVar, TermList node)
         { THROW_MH(""); }
 

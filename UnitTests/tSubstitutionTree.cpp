@@ -46,11 +46,11 @@ struct FirstOrderUnification {
   }
 };
 
-// struct HigherOrderUnification {
-//   auto find(STree& tree, TermList query) {
-//     return iterTraits(tree.iterator<STree::Iterator<RetrievalAlgorithms::HOLUnification>>(query, /*retrieveSubstitutions=*/ true, /*reversed=*/false, AbstractionOracle(Shell::Options::UnificationWithAbstraction::HOL))); // TODO fix not using UWA here
-//   }
-// };
+struct HigherOrderUnification {
+  auto find(STree& tree, TermList query) {
+    return iterTraits(tree.iterator<STree::Iterator<RetrievalAlgorithms::HOLUnification>>(query, /*retrieveSubstitutions=*/ true, /*reversed=*/false));
+  }
+};
 
 
 template<class Retrieval>
