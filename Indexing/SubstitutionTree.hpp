@@ -207,7 +207,6 @@ public:
 private:
   /** Number of the next variable */
   int _nextVar = 0;
-  std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {}; // TODO remove this (?)
   Node* _root = nullptr;
   Cntr _iterCnt;
 
@@ -227,10 +226,6 @@ public:
 
   SubstitutionTree() : _nextVar(0), _root(nullptr) {}
   SubstitutionTree(Node* root, unsigned nextVar) : _nextVar(nextVar), _root(root) {}
-
-  void setLog(std::function<void(const char*, unsigned, const LeafData_&)> _log) {
-    log = _log;
-  }
 
   ~SubstitutionTree()
   {

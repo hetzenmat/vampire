@@ -88,9 +88,6 @@ TypedTermList toDeBruijnIndices(TypedTermList t) {
   TEST_FUN(NAME) { \
     env.options->setHolPrinting(Options::HPrinting::DB_INDICES); \
     auto index = TermSubstitutionTree<TermWithoutValue>(); \
-    index.setLog([](const char* file, unsigned line, const TermWithoutValue& x) { \
-      std::cout << file << ":" << line << " @ " << x.term.toString() << "\n"; \
-    }); \
     \
     DECL_ATOMIC_SORT(srt) \
     DECL_ARROW_SORT(fSrt, srt, srt) \

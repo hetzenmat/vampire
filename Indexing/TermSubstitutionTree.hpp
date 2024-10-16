@@ -78,11 +78,6 @@ public:
     _inner.handle(std::move(d), insert);
   }
 
-  void setLog(std::function<void(const char*, unsigned, const LeafData_&)> _log) {
-    _inner.setLog(_log);
-    log = _log;
-  }
-
   void useExtra() {
     _extra = true;
   }
