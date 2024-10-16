@@ -77,8 +77,8 @@ namespace Indexing {
     Option<F> _fun;
   public:
     CallOnceUnifIter(F fun) : _fun(std::move(fun)) { }
-    bool nextUnifier() 
-    { return _fun.isSome() && _fun.take().unwrap().operator()(); }
+    bool nextUnifier(BacktrackData& bd) 
+    { return _fun.isSome() && _fun.take().unwrap().operator()(bd); }
   };
 
   // TODO document
@@ -89,8 +89,8 @@ namespace Indexing {
     OptionUnifIter(Option<Inner> inner) : _inner(std::move(inner)) { }
     OptionUnifIter() : OptionUnifIter(decltype(_inner)()) {}
     OptionUnifIter(Inner inner) : OptionUnifIter(decltype(_inner)(std::move(inner))) {}
-    bool nextUnifier() 
-    { return _inner.isSome() ? _inner->nextUnifier() : false; }
+    bool nextUnifier(BacktrackData& bd) 
+    { return _inner.isSome() ? _inner->nextUnifier(bd) : false; }
   };
 
   template<class F> CallOnceUnifIter(F) -> CallOnceUnifIter<F>;
@@ -1220,10 +1220,8 @@ public:
 
       void reset() {
         _iterCntr.reset();
-        if(_normalizationRecording) {
-          _algo.bdDone();
-          _normalizationRecording=false;
-          _normalizationBacktrackData.backtrack();
+        if(_normalizationBacktrackData.isSome()) {
+          _normalizationBacktrackData.take()->backtrack();
         }
         while(_frames.isNonEmpty()) {
           _frames.pop().bd.backtrack();
@@ -1235,7 +1233,7 @@ public:
         _algo.init(args...);
         _retrieveSubstitution = retrieveSubstitution;
         _leafData = {};
-        _normalizationRecording = false;
+        _normalizationBacktrackData = {};
         _iterCntr = InstanceCntr(parent->_iterCnt);
 
         if(!root) {
@@ -1261,10 +1259,8 @@ public:
 
       bool hasNext()
       {
-        if(_normalizationRecording) {
-          _algo.bdDone();
-          _normalizationRecording=false;
-          _normalizationBacktrackData.backtrack();
+        if(_normalizationBacktrackData.isSome()) {
+          _normalizationBacktrackData.take()->backtrack();
         }
 
         while(!hasLeafData() && findNextLeaf()) {}
@@ -1277,18 +1273,17 @@ public:
         while(!hasLeafData() && findNextLeaf()) {}
         ASS(hasLeafData());
 
-        ASS(!_normalizationRecording);
+        ASS(_normalizationBacktrackData.isNone());
 
         auto ld = _leafData->first.next();
         if (_retrieveSubstitution) {
             Renaming normalizer;
             normalizer.normalizeVariables(ld->key());
 
-            ASS(_normalizationBacktrackData.isEmpty());
-            _algo.bdRecord(_normalizationBacktrackData);
-            _normalizationRecording=true;
+            ASS(_normalizationBacktrackData.isNone());
+            _normalizationBacktrackData = some(BacktrackData());
 
-            _algo.denormalize(normalizer);
+            _algo.denormalize(normalizer, *_normalizationBacktrackData);
         }
 
         DEBUG_QUERY(1, indent(), "leaf data: ", *ld)
@@ -1297,30 +1292,6 @@ public:
 
     private:
 
-      // template<class F>
-      template<class F, std::enable_if_t<!std::is_same_v<void, std::invoke_result_t<F>>, int> = 0>
-      auto runRecording(BacktrackData& bd, F f) 
-      {
-        _algo.bdRecord(bd);
-        auto res = f();
-        _algo.bdDone();
-        return res;
-      }
-
-
-      template<class F, std::enable_if_t< std::is_same_v<void, std::invoke_result_t<F>>, int> = 0>
-      auto runRecording(BacktrackData& bd, F f) 
-      {
-        _algo.bdRecord(bd);
-        f();
-        _algo.bdDone();
-      }
-
-
-      template<class F>
-      auto runRecording(F f) 
-      { return runRecording(_frames.top().bd, std::move(f)); }
-
       auto indent() 
       { return outputInterleaved("", range(0, _frames.size()).map([](auto) { return "  "; })); }
 
@@ -1328,10 +1299,8 @@ public:
       {
         auto nextUnif = false;
         auto tryNextUnif = [&]() {
-          return runRecording([&]{ 
-              nextUnif = _frames.top().leftUnifs.nextUnifier();
-              return nextUnif;
-          });
+          nextUnif = _frames.top().leftUnifs.nextUnifier(_frames.top().bd);
+          return nextUnif;
         };
 
         if (_leafData) {
@@ -1360,7 +1329,7 @@ public:
               // _frames.top().bd.backtrack();
               auto unif = _algo.createUnifIter(_frames.top().node->childVar, child->term());
               auto bd = BacktrackData();
-              if (runRecording(bd, [&]{ return unif.nextUnifier(); })) {
+              if (unif.nextUnifier(bd)) {
                 pushNode(child, unif, std::move(bd));
               }
 
@@ -1372,7 +1341,7 @@ public:
               ASSERTION_VIOLATION
             }
           } while(_leafData.isNone());
-        } while (!runRecording([&](){ return _algo.doFinalLeafCheck(); }));
+        } while (!_algo.doFinalLeafCheck(_frames.top().bd));
         return true;
       }
       RetrievalAlgorithm _algo;
@@ -1397,8 +1366,7 @@ public:
       Stack<Frame> _frames;
       bool _retrieveSubstitution;
       Option<std::pair<LDIterator, BacktrackData>> _leafData;
-      bool _normalizationRecording;
-      BacktrackData _normalizationBacktrackData;
+      Option<BacktrackData> _normalizationBacktrackData;
       InstanceCntr _iterCntr;
 
       void pushNode(Node* n, UnifIter leftUnifs, BacktrackData bd) {
@@ -1494,24 +1462,25 @@ public:
         // TODO document
         auto createUnifIter(unsigned specialVar, TermList node)
         { 
-          return CallOnceUnifIter([=]() {
-            return _subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
+          return CallOnceUnifIter([=](BacktrackData& bd) {
+            _subs.bdRecord(bd);
+            auto out = _subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
+            _subs.bdDone();
+            return out;
           });
         }
 
         /** @see associate */
-        void denormalize(Renaming& norm)
-        { _subs.denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); }
+        void denormalize(Renaming& norm, BacktrackData& bd)
+        { 
+          _subs.bdRecord(bd);
+          _subs.denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); 
+          _subs.bdDone();
+        }
 
         /** whenever we arrive at a leave we return the current witness for the current leave term to unify
          * with the query term. The unifier is queried using this function.  */
         Unifier unifier() { return ResultSubstitution::fromSubstitution(&_subs, QUERY_BANK, RESULT_BANK); }
-
-        /** same as in @Backtrackable */
-        void bdRecord(BacktrackData& bd) { _subs.bdRecord(bd); }
-
-        /** same as in @Backtrackable */
-        void bdDone() { _subs.bdDone(); }
 
         /** This function is called once when the iterator arrives at a leaf. 
          * The function can do a final check whether the current state of the retrieved witness (e.g. substitution) 
@@ -1522,7 +1491,7 @@ public:
          * sound but are not needed. For examples and a bit more of an explanation have a look at the paper
          * Refining Unification with Abstraction from LPAR2023
          */
-        bool doFinalLeafCheck() { return true; }
+        bool doFinalLeafCheck(BacktrackData& bd) { return true; }
 
         /** 
          * Returns an iterator over all child nodes of n that should be attempted for unification.
@@ -1587,16 +1556,14 @@ public:
         void bindQuerySpecialVar(unsigned var, TermList term)
         { _unif.subs().bindSpecialVar(var, term, QUERY_BANK); }
 
-        void bdRecord(BacktrackData& bd)
-        { _unif.subs().bdRecord(bd); }
+        void denormalize(Renaming& norm, BacktrackData& bd)
+        { 
+          _unif.subs().bdRecord(bd);
+          _unif.subs().denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); 
+          _unif.subs().bdDone();
+        }
 
-        void bdDone()
-        { _unif.subs().bdDone(); }
-
-        void denormalize(Renaming& norm)
-        { _unif.subs().denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); }
-
-        bool doFinalLeafCheck()
+        bool doFinalLeafCheck(BacktrackData& bd)
         { return true; }
 
         template<class LD>
@@ -1632,8 +1599,11 @@ public:
         using Unifier = AbstractingUnifier*;
 
         auto createUnifIter(unsigned specialVar, TermList node)
-        { return CallOnceUnifIter([=]() {
-            return _unif.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
+        { return CallOnceUnifIter([=](BacktrackData& bd) {
+            _unif.bdRecord(bd);
+            auto out = _unif.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
+            _unif.bdDone();
+            return out;
           }); }
  
         Unifier unifier()
@@ -1642,17 +1612,21 @@ public:
         void bindQuerySpecialVar(unsigned var, TermList term)
         { _unif.subs().bindSpecialVar(var, term, QUERY_BANK); }
 
-        void bdRecord(BacktrackData& bd)
-        { _unif.subs().bdRecord(bd); }
+        void denormalize(Renaming& norm, BacktrackData& bd)
+        { 
+          _unif.subs().bdRecord(bd);
+          _unif.subs().denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); 
+          _unif.subs().bdDone();
+        }
 
-        void bdDone()
-        { _unif.subs().bdDone(); }
-
-        void denormalize(Renaming& norm)
-        { _unif.subs().denormalize(norm, NORM_RESULT_BANK,RESULT_BANK); }
-
-        bool doFinalLeafCheck()
-        { return !_fixedPointIteration || _unif.fixedPointIteration(); }
+        bool doFinalLeafCheck(BacktrackData& bd)
+        { 
+          if (!_fixedPointIteration) return true;
+          _unif.bdRecord(bd);
+          auto out = _unif.fixedPointIteration(); 
+          _unif.bdDone();
+          return out;
+        }
 
         template<class LD>
         static typename SubstitutionTree<LD>::NodeIterator _selectPotentiallyUnifiableChildren(typename SubstitutionTree<LD>::IntermediateNode* n, AbstractingUnifier& unif)
