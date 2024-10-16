@@ -82,6 +82,11 @@ struct TermWithValue {
   { return out << self.asTuple(); }
 };
 
+template<class Value>
+TermWithValue<Value> termWithValue(TypedTermList term, Value value) 
+{ return { term, std::move(value), }; }
+
+
 class TermWithoutValue : public TermWithValue<std::tuple<>> 
 {
 public:

@@ -59,11 +59,14 @@ class TermSubstitutionTree
 public:
   using LeafData = LeafData_;
 
-  explicit TermSubstitutionTree(SplittingAlgo algo = SplittingAlgo::NONE, bool extra = false)
-  : _inner(), _extra(extra), _algo(algo)
-  {
+  TermSubstitutionTree(Indexing::SubstitutionTree<LeafData_> inner, SplittingAlgo algo, bool extra)
+    : _inner(std::move(inner)), _extra(extra), _algo(algo)
+  { }
 
-  }
+  TermSubstitutionTree(SplittingAlgo algo = SplittingAlgo::NONE, bool extra = false)
+    : TermSubstitutionTree(decltype(_inner)(), algo, extra)
+  { }
+
 
   void handle(LeafData d, bool insert) final override {
     if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
@@ -96,7 +99,7 @@ private:
    * store Terms of type $o (formulas) in the tree, but in the leaf we store
    * the skolem terms used to witness them (to facilitate the reuse of Skolems)
    */
-  bool _extra;
+  bool _extra; // TODO remove this (?)
   SplittingAlgo _algo;
 
   std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {};

@@ -700,6 +700,7 @@ set(UNIT_TESTS
     UnitTests/tQuotientE.cpp
     UnitTests/tUnificationWithAbstraction.cpp
     UnitTests/tTermIndex.cpp
+    UnitTests/tSubstitutionTree.cpp
     UnitTests/tGaussianElimination.cpp
     UnitTests/tPushUnaryMinus.cpp
     UnitTests/tArithmeticSubtermGeneralization.cpp

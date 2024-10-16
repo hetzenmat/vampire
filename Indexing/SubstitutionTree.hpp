@@ -154,9 +154,17 @@ template<class LD> std::ostream& operator<<(std::ostream& out, OutputMultiline<S
 template<class LeafData_>
 class SubstitutionTree final
 {
+public:
+  class Node;
+  using LeafData = LeafData_;
+private:
+  /** Number of the next variable */
+  int _nextVar = 0;
+  std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {}; // TODO remove this (?)
+  Node* _root = nullptr;
+  Cntr _iterCnt;
 
 public:
-  using LeafData = LeafData_;
 
   static constexpr int QRS_QUERY_BANK = 0;
   static constexpr int QRS_RESULT_BANK = 1;
@@ -171,6 +179,7 @@ public:
   SubstitutionTree(SubstitutionTree&& other) : SubstitutionTree() { swap(*this, other); }
 
   SubstitutionTree() : _nextVar(0), _root(nullptr) {}
+  SubstitutionTree(Node* root, unsigned nextVar) : _nextVar(nextVar), _root(root) {}
 
   void setLog(std::function<void(const char*, unsigned, const LeafData_&)> _log) {
     log = _log;
@@ -358,7 +367,16 @@ public:
         removeAllChildren();
       }
 
-      void loadChildren(NodeIterator children);
+      void addChild(Node* child) {
+        Node** own = childByTop(child->top(), /*canCreate=*/true);
+        ASS(*own == nullptr);
+        *own = child;
+      }
+
+      void loadChildren(NodeIterator children) {
+        for (auto c : iterTraits(children)) 
+          addChild(*c);
+      }
 
       const unsigned childVar;
 
@@ -584,12 +602,6 @@ public:
     void insert(BindingMap& binding,LeafData ld);
     void remove(BindingMap& binding,LeafData ld);
 
-    /** Number of the next variable */
-    int _nextVar = 0;
-    std::function<void(const char*, unsigned, const LeafData_&)> log = [](const char* file, unsigned line, const LeafData_& x) {};
-    Node* _root = nullptr;
-    Cntr _iterCnt;
-
   public:
 
     class RenamingSubstitution 
@@ -782,11 +794,18 @@ public:
      * In the case of a term this means { S0 -> term, S0 -> sortOfTerm  }
      * In the case of a literal this means { S0 -> arg0, ..., SN -> argN  }
      */
+    // TODO move this up to the level of TermSubstitutionTree
     template<class BindingFunction>
     void createBindings(TypedTermList term, bool reversed, BindingFunction bindSpecialVar)
     {
       bindSpecialVar(0, term);
       bindSpecialVar(1, term.sort());
+    }
+
+    template<class BindingFunction>
+    void createBindings(TermList term, bool reversed, BindingFunction bindSpecialVar)
+    {
+      bindSpecialVar(0, term);
     }
 
     /** see createBindings(TypedTermList,...) */
@@ -1287,7 +1306,6 @@ public:
         printState();
         do {
           do {
-            // _frames.top().bd.backtrack();
             DBG("loop start ")
             while (!_frames.isEmpty() 
                 && !_frames.top().children.hasNext()
