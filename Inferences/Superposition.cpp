@@ -339,7 +339,7 @@ Clause* Superposition::performSuperposition(
 
   unsigned numPositiveLiteralsLowerBound = Int::max(eqClause->numPositiveLiterals()-1, rwClause->numPositiveLiterals()); // lower bound on number of positive literals, don't know at this point whether duplicate positive literals will occur
   //TODO update inference rule name AYB
-  Inference inf(GeneratingInference2(unifier->usesUwa() ? InferenceRule::CONSTRAINED_SUPERPOSITION : InferenceRule::SUPERPOSITION, rwClause, eqClause));
+  Inference inf(GeneratingInference2(env.options->uwaEnabled() ? InferenceRule::CONSTRAINED_SUPERPOSITION : InferenceRule::SUPERPOSITION, rwClause, eqClause));
   Inference::Destroyer inf_destroyer(inf);
 
   bool needsToFulfilWeightLimit = passiveClauseContainer && !passiveClauseContainer->fulfilsAgeLimit(0, numPositiveLiteralsLowerBound, inf) && passiveClauseContainer->weightLimited(); // 0 here denotes the current weight estimate
@@ -358,7 +358,7 @@ Clause* Superposition::performSuperposition(
   TermList rwTermS = subst->apply(rwTerm, !eqIsResult);
 
 #if VDEBUG
-  if(!unifier->usesUwa()){
+  if(!env.options->uwaEnabled()){
     ASS_EQ(rwTermS,eqLHSS);
   }
 #endif
@@ -496,7 +496,7 @@ Clause* Superposition::performSuperposition(
     return nullptr;
   }
 
-  if(!unifier->usesUwa()){
+  if(!env.options->uwaEnabled()){
     if(rwClause==eqClause) {
       env.statistics->selfSuperposition++;
     } else if(eqIsResult) {

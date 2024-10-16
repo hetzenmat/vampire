@@ -71,6 +71,8 @@ class AbstractionOracle final
   friend class AbstractingUnifier;
 public:
   AbstractionOracle(Shell::Options::UnificationWithAbstraction mode) : _mode(mode) {}
+  Shell::Options::UnificationWithAbstraction mode() const { return _mode; }
+  bool uwaEnabled() const { return _mode != Shell::Options::UnificationWithAbstraction::OFF; }
 
   struct EqualIf { 
     Recycled<Stack<UnificationConstraint>> _unify; 
@@ -145,36 +147,33 @@ class AbstractingUnifier
   Recycled<RobSubstitution> _subs;
   Recycled<UnificationConstraintStack> _constr;
   Option<BacktrackData&> _bd;
-  AbstractionOracle _uwa;
 
   friend class RobSubstitution;
-  AbstractingUnifier(AbstractionOracle uwa) : _subs(), _constr(), _bd(), _uwa(uwa) { }
+  AbstractingUnifier() : _subs(), _constr(), _bd() { }
 public:
-  void init(AbstractionOracle uwa) 
+  void init() 
   { 
     _subs->reset();
     _constr->reset();
     _bd = {};
-    _uwa = std::move(uwa);
   }
 
-  static AbstractingUnifier empty(AbstractionOracle uwa) { return AbstractingUnifier(uwa); }
+  static AbstractingUnifier empty() { return AbstractingUnifier(); }
 
   bool isRecording() { return _subs->bdIsRecording(); }
 
-  bool unify(TermList t1, unsigned bank1, TermList t2, unsigned bank2);
-  bool unify(TermSpec l, TermSpec r, bool& progress);
-  bool fixedPointIteration();
+  bool unify(AbstractionOracle const& ao, TermList t1, unsigned bank1, TermList t2, unsigned bank2);
+  bool unify(AbstractionOracle const& ao, TermSpec l, TermSpec r, bool& progress);
+  bool fixedPointIteration(AbstractionOracle const& ao);
 
   // TODO document
-  Option<Recycled<Stack<unsigned>>> unifiableSymbols(unsigned f);
+  Option<Recycled<Stack<unsigned>>> unifiableSymbols(AbstractionOracle const&, unsigned f);
 
-
-  static Option<AbstractingUnifier> unify(TermList t1, unsigned bank1, TermList t2, unsigned bank2, AbstractionOracle uwa, bool fixedPointIteration)
+  static Option<AbstractingUnifier> unify(TermList t1, unsigned bank1, TermList t2, unsigned bank2, AbstractionOracle const& ao, bool fixedPointIteration)
   {
-    auto au = AbstractingUnifier::empty(uwa);
-    if (!au.unify(t1, bank1, t2, bank2)) return {};
-    if (!fixedPointIteration || au.fixedPointIteration()) return some(std::move(au));
+    auto au = AbstractingUnifier::empty();
+    if (!au.unify(ao, t1, bank1, t2, bank2)) return {};
+    if (!fixedPointIteration || au.fixedPointIteration(ao)) return some(std::move(au));
     else return {};
   }
 
@@ -188,7 +187,7 @@ public:
   BacktrackData& bdGet() { return _subs->bdGet(); }
   void bdRecord(BacktrackData& bd) { _subs->bdRecord(bd); }
   void bdDone() { _subs->bdDone(); }
-  bool usesUwa() const { return _uwa._mode != Options::UnificationWithAbstraction::OFF; }
+  // bool usesUwa() const { return _uwa._mode != Options::UnificationWithAbstraction::OFF; }
 
   friend std::ostream& operator<<(std::ostream& out, AbstractingUnifier const& self)
   { return out << "(" << self._subs << ", " << self._constr << ")"; }

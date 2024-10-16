@@ -1538,12 +1538,12 @@ public:
       public:
         using Unifier = AbstractingUnifier*;
 
-        HOLUnification(AbstractionOracle ao) 
-          : _unif(AbstractingUnifier::empty(ao)) 
+        HOLUnification() 
+          : _unif(AbstractingUnifier::empty()) 
         {}
 
         void init(AbstractionOracle ao) { 
-          _unif.init(ao);
+          _unif.init();
         }
 
         // TODO
@@ -1584,15 +1584,18 @@ public:
 
       class UnificationWithAbstraction { 
         AbstractingUnifier _unif;
+        AbstractionOracle _ao;
         bool _fixedPointIteration;
       public:
         UnificationWithAbstraction(AbstractionOracle ao, bool fixedPointIteration) 
-          : _unif(AbstractingUnifier::empty(ao)) 
+          : _unif(AbstractingUnifier::empty()) 
+          , _ao(std::move(ao))
           , _fixedPointIteration(fixedPointIteration) 
         {}
 
         void init(AbstractionOracle ao, bool fixedPointIteration) { 
-          _unif.init(ao);
+          _unif.init();
+          _ao = std::move(ao);
           _fixedPointIteration = fixedPointIteration;
         }
 
@@ -1601,7 +1604,7 @@ public:
         auto createUnifIter(unsigned specialVar, TermList node)
         { return CallOnceUnifIter([=](BacktrackData& bd) {
             _unif.bdRecord(bd);
-            auto out = _unif.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
+            auto out = _unif.unify(_ao, TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
             _unif.bdDone();
             return out;
           }); }
@@ -1623,22 +1626,22 @@ public:
         { 
           if (!_fixedPointIteration) return true;
           _unif.bdRecord(bd);
-          auto out = _unif.fixedPointIteration(); 
+          auto out = _unif.fixedPointIteration(_ao); 
           _unif.bdDone();
           return out;
         }
 
         template<class LD>
-        static typename SubstitutionTree<LD>::NodeIterator _selectPotentiallyUnifiableChildren(typename SubstitutionTree<LD>::IntermediateNode* n, AbstractingUnifier& unif)
+        static typename SubstitutionTree<LD>::NodeIterator _selectPotentiallyUnifiableChildren(typename SubstitutionTree<LD>::IntermediateNode* n, AbstractingUnifier& unif, AbstractionOracle const& ao)
         {
-          if (unif.usesUwa()) {
+          if (ao.uwaEnabled()) {
             unsigned specVar = n->childVar;
             auto top = unif.subs().getSpecialVarTop(specVar);
 
             if(top.var()) {
               return n->allChildren();
             } else {
-              auto syms = unif.unifiableSymbols(top.functor());
+              auto syms = unif.unifiableSymbols(ao, top.functor());
               if (syms) {
                 return pvi(concatIters(
                       arrayIter(std::move(*syms))
@@ -1657,7 +1660,7 @@ public:
 
         template<class LD>
         typename SubstitutionTree<LD>::NodeIterator selectPotentiallyUnifiableChildren(typename SubstitutionTree<LD>::IntermediateNode* n)
-        { return _selectPotentiallyUnifiableChildren<LD>(n, _unif); }
+        { return _selectPotentiallyUnifiableChildren<LD>(n, _unif, _ao); }
         friend std::ostream& operator<<(std::ostream& out, UnificationWithAbstraction const& self)
         { return out << self._unif; }
       };
