@@ -237,6 +237,7 @@ public:
     FUNC_EXT,
     AC1,
     AC2,
+    HOL, // TODO remove
   };
 
   enum class Induction : unsigned int {

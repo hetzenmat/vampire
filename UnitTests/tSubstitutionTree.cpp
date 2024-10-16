@@ -14,6 +14,7 @@
 #include "Test/SubstituionTreeSugar.hpp"
 
 #include "Kernel/RobSubstitution.hpp"
+#include "Kernel/UnificationWithAbstraction.hpp"
 
 #include "Test/UnitTesting.hpp"
 #include "Test/SyntaxSugar.hpp"
@@ -39,15 +40,29 @@ struct Expected {
   { return out << self.data; }
 };
 
+struct FirstOrderUnification {
+  auto find(STree& tree, TermList query) {
+    return iterTraits(tree.iterator<STree::Iterator<RetrievalAlgorithms::RobUnification>>(query, /*retrieveSubstitutions=*/ true, /*reversed=*/false));
+  }
+};
+
+// struct HigherOrderUnification {
+//   auto find(STree& tree, TermList query) {
+//     return iterTraits(tree.iterator<STree::Iterator<RetrievalAlgorithms::HOLUnification>>(query, /*retrieveSubstitutions=*/ true, /*reversed=*/false, AbstractionOracle(Shell::Options::UnificationWithAbstraction::HOL))); // TODO fix not using UWA here
+//   }
+// };
+
+
+template<class Retrieval>
 struct SubsTreeTest {
   STree tree;
   TermList query;
   Stack<Expected> expected;
+  Retrieval retrieval;
 
   void run() {
 
-    // auto iter = iterTraits(tree.getUnifications(query, /*retrieveSubstitutions=*/ true));
-    auto resultIter = iterTraits(tree.iterator<STree::Iterator<RetrievalAlgorithms::RobUnification>>(query, /*retrieveSubstitutions=*/ true, /*reversed=*/false));
+    auto resultIter = retrieval.find(tree, query);
     auto missing = expected;
     Stack<LeafData const*> unexpected;
     Stack<LeafData const*> results;
@@ -101,7 +116,7 @@ using namespace SubsTreeBuilder;
 
 RUN_TEST(tree_test_01,
     TEST_SUGAR,
-    SubsTreeTest {
+    SubsTreeTest<FirstOrderUnification> {
       .tree = subsTree(0, { 
           leaf(TermList(f(a)), { termWithValue(f(a), 0), }),
           leaf(TermList(g(b)), { termWithValue(g(b), 1), }),
@@ -112,7 +127,7 @@ RUN_TEST(tree_test_01,
 
 RUN_TEST(tree_test_02,
     TEST_SUGAR,
-    SubsTreeTest {
+    SubsTreeTest<FirstOrderUnification> {
       .tree = subsTree(0, { 
           internal(g(S(1)), 1, {
             leaf(TermList(a), { termWithValue(f(a), 0), }),
@@ -130,7 +145,7 @@ RUN_TEST(tree_test_02,
 
 RUN_TEST(tree_test_03,
     TEST_SUGAR,
-    SubsTreeTest {
+    SubsTreeTest<FirstOrderUnification> {
       .tree = subsTree(0, { 
           internal(f2(S(1), a), 1, {
             leaf(TermList(a), { termWithValue(f(a), 0), }),
@@ -146,7 +161,7 @@ RUN_TEST(tree_test_03,
 
 RUN_TEST(tree_test_04,
     TEST_SUGAR,
-    SubsTreeTest {
+    SubsTreeTest<FirstOrderUnification> {
       .tree = subsTree(0, { 
           leaf(TermList(a), { termWithValue(a, 1), }),
           internal(f2(S(1), a), 1, {
@@ -163,7 +178,7 @@ RUN_TEST(tree_test_04,
 
 RUN_TEST(tree_test_05,
     TEST_SUGAR,
-    SubsTreeTest {
+    SubsTreeTest<FirstOrderUnification> {
       .tree = subsTree(0, { 
           leaf(TermList(a), { termWithValue(a, 1), }),
           internal(f2(S(1), a), 1, {
@@ -176,3 +191,5 @@ RUN_TEST(tree_test_05,
       .query = f2(x, x),
       .expected = { { .data = 1 }, },
     })
+
+// TODO matthias: write test cases with HigherOrderUnification

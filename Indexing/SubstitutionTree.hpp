@@ -71,6 +71,31 @@ using namespace Kernel;
 
 namespace Indexing {
 
+  // TODO document
+  template<class F>
+  struct CallOnceUnifIter {
+    Option<F> _fun;
+  public:
+    CallOnceUnifIter(F fun) : _fun(std::move(fun)) { }
+    bool nextUnifier() 
+    { return _fun.isSome() && _fun.take().unwrap().operator()(); }
+  };
+
+  // TODO document
+  template<class Inner>
+  struct OptionUnifIter {
+    Option<Inner> _inner;
+  public:
+    OptionUnifIter(Option<Inner> inner) : _inner(std::move(inner)) { }
+    OptionUnifIter() : OptionUnifIter(decltype(_inner)()) {}
+    OptionUnifIter(Inner inner) : OptionUnifIter(decltype(_inner)(std::move(inner))) {}
+    bool nextUnifier() 
+    { return _inner.isSome() ? _inner->nextUnifier() : false; }
+  };
+
+  template<class F> CallOnceUnifIter(F) -> CallOnceUnifIter<F>;
+
+
 
   /** a counter that is compiled away in release mode */
   struct Cntr {
@@ -1181,6 +1206,8 @@ public:
      *   `Fast*Iterator`, which we hopefully can refactor away in the future without any loss in performance.
      * - We do not use subtyping but parametric polymorphism for them, as subtyping polymorphsim would require us to 
      *   have the same element type for all of them, which is not what we want.
+     *
+     *   TODO update documentation 
      */
     template<class RetrievalAlgorithm>
     class Iterator final
@@ -1219,15 +1246,13 @@ public:
             [&](unsigned var, TermList t) { _algo.bindQuerySpecialVar(var, t); });
         DEBUG_QUERY(0, "query: ", _algo)
 
-        pushNode(root, iterTraits(VirtualIterator<std::tuple<>>::getEmpty()), BacktrackData());
-        // pushNode(root, iterTraits(pvi(iterItems(std::tuple<>()))));
+        pushNode(root, UnifIter(), BacktrackData());
       }
 
       template<class TermOrLit, class...AlgoArgs>
       Iterator(SubstitutionTree* parent, Node* root, TermOrLit query, bool retrieveSubstitution, bool reversed, AlgoArgs... args)
        : _algo(args...)
       { init(parent, root, query, retrieveSubstitution, reversed, args...); }
-
 
       ~Iterator()
       { reset(); }
@@ -1304,8 +1329,7 @@ public:
         auto nextUnif = false;
         auto tryNextUnif = [&]() {
           return runRecording([&]{ 
-              nextUnif = _frames.top().leftUnifs.hasNext();
-              if (nextUnif) { _frames.top().leftUnifs.next(); }
+              nextUnif = _frames.top().leftUnifs.nextUnifier();
               return nextUnif;
           });
         };
@@ -1334,10 +1358,9 @@ public:
               ASS(_frames.top().leftChildren.hasNext())
               auto child = *_frames.top().leftChildren.next();
               // _frames.top().bd.backtrack();
-              auto unif = iterTraits(pvi(_algo.associate(_frames.top().node->childVar, child->term())));
+              auto unif = _algo.createUnifIter(_frames.top().node->childVar, child->term());
               auto bd = BacktrackData();
-              if (runRecording(bd, [&]{ return unif.hasNext(); })) {
-                runRecording(bd, [&]{ return unif.next(); });
+              if (runRecording(bd, [&]{ return unif.nextUnifier(); })) {
                 pushNode(child, unif, std::move(bd));
               }
 
@@ -1354,7 +1377,7 @@ public:
       }
       RetrievalAlgorithm _algo;
 
-      using UnifIter = IterTraits<VirtualIterator<std::tuple<>>>; // TODO
+      using UnifIter = OptionUnifIter<decltype(_algo.createUnifIter(0, TermList()))>; // TODO
       struct Frame {
         /* is already unified */
         IntermediateNode* node;
@@ -1402,232 +1425,6 @@ public:
       { return _frames.keepRecycled(); }
     };
 
-    /** * A generic iterator over a substitution tree that can be used to retrieve elements stored in the tree that match a certain retrieval condition R.
-     * The most simple retrieval condition would be `R(x) <=> x unifies with query`.
-     * Similarly we could have retrieval conditions that, find instances, generalizations, unification with 
-     * abstraction etc. 
-     * 
-     * The retrieval condition is computed by objects of the type RetrievalAlgorithm. All commonly used ones can be 
-     * found in Indexing::RetrievalAlgorithms, which also documents the interface of these objects. 
-     *
-     * Notes:
-     * - currently instantiation and generalization don't use this generic approach, but the optimized iterators
-     *   `Fast*Iterator`, which we hopefully can refactor away in the future without any loss in performance.
-     * - We do not use subtyping but parametric polymorphism for them, as subtyping polymorphsim would require us to 
-     *   have the same element type for all of them, which is not what we want.
-     */
-    template<class RetrievalAlgorithm>
-    class IteratorOld final
-    {
-    public:
-      IteratorOld(IteratorOld&&) = default;
-      IteratorOld& operator=(IteratorOld&&) = default;
-      using Unifier = typename RetrievalAlgorithm::Unifier;
-      DECL_ELEMENT_TYPE(QueryRes<Unifier, LeafData>);
-
-      void reset() {
-        _iterCntr.reset();
-        _svStack.reset();
-        _nodeIterators.reset();
-        _bdStack.reset();
-        if(_normalizationRecording) {
-          _algo.bdDone();
-          _normalizationRecording=false;
-          _normalizationBacktrackData.backtrack();
-        }
-        while(_bdStack.isNonEmpty()) {
-          _bdStack.pop().backtrack();
-        }
-      }
-
-      template<class TermOrLit, class...AlgoArgs>
-      void init(SubstitutionTree* parent, Node* root, TermOrLit query, bool retrieveSubstitution, bool reversed, AlgoArgs... args) {
-        _algo.init(args...);
-        _retrieveSubstitution = retrieveSubstitution;
-        _leafData = {};
-        _normalizationRecording = false;
-        _iterCntr = InstanceCntr(parent->_iterCnt);
-
-        if(!root) {
-          return;
-        }
-
-        parent->createBindings(query, reversed, 
-            [&](unsigned var, TermList t) { _algo.bindQuerySpecialVar(var, t); });
-        DEBUG_QUERY(1, "query: ", _algo)
-
-
-        prepareChildren(root, /* backtrackable */ false);
-      }
-
-      template<class TermOrLit, class...AlgoArgs>
-      IteratorOld(SubstitutionTree* parent, Node* root, TermOrLit query, bool retrieveSubstitution, bool reversed, AlgoArgs... args)
-       : _algo(args...)
-      { init(parent, root, query, retrieveSubstitution, reversed, args...); }
-
-
-      ~IteratorOld()
-      { reset(); }
-
-      bool hasLeafData() { return _leafData.isSome() && _leafData->hasNext(); };
-
-      bool hasNext()
-      {
-        if(_normalizationRecording) {
-          _algo.bdDone();
-          _normalizationRecording=false;
-          _normalizationBacktrackData.backtrack();
-        }
-
-        while(!hasLeafData() && findNextLeaf()) {}
-        return hasLeafData();
-      }
-
-      QueryRes<Unifier, LeafData> next()
-      {
-        while(!hasLeafData() && findNextLeaf()) {}
-        ASS(hasLeafData());
-
-        ASS(!_normalizationRecording);
-
-        auto ld = _leafData->next();
-        if (_retrieveSubstitution) {
-            Renaming normalizer;
-            normalizer.normalizeVariables(ld->key());
-
-            ASS(_normalizationBacktrackData.isEmpty());
-            _algo.bdRecord(_normalizationBacktrackData);
-            _normalizationRecording=true;
-
-            _algo.denormalize(normalizer);
-        }
-
-        DEBUG_QUERY(0, "leaf data: ", *ld)
-        return QueryRes(_algo.unifier(), ld);
-      }
-
-    private:
-
-      template<class F>
-      bool runRecording(F f) 
-      {
-        _algo.bdRecord(_bdStack.top());
-        bool success = f();
-        _algo.bdDone();
-        return success;
-      }
-
-      bool inLeaf() const { return _leafData.isSome(); }
-
-      bool findNextLeaf()
-      {
-        if(_nodeIterators.isEmpty()) {
-          //There are no node iterators in the stack, so there's nowhere
-          //to look for the next leaf.
-          //This shouldn't hapen during the regular retrieval process, but it
-          //can happen when there are no literals inserted for a predicate,
-          //or when predicates with zero arity are encountered.
-          ASS(_bdStack.isEmpty());
-          return false;
-        }
-
-        auto leaveLeaf = [&]() {
-            ASS(!_normalizationRecording);
-            _bdStack.pop().backtrack();
-            _leafData = {};
-        };
-
-        if(_leafData.isSome()) {
-          leaveLeaf();
-        }
-
-        ASS(!_normalizationRecording);
-        ASS(_bdStack.length()+1==_nodeIterators.length());
-
-        do {
-          while (!_nodeIterators.top().hasNext() && !_bdStack.isEmpty()) {
-            _bdStack.pop().backtrack();
-          }
-          if(!_nodeIterators.top().hasNext()) {
-            return false;
-          }
-          Node* n=*_nodeIterators.top().next();
-          DEBUG_QUERY(1, "trying S", _svStack.top(), " -> ", n->term())
-
-          _bdStack.push(BacktrackData());
-
-          _algo.bdRecord(_bdStack.top());
-          auto assoc = _algo.associate(_svStack.top(), n->term());
-          _algo.bdDone();
-
-          if (!assoc.hasNext()) {
-            /* unif failure */
-            _bdStack.pop().backtrack();
-            continue;
-
-          } else {
-            /* unif success */
-            assoc.next();
-            if (_leafData.isSome() && !runRecording([&](){ return _algo.doFinalLeafCheck(); })) {
-              leaveLeaf();
-              continue;
-            }
-          }
-
-          // if (runRecording([&]() { return _algo.associate(_svStack.top(), n->term());})) {
-          //   prepareChildren(n, /* backtrackable */ true);
-          //   if (_leafData.isSome() && !runRecording([&](){ return _algo.doFinalLeafCheck(); })) {
-          //     leaveLeaf();
-          //     continue;
-          //   }
-          // } else {
-          //   _bdStack.pop().backtrack();
-          //   continue;
-          // }
-        } while(_leafData.isNone());
-        ASS(_leafData.isSome())
-        ASS(_bdStack.size() != 0)
-        return true;
-      }
-
-      /** if `n` is a leaf _ldIterator is prepared 
-       * if `n` is internal, the next special variable is put on svStack and the children it should be unified with are being put on _nodeIterators
-       */
-      void prepareChildren(Node* n, bool backtrackable) {
-        if(n->isLeaf()) {
-          _leafData = some(static_cast<Leaf*>(n)->allChildren());
-        } else {
-          IntermediateNode* inode=static_cast<IntermediateNode*>(n);
-          _svStack.push(inode->childVar);
-          _leafData = {};
-          DEBUG_QUERY(1, "entering node: S", _svStack.top())
-          
-          _nodeIterators.push(_algo.template selectPotentiallyUnifiableChildren<LeafData>(inode));
-          if (backtrackable) {
-            _bdStack.top().addClosure([&]() { 
-                DEBUG_CODE(auto var = )_svStack.pop();
-                DEBUG_QUERY(1, "backtracking node: S", var)
-                _nodeIterators.pop(); 
-            });
-          }
-        }
-      }
-
-      RetrievalAlgorithm _algo;
-      VarStack _svStack;
-      bool _retrieveSubstitution;
-      Option<LDIterator> _leafData;
-      Stack<NodeIterator> _nodeIterators;
-      Stack<BacktrackData> _bdStack;
-      bool _normalizationRecording;
-      BacktrackData _normalizationBacktrackData;
-      InstanceCntr _iterCntr;
-
-    public:
-      bool keepRecycled() const 
-      { return _svStack.keepRecycled() || _nodeIterators.keepRecycled() || _bdStack.keepRecycled(); }
-    };
-
 
   public:
     bool maybeEmpty() const { return _root == nullptr; }
@@ -1649,6 +1446,7 @@ public:
    *
    */ 
   namespace RetrievalAlgorithms {
+
 
       class RobUnification { 
         RobSubstitution _subs;
@@ -1679,18 +1477,26 @@ public:
          * Matching them up again is done by the function denormalize.
          *
          * TODO update documentation
+         * TODO remove
          */
-        auto associate(unsigned specialVar, TermList node)
+        // auto associate(unsigned specialVar, TermList node)
+        // { 
+        //   return unfoldIter([=, init = false]() mutable { 
+        //       if (!init) {
+        //         init = true;
+        //         return someIf(_subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK), [](){ return std::make_tuple(); });  
+        //       } else {
+        //         return Option<std::tuple<>>();
+        //       }
+        //   });
+        // }
+
+        // TODO document
+        auto createUnifIter(unsigned specialVar, TermList node)
         { 
-          return unfoldIter([=, init = false]() mutable { 
-              if (!init) {
-                init = true;
-                return someIf(_subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK), [](){ return std::make_tuple(); });  
-              } else {
-                return Option<std::tuple<>>();
-              }
+          return CallOnceUnifIter([=]() {
+            return _subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
           });
-          // return _subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK); 
         }
 
         /** @see associate */
@@ -1746,9 +1552,16 @@ public:
             }
           }
         }
+
         friend std::ostream& operator<<(std::ostream& out, RobUnification const& self)
         { return out << self._subs; }
 
+      };
+
+
+      struct DummyUnifIter {
+        // TODO document
+        bool nextUnifier() { ASSERTION_VIOLATION_REP("not yet implemented") }
       };
 
       class HOLUnification { 
@@ -1760,12 +1573,12 @@ public:
           : _unif(AbstractingUnifier::empty(ao)) 
         {}
 
-        void init(AbstractionOracle ao, bool fixedPointIteration) { 
+        void init(AbstractionOracle ao) { 
           _unif.init(ao);
         }
 
         // TODO
-        VirtualIterator<std::tuple<>> associate(unsigned specialVar, TermList node)
+        DummyUnifIter createUnifIter(unsigned specialVar, TermList node)
         { THROW_MH(""); }
 
         Unifier unifier()
@@ -1818,21 +1631,10 @@ public:
 
         using Unifier = AbstractingUnifier*;
 
-        // bool associate(unsigned specialVar, TermList node)
-        // { return _unif.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK); }
-        auto associate(unsigned specialVar, TermList node)
-        { 
-          return unfoldIter([=, init = false]() mutable { 
-              if (!init) {
-                init = true;
-                return someIf(_unif.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK), [](){ return std::make_tuple(); });  
-              } else {
-                return Option<std::tuple<>>();
-              }
-          });
-          // return _subs.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK); 
-        }
-
+        auto createUnifIter(unsigned specialVar, TermList node)
+        { return CallOnceUnifIter([=]() {
+            return _unif.unify(TermList(specialVar, /* special */ true), QUERY_BANK, node, NORM_RESULT_BANK);
+          }); }
  
         Unifier unifier()
         { return &_unif; }
