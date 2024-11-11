@@ -37,8 +37,76 @@ using namespace Indexing;
 
 namespace UnificationAlgorithms {
 
+// TODO if we implement solid fragment, this will not work...
+enum class OracleResult
+{
+  SUCCESS=1,
+  FAILURE=2,
+  OUT_OF_FRAGMENT=3
+};
+
 class HOLInstantiation;
 class HOLGeneralisation;
+
+class HOLConstraint //: public UnificationConstraint
+ {
+private:
+  TermSpec _lhs;
+  TermSpec _rhs;
+  TermList _t1head;
+  TermList _t2head;
+public:
+
+  HOLConstraint(){} // dummy constructor required for use in SkipList
+
+  // HOLConstraint(TermList t1, int t1index, TermList t2, int t2index)
+  HOLConstraint(TermSpec ll, TermSpec rr)
+      : // UnificationConstraint({t1,t1index}, {t2,t2index}, {sort,sortIndex}),
+        _lhs(ll),
+        _rhs(rr),
+        _t1head(ll.term.head()),
+        _t2head(rr.term.head())
+  {
+    ASS(!_t1head.isLambdaTerm() && !_t2head.isLambdaTerm()); // terms must be in whnf
+  }
+  //USE_ALLOCATOR(HOLConstraint)
+
+  TermSpec lhs() const { return _lhs; }
+  TermSpec rhs() const { return _rhs; }
+
+  bool flexFlex()   const { return _t1head.isVar() && _t2head.isVar(); }
+  bool rigidRigid() const { return _t1head.isTerm() && _t2head.isTerm(); }
+  bool flexRigid()  const { return (_t1head.isVar() && !_t2head.isVar())  || (_t2head.isVar() && !_t1head.isVar()); }
+
+  TermList lhsHead() const { return _t1head; }
+  TermList rhsHead() const { return _t2head; }
+
+  TermList sort() const {
+    ASS(_lhs.isTerm() || _rhs.isTerm());
+    if(_lhs.isTerm())
+    { return SortHelper::getResultSort(_lhs.term.term()); }
+    return SortHelper::getResultSort(_rhs.term.term());
+  }
+
+  HOLConstraint constraint() { return HOLConstraint(lhs(),rhs()); }
+ };
+
+
+class HigherOrderUnifiersIt;
+
+class HigherOrderUnifiersItWrapper: public IteratorCore<RobSubstitution*> {
+public:
+  HigherOrderUnifiersItWrapper(TermSpec lhs, TermList lhsSort, TermSpec rhs, TermList rhsSort, bool funcExt);
+  bool hasNext();
+  RobSubstitution* next();
+
+private:
+  bool _success;
+  SubstIterator _inner;
+  Recycled<RobSubstitution> _subst;
+};
+
+
 
 class HOLUnification {
  // when this class is used for tree unification the field
@@ -51,59 +119,7 @@ class HOLUnification {
  // bool unifyWithPlaceholders(TermList t1, TermList t2, RobSubstitutionTL* sub);
  bool unifyWithPlaceholders(TermSpec t1, TermSpec t2, RobSubstitution* sub);
 
- // TODO if we implement solid fragment, this will not work...
- enum OracleResult
- {
-   SUCCESS=1,
-   FAILURE=2,
-   OUT_OF_FRAGMENT=3
- };
 
- // static OracleResult fixpointUnify(TermList var, TermList t, RobSubstitutionTL* sub);
- static OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub);
-
- class HOLConstraint //: public UnificationConstraint
- {
- private:
-   TermSpec _lhs;
-   TermSpec _rhs;
-   TermList _t1head;
-   TermList _t2head;
- public:
-
-   HOLConstraint(){} // dummy constructor required for use in SkipList
-
-   // HOLConstraint(TermList t1, int t1index, TermList t2, int t2index)
-   HOLConstraint(TermSpec ll, TermSpec rr)
-       : // UnificationConstraint({t1,t1index}, {t2,t2index}, {sort,sortIndex}),
-         _lhs(ll),
-         _rhs(rr),
-         _t1head(ll.term.head()),
-         _t2head(rr.term.head())
-   {
-     ASS(!_t1head.isLambdaTerm() && !_t2head.isLambdaTerm()); // terms must be in whnf
-   }
-   //USE_ALLOCATOR(HOLConstraint)
-
-   TermSpec lhs() const { return _lhs; }
-   TermSpec rhs() const { return _rhs; }
-
-   bool flexFlex()   const { return _t1head.isVar() && _t2head.isVar(); }
-   bool rigidRigid() const { return _t1head.isTerm() && _t2head.isTerm(); }
-   bool flexRigid()  const { return (_t1head.isVar() && !_t2head.isVar())  || (_t2head.isVar() && !_t1head.isVar()); }
-
-   TermList lhsHead() const { return _t1head; }
-   TermList rhsHead() const { return _t2head; }
-
-   TermList sort() const {
-     ASS(_lhs.isTerm() || _rhs.isTerm());
-     if(_lhs.isTerm())
-     { return SortHelper::getResultSort(_lhs.term.term()); }
-     return SortHelper::getResultSort(_rhs.term.term());
-   }
-
-   HOLConstraint constraint() { return HOLConstraint(lhs(),rhs()); }
- };
 
  inline bool sortCheck(TermList sort, bool topLevel = false){
    return
@@ -111,10 +127,15 @@ class HOLUnification {
        (sort.isOrdinaryVar() || sort.isArrowSort() || (sort.isBoolSort() && !topLevel));
  }
 
- class HigherOrderUnifiersIt;
- //class HigherOrderUnifiersItWrapper;
+
+
 
 public:
+
+  // static OracleResult fixpointUnify(TermList var, TermList t, RobSubstitutionTL* sub);
+  static OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub);
+
+
 
  HOLUnification() : _funcExt( env.options->functionExtensionality() == Options::FunctionExtensionality::ABSTRACTION)
  {}
@@ -142,6 +163,7 @@ public:
  // traversal or only the children with same top
  bool usesUwa() const { return false; }
 };
+
 
 }
 

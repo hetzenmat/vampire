@@ -96,7 +96,7 @@ enum ArgumentOrderVals {
 
 
 // TODO change to enum class
-enum class VarBank : unsigned long {
+enum class VarBank : int {
   DEFAULT_BANK=0,
   QUERY_BANK=1,
   NORM_RESULT_BANK=2,
@@ -108,9 +108,15 @@ enum class VarBank : unsigned long {
   UNBOUND_BANK=8
 };
 
+struct Bank {
+  static constexpr int Query = 1;
+  static constexpr int FRESH = 4;
+};
+
+
 class TermList;
 
-class RobSubstitutionTL; // forward declaration
+// class RobSubstitutionTL; // forward declaration
 
 /**
  * Class containing either a pointer to a compound term or

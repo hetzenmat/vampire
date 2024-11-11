@@ -46,6 +46,10 @@ struct VarSpec
   VarSpec() {}
   VarSpec(unsigned var, int index) : var(var), index(index) {}
 
+  VarSpec incrVar() const {
+    return {var+1, index};
+  }
+
   friend std::ostream& operator<<(std::ostream& out, VarSpec const& self);
 
   /** number of variable */
@@ -279,6 +283,8 @@ using namespace Lib;
 namespace UnificationAlgorithms {
 //class AbstractingUnification;
   class HOLUnification;
+  class HigherOrderUnifiersItWrapper;
+  class HigherOrderUnifiersIt;
 //class HOLInstantiation;
 //class HOLGeneralisation;
 //class RobUnification;
@@ -293,6 +299,8 @@ class RobSubstitution
   friend class AbstractingUnifier;
   friend class UnificationConstraint;
   friend class UnificationAlgorithms::HOLUnification;
+  friend class UnificationAlgorithms::HigherOrderUnifiersItWrapper;
+  friend class UnificationAlgorithms::HigherOrderUnifiersIt;
  
   DHMap<VarSpec, TermSpec> _bindings;
   mutable DHMap<VarSpec, unsigned> _outputVarBindings;
@@ -464,32 +472,32 @@ private:
 inline AutoDerefTermSpec::AutoDerefTermSpec(TermSpec const& t, RobSubstitution const* s) : term(s->derefBound(t)) {}
 
 // TODO MH
-class RobSubstitutionTL {
-public:
-  TermList derefBound(TermList x) {
-    THROW_MH();
-  }
-
-  TermList apply(TermList, int) {
-    THROW_MH();
-  }
-
-  Literal* apply(Literal *, int) {
-    THROW_MH();
-  }
-
-  bool unify(TermList, TermList) {
-    THROW_MH();
-  }
-  bool unify(TermList, int, TermList, int) {
-    THROW_MH();
-  }
-
-  bool match(TermList, TermList, int) {THROW_MH();}
-
-
-  void reset() { THROW_MH(); }
-};
+// class RobSubstitutionTL {
+// public:
+//   TermList derefBound(TermList x) {
+//     THROW_MH();
+//   }
+//
+//   TermList apply(TermList, int) {
+//     THROW_MH();
+//   }
+//
+//   Literal* apply(Literal *, int) {
+//     THROW_MH();
+//   }
+//
+//   bool unify(TermList, TermList) {
+//     THROW_MH();
+//   }
+//   bool unify(TermList, int, TermList, int) {
+//     THROW_MH();
+//   }
+//
+//   bool match(TermList, TermList, int) {THROW_MH();}
+//
+//
+//   void reset() { THROW_MH(); }
+// };
 
 // TODO MH
 class RobSubstitutionTS {

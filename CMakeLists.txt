@@ -692,6 +692,8 @@ set(VAMPIRE_TESTING_SOURCES
     Test/SyntaxSugar.cpp
     Test/TestUtils.hpp
     Test/TestUtils.cpp
+    Test/HOLUtils.hpp
+    Test/HOLUtils.cpp
     )
 source_group(testing_files FILES ${VAMPIRE_TESTING_SOURCES})
 
@@ -735,6 +737,7 @@ set(UNIT_TESTS
     UnitTests/tFunctionDefinitionRewriting.cpp
     UnitTests/tBetaReduction.cpp
     UnitTests/tHOLMatching.cpp
+    UnitTests/tHOLUnification.cpp
 )
 source_group(unit_tests FILES ${UNIT_TESTS})
 

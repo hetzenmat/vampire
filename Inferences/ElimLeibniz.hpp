@@ -42,7 +42,7 @@ class ElimLeibniz : public GeneratingInferenceEngine
 
     bool isPair(Literal* l1, Literal* l2);
 
-    Clause* createConclusion(Clause* premise, Literal* newLit, Literal* posLit, Literal* negLit, RobSubstitutionTL& subst);
+    Clause* createConclusion(Clause* premise, Literal* newLit, Literal* posLit, Literal* negLit, RobSubstitution& subst);
 
     LeibEqRec getLiteralInfo(Literal* lit);
 

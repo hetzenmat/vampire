@@ -31,6 +31,8 @@
 
 #include "Choice.hpp"
 
+#include "Indexing/SubstitutionTree.hpp"
+
 #if VDEBUG
 #include <iostream>
 using namespace std;
@@ -100,7 +102,7 @@ struct Choice::AxiomsIterator
       _choiceOps.remove(op);
       OperatorType* type = env.signature->getFunction(op)->fnType();
       
-      static RobSubstitutionTL subst;
+      static RobSubstitution subst;
       static TermStack typeArgs;
       typeArgs.reset();
       subst.reset();
@@ -173,10 +175,10 @@ struct Choice::IsChoiceTerm
       TermList o  = AtomicSort::boolSort();
       TermList sort = AtomicSort::arrowSort(AtomicSort::arrowSort(tv, o), tv);
 
-      static RobSubstitutionTL subst;
+      static RobSubstitution subst;
       subst.reset();
-      return ((head.isVar() || env.signature->isChoiceOperator(head.term()->functor())) &&
-              subst.match(sort,headSort,1 /*VarBank::QUERY_BANK*/));
+      return (head.isVar() || env.signature->isChoiceOperator(head.term()->functor())) &&
+              subst.match(sort, QUERY_BANK, headSort,RESULT_BANK);
     }
     return false;
 

@@ -17,70 +17,15 @@
 
 #include "Test/UnitTesting.hpp"
 #include "Test/TestUtils.hpp"
+#include "Test/HOLUtils.hpp"
 
-
-
-
-TypedTermList LAM(TypedTermList var, TypedTermList term) {
-  
-    auto varSort = var.sort();
-    auto termSort = term.sort();
-
-    VList* boundVar = new VList(var.var());
-    SList* boundVarSort = new SList(varSort);
-    Term* lambdaTerm = Term::createLambda(term, boundVar, boundVarSort, termSort);
-
-    return {TermList(lambdaTerm), TermList(AtomicSort::arrowSort(varSort, termSort))};
-}
-
-void require(bool v) {
-  if (!v) {
-    throw std::exception();
-  }
-}
-
-TypedTermList AP(TypedTermList lhs, TypedTermList rhs) {
-  require(lhs.sort().isArrowSort());
-
-  auto [domain, result] = lhs.sort().asPair();
-  
-  if (domain != rhs.sort()) {
-    std::cout << lhs << " @ " << rhs << std::endl;
-  }
-
-  ASS(domain == rhs.sort());
-
-  return {ApplicativeHelper::app(lhs.sort(), lhs, rhs), result};
-}
-
-TypedTermList AP_l(std::initializer_list<TypedTermList> terms) {
-  auto size = terms.size();
-
-  ASS(size > 0);
-  auto a = std::data(terms);
-  TypedTermList res = a[0];
-  
-  for (std::size_t i = 0; i + 1 < size; ++i) {
-    res = AP(res, a[i+1]);
-  }
-
-  return res;
-}
-
-TypedTermList toDeBruijnIndices(TypedTermList t) {
-  return {LambdaConversion::convertLambda(t), t.sort()};
-}
+using namespace HOLUtils;
 
 #define DECL_ATOMIC_SORT(name) TermList name = TermList(AtomicSort::createConstant(#name));
 
 #define DECL_ARROW_SORT(name, from, to) TermList name = TermList(AtomicSort::arrowSort(from, to));
 
-#define DECL_VAR(name, index, sort) [[maybe_unused]] TypedTermList name = TypedTermList(TermList::var(index), sort);
 
-#define DECL_CONST(name, sort) \
-  unsigned name ## Index = env.signature->addFunction(#name, 0); \
-  env.signature->getFunction(name ## Index)->setType(OperatorType::getFunctionType({}, sort)); \
-  [[maybe_unused]] TypedTermList name = TypedTermList(TermList(Term::createConstant(name ## Index)), sort);
 
 #define BRACED_INIT_LIST(...) {__VA_ARGS__}
 

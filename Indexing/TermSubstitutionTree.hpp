@@ -69,7 +69,7 @@ public:
     if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
       // replace higher-order terms with placeholder constants
       //tt = TypedTermList(ToPlaceholders().replace(tt), tt.sort());
-      THROW_MH();
+
     }
 
     _inner.handle(std::move(d), insert);

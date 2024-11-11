@@ -24,18 +24,29 @@ namespace Kernel
 namespace UnificationAlgorithms
 {
 
-class HOLUnification::HigherOrderUnifiersIt: public IteratorCore<RobSubstitution*> {
+class HigherOrderUnifiersIt: public IteratorCore<RobSubstitution*> {
 public:
 
-  TermList applyTypeSub(TermList t){
-    THROW_MH(); // Do we need to deal with type substitutions for TH0?
+  TermList applyTypeSub(TermList t) {
+
+
+    LOG("type sub", t);
+
+    return t;
+
     // in the monomorphic case, should be cheap
-    // return SortDeref(_subst).deref(t);
+    //return SortDeref(_subst).deref(t);
   }
 
   HigherOrderUnifiersIt(TermSpec t1, TermSpec t2, RobSubstitution *subst, bool funcExt)
-      : _used(false), _solved(false), _topLevel(true), _funcExt(funcExt), _depth(0),
-        _unifiersReturned(0), _freshVar(0, VarBank::FRESH_BANK), _subst(subst)
+      : _used(false),
+        _solved(false),
+        _topLevel(true),
+        _funcExt(funcExt),
+        _depth(0),
+        _unifiersReturned(0),
+        _freshVar(TermList::var(0), Bank::FRESH),
+        _subst(subst)
   {
 
     BacktrackData bd;
@@ -216,6 +227,7 @@ public:
 
         for(unsigned i = 0; i < lhsArgs.size(); i++){
           auto t1 = lhsArgs[i].whnfDeref(_subst);
+          THROW_MH();
           int t1Index = 0/0; // TODO MH;
           t1 = ApplicativeHelper::surroundWithLambdas(t1, sorts, argSorts[i], /* traverse stack from top */ true);
           auto t2 = rhsArgs[i].whnfDeref(_subst);
@@ -384,77 +396,88 @@ private:
   SkipList<HOLConstraint,HOLCnstComp> _unifPairs;
   Recycled<Stack<BacktrackData>> _bdStack;
   Recycled<Stack<TermStack>> _bindings;
-  TermList _freshVar;
+  TermSpec _freshVar;
   RobSubstitution* _subst;
 };
 
-bool HOLUnification::unifyWithPlaceholders(TermSpec t1, TermSpec t2, RobSubstitution* sub)
-{
-  // TODO deal with the case where both terms are fully first-order...
-
-  if (t1 == t2) {
-    return true;
-  }
-
-  auto impl = [&]() -> bool {
-
-    Recycled<Stack<std::pair<TermSpec, TermSpec>>> toDo;
-    toDo->push({t1, t2});
-
-    // Save encountered unification pairs to avoid
-    // recomputing their unification
-    Recycled<DHSet<std::pair<TermSpec,TermSpec>>> encountered;
-
-    auto pushTodo = [&](std::pair<TermSpec,TermSpec> pair) {
-      if (!encountered->find(pair)) {
-        encountered->insert(pair);
-        toDo->push(pair);
-      }
-    };
-
-    while (toDo->isNonEmpty()) {
-      auto x = toDo->pop();
-      auto dt1 = sub->derefBound(x.first);
-      auto dt2 = sub->derefBound(x.second);
-
-      if (dt1 == dt2 || dt1.term.isPlaceholder() || dt2.term.isPlaceholder()) {
-        // do nothing
-        // we want unification to pass in these cases
-      } else if(dt1.isVar() && !sub->occurs(dt1.varSpec(), dt2)) {
-        sub->bind(dt1.varSpec(), dt2);
-      } else if(dt2.isVar() && !sub->occurs(dt2.varSpec(), dt1)) {
-        sub->bind(dt2.varSpec(), dt1);
-      } else if(dt1.isTerm() && dt2.isTerm() && dt1.term.term()->functor() == dt2.term.term()->functor()) {
-
-        for (unsigned i = 0; i < dt1.term.term()->arity(); i++) {
-          pushTodo({dt1.nthArg(i), dt2.nthArg(i)});
-        }
-
-      } else {
-        return false;
-      }
+HigherOrderUnifiersItWrapper::HigherOrderUnifiersItWrapper(TermSpec lhs,
+                                                           TermList lhsSort,
+                                                           TermSpec rhs,
+                                                           TermList rhsSort,
+                                                           bool funcExt) : _subst() {
+    // this unification must pass, otherwise we wouldn't have reached a leaf
+    // however, we are forced to recompute it here with the new substitution (not ideal)
+    ALWAYS(_subst->unify(lhsSort, lhs.index, rhsSort, rhs.index));
+    if (env.options->applicativeUnify()) {
+      _success = _subst->applicativeUnify(lhs, rhs);
+    } else {
+      _inner = vi(new HigherOrderUnifiersIt(lhs, rhs, &*_subst, funcExt));
     }
-    return true;
-  };
-
-  BacktrackData localBD;
-  sub->bdRecord(localBD);
-  bool success = impl();
-  sub->bdDone();
-
-  if(!success) {
-    localBD.backtrack();
-  } else {
-    if(sub->bdIsRecording()) {
-      sub->bdCommit(localBD);
-    }
-    localBD.drop();
-  }
-
-  return success;
 }
 
-HOLUnification::OracleResult HOLUnification::fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub)
+bool HigherOrderUnifiersItWrapper::hasNext() {
+    return env.options->applicativeUnify() ? _success : _inner.hasNext();
+}
+
+RobSubstitution* HigherOrderUnifiersItWrapper::next() {
+  if (env.options->applicativeUnify()) {
+    _success = false;
+    return &*_subst;
+  }
+  return _inner.next();
+}
+
+
+bool HOLUnification::associate(unsigned specialVar, TermSpec node, RobSubstitution* sub)
+{
+  return unifyWithPlaceholders(TermSpec(TermList::specialVar(specialVar), SPECIAL_INDEX), node, sub);
+}
+
+class HigherOrderUnifiersIt;
+
+SubstIterator HOLUnification::unifiers(TermSpec t1, TermSpec t2, RobSubstitution* sub, bool topLevelCheck)
+{
+  if (env.options->applicativeUnify()) {
+    if(sub->applicativeUnify(t1,t2)) {
+      return pvi(getSingletonIterator(sub));
+    }
+    return SubstIterator::getEmpty();
+  }
+
+  if (t1.sameTermContent(t2)) return pvi(getSingletonIterator(sub));
+
+  if (topLevelCheck) {
+    // if topLevelCheck is set, we want to check that we
+    // don't return a constraint of the form t1 != t2
+    if (t1.isVar() || t2.isVar()) {
+      auto var = t1.isVar() ? t1 : t2;
+      auto otherTerm = var == t1 ? t2 : t1;
+      auto res = fixpointUnify(var,otherTerm,sub);
+      if(res == OracleResult::SUCCESS) return pvi(getSingletonIterator(sub));
+      if(res == OracleResult::FAILURE) return SubstIterator::getEmpty();
+      if(res == OracleResult::OUT_OF_FRAGMENT) return SubstIterator::getEmpty();
+    } else {
+      if(!ApplicativeHelper::splittable(t1.term, true) || !ApplicativeHelper::splittable(t2.term, true)) {
+        return SubstIterator::getEmpty();
+      }
+    }
+  }
+
+  return vi(new HigherOrderUnifiersIt(t1, t2, sub, _funcExt));
+}
+
+SubstIterator HOLUnification::postprocess(RobSubstitution* sub, TermList t, TermList sort)
+{
+  // ignore the sub that has been passed in, since
+  // that contains substitutions formed during tree traversal which
+  // are not helpful here (but cannot be erased either!)
+  TypedTermList res = ToBank(VarBank::RESULT_BANK).toBank(TypedTermList(t,sort));
+
+  THROW_MH();
+  // return vi(new HigherOrderUnifiersItWrapper(_origQuery, _origQuerySort, res, res.sort(), _funcExt));
+}
+
+OracleResult HOLUnification::fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub)
 {
   TermList v;
   // var can be an eta expanded var due to the normalisation of lambda prefixes
@@ -542,54 +565,72 @@ HOLUnification::OracleResult HOLUnification::fixpointUnify(TermSpec var, TermSpe
   return OracleResult::SUCCESS;
 }
 
-bool HOLUnification::associate(unsigned specialVar, TermSpec node, RobSubstitution* sub)
+bool HOLUnification::unifyWithPlaceholders(TermSpec t1, TermSpec t2, RobSubstitution* sub)
 {
-  return unifyWithPlaceholders(TermSpec(TermList::specialVar(specialVar), SPECIAL_INDEX), node, sub);
-}
+  // TODO deal with the case where both terms are fully first-order...
 
-class HigherOrderUnifiersIt;
-
-SubstIterator HOLUnification::unifiers(TermSpec t1, TermSpec t2, RobSubstitution* sub, bool topLevelCheck)
-{
-  if (env.options->applicativeUnify()) {
-    if(sub->applicativeUnify(t1,t2)) {
-      return pvi(getSingletonIterator(sub));
-    }
-    return SubstIterator::getEmpty();
+  if (t1 == t2) {
+    return true;
   }
 
-  if (t1.sameTermContent(t2)) return pvi(getSingletonIterator(sub));
+  auto impl = [&]() -> bool {
 
-  if (topLevelCheck) {
-    // if topLevelCheck is set, we want to check that we
-    // don't return a constraint of the form t1 != t2
-    if (t1.isVar() || t2.isVar()) {
-      auto var = t1.isVar() ? t1 : t2;
-      auto otherTerm = var == t1 ? t2 : t1;
-      auto res = fixpointUnify(var,otherTerm,sub);
-      if(res == OracleResult::SUCCESS) return pvi(getSingletonIterator(sub));
-      if(res == OracleResult::FAILURE) return SubstIterator::getEmpty();
-      if(res == OracleResult::OUT_OF_FRAGMENT) return SubstIterator::getEmpty();
-    } else {
-      if(!ApplicativeHelper::splittable(t1.term, true) || !ApplicativeHelper::splittable(t2.term, true)) {
-        return SubstIterator::getEmpty();
+    Recycled<Stack<std::pair<TermSpec, TermSpec>>> toDo;
+    toDo->push({t1, t2});
+
+    // Save encountered unification pairs to avoid
+    // recomputing their unification
+    Recycled<DHSet<std::pair<TermSpec,TermSpec>>> encountered;
+
+    auto pushTodo = [&](std::pair<TermSpec,TermSpec> pair) {
+      if (!encountered->find(pair)) {
+        encountered->insert(pair);
+        toDo->push(pair);
+      }
+    };
+
+    while (toDo->isNonEmpty()) {
+      auto x = toDo->pop();
+      auto dt1 = sub->derefBound(x.first);
+      auto dt2 = sub->derefBound(x.second);
+
+      if (dt1 == dt2 || dt1.term.isPlaceholder() || dt2.term.isPlaceholder()) {
+        // do nothing
+        // we want unification to pass in these cases
+      } else if(dt1.isVar() && !sub->occurs(dt1.varSpec(), dt2)) {
+        sub->bind(dt1.varSpec(), dt2);
+      } else if(dt2.isVar() && !sub->occurs(dt2.varSpec(), dt1)) {
+        sub->bind(dt2.varSpec(), dt1);
+      } else if(dt1.isTerm() && dt2.isTerm() && dt1.term.term()->functor() == dt2.term.term()->functor()) {
+
+        for (unsigned i = 0; i < dt1.term.term()->arity(); i++) {
+          pushTodo({dt1.nthArg(i), dt2.nthArg(i)});
+        }
+
+      } else {
+        return false;
       }
     }
+    return true;
+  };
+
+  BacktrackData localBD;
+  sub->bdRecord(localBD);
+  bool success = impl();
+  sub->bdDone();
+
+  if(!success) {
+    localBD.backtrack();
+  } else {
+    if(sub->bdIsRecording()) {
+      sub->bdCommit(localBD);
+    }
+    localBD.drop();
   }
 
-  return vi(new HigherOrderUnifiersIt(t1, t2, sub, _funcExt));
+  return success;
 }
 
-SubstIterator HOLUnification::postprocess(RobSubstitution* sub, TermList t, TermList sort)
-{
-  // ignore the sub that has been passed in, since
-  // that contains substitutions formed during tree traversal which
-  // are not helpful here (but cannot be erased either!)
-  TypedTermList res = ToBank(VarBank::RESULT_BANK).toBank(TypedTermList(t,sort));
-
-  THROW_MH();
-  // return vi(new HigherOrderUnifiersItWrapper(_origQuery, _origQuerySort, res, res.sort(), _funcExt));
-}
 
 }
 }

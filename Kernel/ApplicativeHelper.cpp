@@ -818,7 +818,7 @@ void ApplicativeHelper::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
 }
 
 bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings,
-                                               TermList& fVar)
+                                               TermSpec& fVar)
 {
   ASS(bindings.isEmpty());
 
@@ -856,13 +856,14 @@ bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigid
   getFlexHeadSorts(flexTerm, sortsFlex, SortHelper::getResultSort(rigidTerm.term()));
 
   TermList pb;
-  TermList var = fVar;
+  TermList var = fVar.term;
   bool imit = false;
   // imitation
   if(headRigid.deBruijnIndex().isNone()){ // cannot imitate a bound variable
     imit = true;
     pb = createGeneralBinding(var, headRigid, sortsFlex);
-    fVar = var.var() > fVar.var() ? var : fVar;
+    if (var.var() > fVar.term.var())
+      fVar = TermSpec(var, fVar.index);
     bindings.push(pb);
   }
 
@@ -883,14 +884,15 @@ bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigid
     TermList dbi = getDeBruijnIndex(i + diff, sortsFlex[i + diff]);
 
     TermList pb = createGeneralBinding(fVar,dbi,sortsFlex);
-    fVar = var.var() > fVar.var() ? var : fVar;
+    if (var.var() > fVar.term.var())
+      fVar = TermSpec(var, fVar.index);
     bindings.push(pb);
   }
 
   return imit;
 }
 
-TermList ApplicativeHelper::createGeneralBinding(TermList& freshVar, TermList head,
+TermList ApplicativeHelper::createGeneralBinding(VarSpec& freshVar, TermList head,
                                                  TermStack& sorts, bool surround){
   ASS(head.isTerm()); // in the future may wish to reconsider this assertion
 
@@ -899,7 +901,7 @@ TermList ApplicativeHelper::createGeneralBinding(TermList& freshVar, TermList he
   TermStack indices;
 
   auto getNextFreshVar = [&](){
-    freshVar = TermList(freshVar.var() + 1, freshVar.bank());
+    freshVar = freshVar.incrVar();
     return freshVar;
   };
 

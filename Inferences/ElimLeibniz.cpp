@@ -79,7 +79,7 @@ ElimLeibniz::LeibEqRec ElimLeibniz::getLiteralInfo(Literal* lit){
 }
 
 Clause* ElimLeibniz::createConclusion(Clause* premise, Literal* newLit, 
-                                      Literal* posLit, Literal* negLit, RobSubstitutionTL& subst){
+                                      Literal* posLit, Literal* negLit, RobSubstitution& subst){
   unsigned newLen=premise->length() - 1;
   Clause* res = new(newLen) Clause(newLen, GeneratingInference1(InferenceRule::LEIBNIZ_ELIMINATION, premise));
   Literal* newLitAfter = subst.apply(newLit, 0 /*DEFAULT_BANK*/);
@@ -99,6 +99,8 @@ Clause* ElimLeibniz::createConclusion(Clause* premise, Literal* newLit,
 
 ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
 {
+  THROW_MH();
+
   static TermStack args;
   TermList head;
 
@@ -141,7 +143,7 @@ ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
 afterLoop:
 
   ClauseStack clauses;
-  static RobSubstitutionTL subst;
+  static RobSubstitution subst;
   subst.reset();
  
   LeibEqRec lerPosLit = getLiteralInfo(posLit);
@@ -155,20 +157,23 @@ afterLoop:
   TermList vEquals = AH::equality(argS);
   // creating the term  = arg  (which is eta-equivalent to ^x. arg = x)
   TermList t1 = AH::app(vEquals, lerNegLit.arg);
-  if(subst.unify(var, t1)){
-    Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
-    clauses.push(c);
-    subst.reset();
-  }
+
+  // TODO MH
+  // if (subst.unify(var, t1)) {
+  //   Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
+  //   clauses.push(c);
+  //   subst.reset();
+  // }
 
   TermList db = AH::getDeBruijnIndex(0, argS);
   // creating the term ^x. arg != x
   TermList t2 = AH::lambda(argS, AH::app(AH::neg(), AH::app(AH::app(vEquals, lerPosLit.arg),db)));
 
-  if(subst.unify(var, t2)){
-    Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
-    clauses.push(c);
-  }  
+  // TODO MH
+  // if(subst.unify(var, t2)){
+  //   Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
+  //   clauses.push(c);
+  // }
 
   env.statistics->leibnizElims++;
   return pvi(getUniquePersistentIterator(ClauseStack::Iterator(clauses)));
