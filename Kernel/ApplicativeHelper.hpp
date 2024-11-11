@@ -84,10 +84,10 @@ public:
 
   static void normaliseLambdaPrefixes(TermList& t1, TermList& t2);
 
-  static bool getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings, TermSpec& freshVar);
+  static bool getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings, TermList& freshVar);
   // creates a general binding of the form head (FV1 db1 ... dbn) (FV2 db1 ... dbn) ...
   // if surround is set to true, the general binding is surround by n lambdas
-  static TermList createGeneralBinding(VarSpec& freshVar, TermList head, TermStack& sorts, bool surround = true);
+  static TermList createGeneralBinding(TermList& freshVar, TermList head, TermStack& sorts, bool surround = true);
 
   static TermList surroundWithLambdas(TermList t, TermStack& sorts, bool fromTop = false);
   static TermList surroundWithLambdas(TermList t, TermStack& sorts, TermList sort, bool fromTop = false);

@@ -267,7 +267,7 @@ public:
           BacktrackData& bd = _bdStack->top();
           bd.addClosure([this, fv = _freshVar](){ _freshVar = fv; });
 
-          ApplicativeHelper::getProjAndImitBindings(flexTerm, rigidTerm, projAndImitBindings, _freshVar);
+          ApplicativeHelper::getProjAndImitBindings(flexTerm, rigidTerm, projAndImitBindings, _freshVar.term);
 
           if(projAndImitBindings.isEmpty()){
             // no bindings for this pair of terms
@@ -459,17 +459,6 @@ SubstIterator HOLUnification::unifiers(TermSpec t1, TermSpec t2, RobSubstitution
   }
 
   return vi(new HigherOrderUnifiersIt(t1, t2, sub, _funcExt));
-}
-
-SubstIterator HOLUnification::postprocess(RobSubstitution* sub, TermList t, TermList sort)
-{
-  // ignore the sub that has been passed in, since
-  // that contains substitutions formed during tree traversal which
-  // are not helpful here (but cannot be erased either!)
-  TypedTermList res = ToBank(VarBank::RESULT_BANK).toBank(TypedTermList(t,sort));
-
-  THROW_MH();
-  // return vi(new HigherOrderUnifiersItWrapper(_origQuery, _origQuerySort, res, res.sort(), _funcExt));
 }
 
 OracleResult HOLUnification::fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub)

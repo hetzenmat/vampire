@@ -67,6 +67,11 @@ public:
     : TermSubstitutionTree(decltype(_inner)(), algo, extra)
   { }
 
+  // TODO: MH for testing
+  Indexing::SubstitutionTree<LeafData_>* inner() {
+    return &_inner;
+  }
+
 
   void handle(LeafData d, bool insert) final override {
     // if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {

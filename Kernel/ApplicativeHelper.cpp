@@ -818,7 +818,7 @@ void ApplicativeHelper::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
 }
 
 bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings,
-                                               TermSpec& fVar)
+                                               TermList& fVar)
 {
   ASS(bindings.isEmpty());
 
@@ -856,14 +856,14 @@ bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigid
   getFlexHeadSorts(flexTerm, sortsFlex, SortHelper::getResultSort(rigidTerm.term()));
 
   TermList pb;
-  TermList var = fVar.term;
+  TermList var = fVar;
   bool imit = false;
   // imitation
   if(headRigid.deBruijnIndex().isNone()){ // cannot imitate a bound variable
     imit = true;
     pb = createGeneralBinding(var, headRigid, sortsFlex);
-    if (var.var() > fVar.term.var())
-      fVar = TermSpec(var, fVar.index);
+    if (var.var() > fVar.var())
+      fVar = var;
     bindings.push(pb);
   }
 
@@ -884,15 +884,15 @@ bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigid
     TermList dbi = getDeBruijnIndex(i + diff, sortsFlex[i + diff]);
 
     TermList pb = createGeneralBinding(fVar,dbi,sortsFlex);
-    if (var.var() > fVar.term.var())
-      fVar = TermSpec(var, fVar.index);
+    if (var.var() > fVar.var())
+      fVar = var;
     bindings.push(pb);
   }
 
   return imit;
 }
 
-TermList ApplicativeHelper::createGeneralBinding(VarSpec& freshVar, TermList head,
+TermList ApplicativeHelper::createGeneralBinding(TermList& freshVar, TermList head,
                                                  TermStack& sorts, bool surround){
   ASS(head.isTerm()); // in the future may wish to reconsider this assertion
 
@@ -900,10 +900,10 @@ TermList ApplicativeHelper::createGeneralBinding(VarSpec& freshVar, TermList hea
   TermStack argSorts;
   TermStack indices;
 
-  auto getNextFreshVar = [&](){
-    freshVar = freshVar.incrVar();
-    return freshVar;
-  };
+  // auto getNextFreshVar = [&](){
+  //   freshVar = freshVar.incrVar();
+  //   return freshVar;
+  // };
 
   TermList headSort = SortHelper::getResultSort(head.term());
   getArgSorts(headSort, argSorts);
@@ -914,7 +914,8 @@ TermList ApplicativeHelper::createGeneralBinding(VarSpec& freshVar, TermList hea
 
   while(!argSorts.isEmpty()){
     TermList varSort = AtomicSort::arrowSort(sorts, argSorts.pop());
-    args.push(app(varSort, getNextFreshVar(), indices));
+    THROW_MH();
+    // args.push(app(varSort, getNextFreshVar(), indices));
   }
 
   TermList pb = app(head, args);

@@ -866,7 +866,7 @@ vstring TermList::asArgsToString() const
  * Write as a vstring the head of the term list.
  * @since 27/02/2008 Manchester
  */
-vstring TermList::toString(bool topLevel, bool higherOrder) const
+vstring TermList::toString() const
 {
   if (isEmpty()) {
     return "<empty TermList>";
@@ -875,16 +875,16 @@ vstring TermList::toString(bool topLevel, bool higherOrder) const
     return Term::variableToString(*this);
   }
 
-  if(higherOrder || (env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() == Options::HPrinting::PRETTY)) {
-    if(ApplicativeHelper::isTrue(*this)){
+  if(env.higherOrderProblem() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
+    if (ApplicativeHelper::isTrue(*this)) {
       return "⊤";
     }
-    if(ApplicativeHelper::isFalse(*this)){
+    if (ApplicativeHelper::isFalse(*this)) {
       return "⊥";
     }
   }
 
-  return term()->toString(topLevel, higherOrder);
+  return term()->toString();
 } // TermList::toString
 
 
@@ -892,41 +892,23 @@ vstring TermList::toString(bool topLevel, bool higherOrder) const
  * Return the result of conversion of a term into a vstring.
  * @since 16/05/2007 Manchester
  */
-vstring Term::toString(bool topLevel, bool higherOrder) const
+vstring Term::toString() const
 {
-  bool printArgs = true;
-
   if (isSuper()) {
     return "$tType";
   }
 
-
-  if (higherOrder || (env.getMainProblem() != nullptr && env.getMainProblem()->isHigherOrder() && env.options->holPrinting() != Options::HPrinting::RAW)) {
+  if (env.higherOrderProblem() && env.options->holPrinting() != Options::HPrinting::RAW) {
     IndexVarStack st;
     return toString(true, st);
   }
 
-
-  if (!isSpecial() && !isLiteral()) {
-    if(isSort() && static_cast<AtomicSort*>(const_cast<Term*>(this))->isArrowSort()){
-      ASS(arity() == 2);
-      vstring res;
-      TermList arg1 = *(nthArgument(0));
-      TermList arg2 = *(nthArgument(1));
-      res += topLevel ? "" : "(";
-      res += arg1.toString(false) + " > " + arg2.toString();
-      res += topLevel ? "" : ")";
-      return res;
-    }
-
-    printArgs = isSort() || env.signature->getFunction(_functor)->combinator() == Signature::NOT_COMB;
-  }
-
   vstring s = headToString();
 
-  if (_arity && printArgs) {
-    s += args()->asArgsToString(); // will also print the ')'
+  if (_arity > 0) {
+    s += '(' + args()->asArgsToString(); // will also print the ')'
   }
+
   return s;
 } // Term::toString
 
@@ -1115,35 +1097,53 @@ vstring Literal::toString() const
   if (isEquality()) {
     const TermList* lhs = args();
     vstring s = lhs->toString();
-    if (isPositive()) {
-      s += " = ";
-    }
-    else {
-      s += " != ";
+
+    if(env.higherOrderProblem() &&
+       env.options->holPrinting() != Options::HPrinting::RAW &&
+       lhs->isApplication()) {
+      s = "(" + s + ")";
     }
 
-    vstring res = s + lhs->next()->toString();
-    if (env.getMainProblem() == nullptr || env.getMainProblem()->isHigherOrder() || 
-       (SortHelper::getEqualityArgumentSort(this) == AtomicSort::boolSort())){
-      res = "("+res+")";
+    vstring eqSym = isPositive() ? " = " : " != ";
+    if (env.higherOrderProblem() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
+      eqSym = isPositive() ? " ≈ " : " ≉ ";
     }
-    /*if(isTwoVarEquality()){
-      res += "___ sort: " + twoVarEqSort().toString();
-    }*/
+    s += eqSym;
+
+    vstring rhs = lhs->next()->toString();
+
+    if (env.higherOrderProblem() &&
+        env.options->holPrinting() != Options::HPrinting::RAW &&
+        lhs->next()->isApplication()) {
+      rhs = "(" + rhs + ")";
+    }
+
+    vstring res = s + rhs;
+    if (env.higherOrderProblem() ||
+        SortHelper::getEqualityArgumentSort(this).isBoolSort()) {
+      res = "(" + res + ")";
+    }
 
     return res;
   }
 
   Stack<const TermList*> stack(64);
-  vstring s = polarity() ? "" : "~";
+  vstring s = "";
+  if (polarity() == 0) { /* negative polarity */
+    if (env.options->holPrinting() == Options::HPrinting::PRETTY) {
+      s = "¬";
+    } else {
+      s = "~";
+    }
+  }
+
   unsigned proj;
   if (Theory::tuples()->findProjection(functor(), true, proj)) {
     return s + "$proj(" + Int::toString(proj) + ", " + args()->asArgsToString();
   }
   s += predicateName();
 
-  //cerr << "predicate: "<< predicateName()<<endl;
-  if (_arity) {
+  if (_arity > 0) {
     s += '(' + args()->asArgsToString(); // will also print the ')'
   }
   return s;

@@ -125,6 +125,47 @@ RUN_TEST(tree_test_01,
       .expected = { { .data = 0 },{ .data = 1 }, },
     })
 
+std::ostream &operator<<(std::ostream &os, std::set<std::string> const &s) {
+  os << "{";
+  bool first = true;
+  for (const auto& e : s) {
+    if (first) {
+      first = false;
+    } else {
+      os << ", ";
+    }
+    os << e;
+
+  }
+  return os << "}";
+
+}
+
+TEST_FUN(tree_test_01_) {
+  TEST_SUGAR
+
+  TermSubstitutionTree<TermWithValue<std::string>> tree(SplittingAlgo::NONE, false);
+
+  tree.insert({f(a), "f(a)"});
+  tree.insert({g(b), "g(b)"});
+
+  auto results = iterTraits(tree.inner()->iterator<SubstitutionTree<TermWithValue<std::string>>::Iterator<RetrievalAlgorithms::RobUnification>>(x.sugaredExpr(), /*retrieveSubstitutions=*/ true, /*reversed=*/false));
+  std::set<std::string> resultSet;
+  for (auto res : results) {
+    // std::cout << res.data->value << std::endl;
+    resultSet.insert(res.data->value);
+  }
+
+  std::set<std::string> expected { "f(a)", "g(b)"};
+
+  if (expected == resultSet) {
+    std::cout << "passed" << std::endl;
+  } else {
+    std::cout << "expected: " << expected << "\ngot: " << resultSet << std::endl;
+  }
+}
+
+
 RUN_TEST(tree_test_02,
     TEST_SUGAR,
     SubsTreeTest<FirstOrderUnification> {

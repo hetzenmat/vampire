@@ -83,6 +83,11 @@ public:
    * be explicitly passed to all the functions interested in knowing...)
    */
   Kernel::Problem* getMainProblem() { return _problem; }
+
+  bool higherOrderProblem() const {
+    return _problem != nullptr && _problem->isHigherOrder();
+  }
+
   void setMainProblem(Kernel::Problem* p) { _problem = p; }
 
 private:
