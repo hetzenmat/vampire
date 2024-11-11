@@ -98,11 +98,6 @@
 // same sugar, remove 1?
 #define DECL_HOL_VAR(x, i, s) auto x = TermSugar(TermList::var(i), s);
 #define DECL_VAR_SORTED(x, i, s) auto x = TermSugar(TermList::var(i), s);
-#define DECL_I_COMB(i) auto i = FuncSugar(env.signature->getCombinator(Signature::I_COMB));
-#define DECL_K_COMB(k) auto k = FuncSugar(env.signature->getCombinator(Signature::K_COMB));
-#define DECL_B_COMB(b) auto b = FuncSugar(env.signature->getCombinator(Signature::B_COMB));
-#define DECL_C_COMB(c) auto c = FuncSugar(env.signature->getCombinator(Signature::C_COMB));
-#define DECL_S_COMB(s) auto s = FuncSugar(env.signature->getCombinator(Signature::S_COMB));
 #define DECL_FUN_DEF(d, t)  auto d = PredSugar(env.signature->getFnDef(t.sugaredExpr().term()->functor()));
 #define DECL_PRED_DEF(d, t) auto d = PredSugar(env.signature->getBoolDef(((Literal*)t)->functor()));
 
@@ -122,15 +117,6 @@
     DECL_SORT_VAR(alpha, 101)                                                                                 \
     DECL_SORT_VAR(beta, 102)                                                                                  \
     DECL_SORT_VAR(gamma, 103)                                                                                 \
-  )
-
-#define DECL_COMBINATORS                                                                                      \
-  __ALLOW_UNUSED(                                                                                             \
-    DECL_I_COMB(I)                                                                                            \
-    DECL_K_COMB(K)                                                                                            \
-    DECL_B_COMB(B)                                                                                            \
-    DECL_C_COMB(C)                                                                                            \
-    DECL_S_COMB(S)                                                                                            \
   )
 
 

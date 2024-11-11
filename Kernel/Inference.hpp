@@ -574,10 +574,6 @@ inline bool isInternalTheoryAxiomRule(InferenceRule r) {
       toNumber(r) < toNumber(InferenceRule::INTERNAL_THEORY_AXIOM_LAST));
 }
 
-inline bool isCombinatorAxiomRule(InferenceRule r) {
-  THROW_MH("");
-}
-
 inline bool isProxyAxiomRule(InferenceRule r) {
   return (toNumber(r) >= toNumber(InferenceRule::PROXY_AXIOM) &&
       toNumber(r) < toNumber(InferenceRule::INTERNAL_THEORY_AXIOM_LAST));
@@ -878,10 +874,8 @@ public:
     return isInternalTheoryAxiomRule(_rule) || isExternalTheoryAxiomRule(_rule);
   }
 
-  bool isCombinatorAxiom() const {
-    return isCombinatorAxiomRule(_rule);
-  }
-
+  // Proxy axioms performed really badly, so perhaps just get
+  // rid of this stuff?
   bool isProxyAxiom() const {
     return isProxyAxiomRule(_rule);
   }  
@@ -923,9 +917,6 @@ public:
   bool isPureTheoryDescendant() const { return _isPureTheoryDescendant; }
   /** This is how AVATAR sets it... */
   void setPureTheoryDescendant(bool val) { _isPureTheoryDescendant = val; }
-
-  bool isCombAxiomsDescendant() const { THROW_MH(""); }
-  void setCombAxiomsDescendant(bool val) { THROW_MH(""); }
 
   bool isProxyAxiomsDescendant() const { return _proxyAxiomsDescendant; }
   void setProxyAxiomsDescendant(bool val) { _proxyAxiomsDescendant=val; }

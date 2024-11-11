@@ -719,7 +719,6 @@ set(UNIT_TESTS
     UnitTests/tBinaryHeap.cpp
     UnitTests/tSafeRecursion.cpp
     UnitTests/tKBO.cpp
-#    UnitTests/tSKIKBO.cpp
     UnitTests/tLPO.cpp
     UnitTests/tRatioKeeper.cpp
     UnitTests/tOptionConstraints.cpp

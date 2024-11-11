@@ -760,26 +760,8 @@ vstring Term::headToString() const
 
         return "$let([" + typesList + "], [" + symbolsList + "] := " + binding.toString() + ", ";
       }
-      case SpecialFunctor::LAMBDA: {
-        VList* vars = sd->getLambdaVars();
-        SList* sorts = sd->getLambdaVarSorts();
-        TermList lambdaExp = sd->getLambdaExp();
-
-        vstring varList = "[";
-
-        VList::Iterator vs(vars);
-        SList::Iterator ss(sorts);
-        bool first = true;
-        while(vs.hasNext()) {
-          if (!first){
-            varList += ", ";
-          }else{ first = false; }
-          varList += Term::variableToString(vs.next()) + " : ";
-          varList += ss.next().toString(); 
-        }
-        varList += "]";        
-        return "(^" + varList + " : (" + lambdaExp.toString() + "))";
-      }
+      case SpecialFunctor::LAMBDA:
+        return lambdaToString(sd);
       case SpecialFunctor::MATCH: {
         // we simply let the arguments be written out
         return "$match(";
@@ -792,8 +774,6 @@ vstring Term::headToString() const
     if (!isSort() && Theory::tuples()->findProjection(functor(), isLiteral(), proj)) {
       return "$proj(" + Int::toString(proj) + ", ";
     }
-    bool print = (isLiteral() || isSort() ||
-                 (env.signature->getFunction(_functor)->combinator() == Signature::NOT_COMB)) && arity();
     vstring name = "";
     if(isLiteral()) {
       name = static_cast<const Literal *>(this)->predicateName();
@@ -807,7 +787,7 @@ vstring Term::headToString() const
     } else {
       name = functionName();
     }
-    return name + (print ? "(" : "");
+    return name + (arity() > 0 ? "(" : "");
   }
 }
 

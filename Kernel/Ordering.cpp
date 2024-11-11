@@ -33,7 +33,6 @@
 
 #include "LPO.hpp"
 #include "KBO.hpp"
-// #include "SKIKBO.hpp"
 #include "Problem.hpp"
 #include "Signature.hpp"
 #include "NumTraits.hpp"
@@ -120,7 +119,6 @@ Ordering* Ordering::create(Problem& prb, const Options& opt)
   default:
     ASSERTION_VIOLATION;
   }
-  //TODO currently do not show SKIKBO
   if (opt.showSimplOrdering()) {
     out->show(std::cout);
   }

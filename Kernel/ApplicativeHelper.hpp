@@ -58,9 +58,6 @@ public:
 
   static void getHeadSortAndArgs(TermList term, TermList& head, TermList& headSort, TermStack& args);
   static void getHeadArgsAndArgSorts(TermList t, TermList& head, TermStack& args, TermStack& argSorts);
-  // function below ONLY used in AppliArgsIT which is used in SKIKBO. Leaving for now in case need to
-  // revive
-  //  static void getHeadAndAllArgs(TermList term, TermList& head, TermStack& args);
 
   static TermList lhsSort(TermList t);
   static TermList rhsSort(TermList t);
