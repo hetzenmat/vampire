@@ -55,7 +55,7 @@ bool BetaNormaliser::exploreSubterms(TermList orig, TermList newTerm)
 
 TermSpec WHNFDeref::normalise(TermSpec t)
 {
-  THROW_MH();
+  THROW_MH("");
   _index = t.index;
   // term transformer does not work at the top level...
   auto transformed = transformSubterm(t.term);
@@ -65,7 +65,7 @@ TermSpec WHNFDeref::normalise(TermSpec t)
 
 TermList WHNFDeref::transformSubterm(TermList t)
 {
-  THROW_MH();
+  THROW_MH("");
 
   /*if(t.isLambdaTerm()) return t;
 
@@ -340,7 +340,7 @@ TermSpec SortDeref::deref(TermList term)
 
 TermList SortDeref::transformSubterm(TermList t)
 {
-  THROW_MH();
+  THROW_MH("");
   /*
   if(t.isVar() && _positions.top() < _typeArities.top()) {
     t = _sub->derefBound(t);

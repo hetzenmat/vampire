@@ -95,7 +95,7 @@ struct EqualityFactoring::ResultFn
       : _self(self), _cl(cl), _cLen(cl->length()), _afterCheck(afterCheck), _ordering(ordering), _fixedPointIteration(fixedPointIteration) {}
   Clause* operator() (pair<pair<Literal*,TermList>,pair<Literal*,TermList> > arg)
   {
-    auto absUnif = AbstractingUnifier::empty(_self._abstractionOracle);
+    auto absUnif = AbstractingUnifier::empty();
     Literal* sLit=arg.first.first;  // selected literal ( = factored-out literal )
     Literal* fLit=arg.second.first; // fairly boring side literal
     ASS(sLit->isEquality());
@@ -104,7 +104,7 @@ struct EqualityFactoring::ResultFn
 
     TermList srt = SortHelper::getEqualityArgumentSort(sLit);
 
-    if (!absUnif.unify(srt, 0, SortHelper::getEqualityArgumentSort(fLit), 0)) {
+    if (!absUnif.unify(_self._abstractionOracle, srt, 0, SortHelper::getEqualityArgumentSort(fLit), 0)) {
       return 0;
     }
 
@@ -115,11 +115,11 @@ struct EqualityFactoring::ResultFn
     TermList fRHS=EqHelper::getOtherEqualitySide(fLit, fLHS);
     ASS_NEQ(sLit, fLit);
 
-    if(!absUnif.unify(sLHS,0,fLHS,0)) {
+    if(!absUnif.unify(_self._abstractionOracle, sLHS,0,fLHS,0)) {
       return 0;
     }
 
-    if (_fixedPointIteration && !absUnif.fixedPointIteration()) {
+    if (_fixedPointIteration && !absUnif.fixedPointIteration(_self._abstractionOracle)) {
       return nullptr;
     }
 

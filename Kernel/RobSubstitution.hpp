@@ -301,7 +301,7 @@ class RobSubstitution
   friend class UnificationAlgorithms::HOLUnification;
   friend class UnificationAlgorithms::HigherOrderUnifiersItWrapper;
   friend class UnificationAlgorithms::HigherOrderUnifiersIt;
- 
+
   DHMap<VarSpec, TermSpec> _bindings;
   mutable DHMap<VarSpec, unsigned> _outputVarBindings;
   mutable bool _startedBindingOutputVars;
@@ -472,40 +472,40 @@ private:
 inline AutoDerefTermSpec::AutoDerefTermSpec(TermSpec const& t, RobSubstitution const* s) : term(s->derefBound(t)) {}
 
 // TODO MH
-// class RobSubstitutionTL {
-// public:
-//   TermList derefBound(TermList x) {
-//     THROW_MH();
-//   }
-//
-//   TermList apply(TermList, int) {
-//     THROW_MH();
-//   }
-//
-//   Literal* apply(Literal *, int) {
-//     THROW_MH();
-//   }
-//
-//   bool unify(TermList, TermList) {
-//     THROW_MH();
-//   }
-//   bool unify(TermList, int, TermList, int) {
-//     THROW_MH();
-//   }
-//
-//   bool match(TermList, TermList, int) {THROW_MH();}
-//
-//
-//   void reset() { THROW_MH(); }
-// };
+class RobSubstitutionTL {
+public:
+  TermList derefBound(TermList x) {
+    THROW_MH("");
+  }
+
+  TermList apply(TermList, int) {
+    THROW_MH("");
+  }
+
+  Literal* apply(Literal *, int) {
+    THROW_MH("");
+  }
+
+  bool unify(TermList, TermList) {
+    THROW_MH("");
+  }
+  bool unify(TermList, int, TermList, int) {
+    THROW_MH("");
+  }
+
+  bool match(TermList, TermList, int) {THROW_MH("");}
+
+
+  void reset() { THROW_MH(""); }
+};
 
 // TODO MH
 class RobSubstitutionTS {
 public:
   void reset() {}
-  bool unify(TermList a, int b, TermList c, int d) { THROW_MH(); }
-  TermList apply(TermList a, int b) { THROW_MH(); }
-  Literal* apply(Literal* a, int b) { THROW_MH(); }
+  bool unify(TermList a, int b, TermList c, int d) { THROW_MH(""); }
+  TermList apply(TermList a, int b) { THROW_MH(""); }
+  Literal* apply(Literal* a, int b) { THROW_MH(""); }
 };
 
 };

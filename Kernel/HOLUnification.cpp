@@ -27,13 +27,8 @@ namespace UnificationAlgorithms
 class HigherOrderUnifiersIt: public IteratorCore<RobSubstitution*> {
 public:
 
-  TermList applyTypeSub(TermList t) {
-
-
-    LOG("type sub", t);
-
-    return t;
-
+  TermList applyTypeSub(TermList t){
+    THROW_MH(""); // Do we need to deal with type substitutions for TH0?
     // in the monomorphic case, should be cheap
     //return SortDeref(_subst).deref(t);
   }
@@ -631,6 +626,16 @@ bool HOLUnification::unifyWithPlaceholders(TermSpec t1, TermSpec t2, RobSubstitu
   return success;
 }
 
+SubstIterator HOLUnification::postprocess(RobSubstitution* sub, TermList t, TermList sort)
+{
+  // ignore the sub that has been passed in, since
+  // that contains substitutions formed during tree traversal which
+  // are not helpful here (but cannot be erased either!)
+  TypedTermList res = ToBank(VarBank::RESULT_BANK).toBank(TypedTermList(t,sort));
+
+  THROW_MH("");
+  // return vi(new HigherOrderUnifiersItWrapper(_origQuery, _origQuerySort, res, res.sort(), _funcExt));
+}
 
 }
 }

@@ -136,11 +136,11 @@ public:
 
   TermList(unsigned var, VarBank bank)
   {
-    THROW_MH();
+    THROW_MH("");
   }
 
   VarBank bank() const {
-    THROW_MH();
+    THROW_MH("");
   }
 
   /** creates a term list containing a variable. If @b special is true, then the variable

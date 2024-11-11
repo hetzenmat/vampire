@@ -332,7 +332,7 @@ TermList TermList::finalResult(){
 }
 
 TermList TermList::whnfDeref(RobSubstitution* sub) {
-  THROW_MH();
+  THROW_MH("");
   // return WHNFDeref(sub).normalise(*this);
 }
 
@@ -517,7 +517,7 @@ unsigned Term::numTermArguments() const
 
 TermList TermList::toBank(VarBank b)
 {
-  THROW_MH();
+  THROW_MH("");
   /*if(isVar())
     return TermList(_var(), b);
 

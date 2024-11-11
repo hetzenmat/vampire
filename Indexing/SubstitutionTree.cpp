@@ -503,17 +503,6 @@ void SubstitutionTree<LeafData_>::Node::split(Node** pnode, TermList* where, int
 }
 
 template<class LeafData_>
-void SubstitutionTree<LeafData_>::IntermediateNode::loadChildren(NodeIterator children)
-{
-  while(children.hasNext()) {
-    Node* ext=*children.next();
-    Node** own=childByTop(ext->top(), true);
-    ASS(! *own);
-    *own=ext;
-  }
-}
-
-template<class LeafData_>
 void SubstitutionTree<LeafData_>::Leaf::loadChildren(LDIterator children)
 {
   while(children.hasNext()) {

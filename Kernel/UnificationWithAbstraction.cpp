@@ -285,7 +285,7 @@ Option<Literal*> UnificationConstraint::toLiteral(RobSubstitution& s)
 
 }
 
-bool AbstractingUnifier::fixedPointIteration()
+bool AbstractingUnifier::fixedPointIteration(AbstractionOracle const& ao)
 {
   TIME_TRACE("uwa fixed point")
   Recycled<Stack<UnificationConstraint>> todo;
@@ -298,7 +298,7 @@ bool AbstractingUnifier::fixedPointIteration()
     auto c = todo->pop();
     DEBUG_FINALIZE(2, "popped: ", c);
     bool progress;
-    auto res = unify(c.lhs(), c.rhs(), progress);
+    auto res = unify(ao, c.lhs(), c.rhs(), progress);
     if (!res) {
       DEBUG_FINALIZE(1, "finalizing failed");
       return false;
@@ -314,11 +314,11 @@ bool AbstractingUnifier::fixedPointIteration()
   return true;
 }
 
-Option<Recycled<Stack<unsigned>>> AbstractingUnifier::unifiableSymbols(unsigned f)
+Option<Recycled<Stack<unsigned>>> AbstractingUnifier::unifiableSymbols(AbstractionOracle const& ao, unsigned f)
 {
   auto anything = []() -> Option<Recycled<Stack<unsigned>>> { return {}; };
   auto nothing  = []() -> Option<Recycled<Stack<unsigned>>> { return some(recycledStack<unsigned>()); };
-  switch (_uwa._mode) {
+  switch (ao._mode) {
     case Options::UnificationWithAbstraction::OFF: return some(recycledStack(f));
     case Options::UnificationWithAbstraction::INTERP_ONLY: return theory->isInterpretedFunction(f) ? anything() : some(recycledStack(f));
     case Options::UnificationWithAbstraction::ONE_INTERP: return anything();
@@ -332,19 +332,19 @@ Option<Recycled<Stack<unsigned>>> AbstractingUnifier::unifiableSymbols(unsigned 
   ASSERTION_VIOLATION
 }
 
-bool AbstractingUnifier::unify(TermList term1, unsigned bank1, TermList term2, unsigned bank2)
+bool AbstractingUnifier::unify(AbstractionOracle const& ao, TermList term1, unsigned bank1, TermList term2, unsigned bank2)
 {
-  if (_uwa._mode == Shell::Options::UnificationWithAbstraction::OFF) 
+  if (ao._mode == Shell::Options::UnificationWithAbstraction::OFF) 
     return _subs->unify(term1, bank1, term2, bank2);
 
   bool progress;
-  return unify(TermSpec(term1, bank1), TermSpec(term2, bank2), progress);
+  return unify(ao, TermSpec(term1, bank1), TermSpec(term2, bank2), progress);
 }
 
-bool AbstractingUnifier::unify(TermSpec t1, TermSpec t2, bool& progress)
+bool AbstractingUnifier::unify(AbstractionOracle const& ao, TermSpec t1, TermSpec t2, bool& progress)
 {
   TIME_TRACE("unification with abstraction")
-  ASS_NEQ(_uwa._mode, Shell::Options::UnificationWithAbstraction::OFF) 
+  ASS_NEQ(ao._mode, Shell::Options::UnificationWithAbstraction::OFF) 
   DEBUG_UNIFY(1, *this, ".unify(", t1, ",", t2, ")")
   progress = false;
 
@@ -365,7 +365,7 @@ bool AbstractingUnifier::unify(TermSpec t1, TermSpec t2, bool& progress)
     Option<AbstractionOracle::AbstractionResult> absRes;
     auto doAbstract = [&](auto& l, auto& r) -> bool
     { 
-      absRes = _uwa.tryAbstract(this, l, r);
+      absRes = ao.tryAbstract(this, l, r);
       if (absRes) {
         DEBUG_UNIFY(2, "abstraction result: ", absRes)
       }

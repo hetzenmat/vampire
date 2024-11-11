@@ -2061,6 +2061,7 @@ public:
   bool thiTautologyDeletion() const { return _thiTautologyDeletion.actualValue; }
 #endif
   UnificationWithAbstraction unificationWithAbstraction() const { return _unificationWithAbstraction.actualValue; }
+  bool uwaEnabled() const { return unificationWithAbstraction() != UnificationWithAbstraction::OFF; }
   bool unificationWithAbstractionFixedPointIteration() const { return _unificationWithAbstractionFixedPointIteration.actualValue; }
   void setUWA(UnificationWithAbstraction value){ _unificationWithAbstraction.actualValue = value; } 
   bool fixUWA() const { return _fixUWA.actualValue; }

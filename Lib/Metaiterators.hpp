@@ -16,6 +16,7 @@
 #ifndef __Metaiterators__
 #define __Metaiterators__
 
+#include <type_traits>
 #include <utility>
 #include <functional>
 
@@ -1682,6 +1683,30 @@ static auto concatIters(I1 i1, I2 i2, Is... is)
 template<class... Items>
 auto iterItems(Items... items)
 { return concatIters(getSingletonIterator(items)...); }
+
+
+template<class F>
+class UnfoldIter {
+public:
+  UnfoldIter(F fun) : _fun(fun) {}
+  DECL_ELEMENT_TYPE(typename std::invoke_result_t<F>::Content);
+private:
+  Option<Option<OWN_ELEMENT_TYPE>> _cur;
+  F _fun;
+public:
+  bool hasNext() {
+    if (_cur.isNone()) {
+      _cur = some(_fun());
+    }
+    return _cur->isSome();
+  }
+
+  OWN_ELEMENT_TYPE next() { return _cur->take().unwrap(); }
+};
+
+
+template<class F>
+auto unfoldIter(F fun) { return iterTraits(UnfoldIter<F>(std::move(fun))); }
 
 static const auto range = [](auto from, auto to) 
   { return iterTraits(getRangeIterator<decltype(to)>(from, to)); };
