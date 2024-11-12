@@ -28,7 +28,7 @@
 #include "Kernel/Clause.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/NumTraits.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Indexing/TermSharing.hpp"
 #include "Kernel/Signature.hpp"

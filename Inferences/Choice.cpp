@@ -19,7 +19,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Signature.hpp"
 #include "Kernel/Inference.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/RobSubstitution.hpp"
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/FormulaVarIterator.hpp"
@@ -46,8 +46,6 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
-typedef ApplicativeHelper AH;
-
 Clause* Choice::createChoiceAxiom(TermList op, TermList set)
 {
   TermList setSort = SortHelper::getResultSort(op.term()).domain();
@@ -62,14 +60,14 @@ Clause* Choice::createChoiceAxiom(TermList op, TermList set)
   }
   TermList freshVar = TermList(max+1, false);
 
-  TermList t1 = AH::app(setSort, set, freshVar);
-  TermList t2 = AH::app(op, set);
-  t2 =          AH::app(setSort, set, t2);
+  TermList t1 = ApplicativeHelper::app(setSort, set, freshVar);
+  TermList t2 = ApplicativeHelper::app(op, set);
+  t2 =          ApplicativeHelper::app(setSort, set, t2);
 
   Clause* axiom = new(2) Clause(2, NonspecificInference0(UnitInputType::AXIOM, InferenceRule::CHOICE_AXIOM));
 
-  (*axiom)[0] = Literal::createEquality(true, t1, AH::bottom(), AtomicSort::boolSort());
-  (*axiom)[1] = Literal::createEquality(true, t2, AH::top(), AtomicSort::boolSort());
+  (*axiom)[0] = Literal::createEquality(true, t1, ApplicativeHelper::bottom(), AtomicSort::boolSort());
+  (*axiom)[1] = Literal::createEquality(true, t2, ApplicativeHelper::top(), AtomicSort::boolSort());
 
   return axiom;
 }
@@ -83,7 +81,7 @@ struct Choice::AxiomsIterator
 
     _set = term.rhs();
 
-    _headSort = AH::lhsSort(term);
+    _headSort = ApplicativeHelper::lhsSort(term);
     _resultSort = SortHelper::getResultSort(term.term());
 
     DHSet<unsigned>* ops = env.signature->getChoiceOperators();
@@ -169,7 +167,7 @@ struct Choice::IsChoiceTerm
     TermList head;
     ApplicativeHelper::getHeadAndArgs(t, head, args);
     if(args.size() == 1 && !args[0].isVar() && !args[0].containsLooseIndex()){
-      TermList headSort = AH::lhsSort(TermList(t));
+      TermList headSort = ApplicativeHelper::lhsSort(TermList(t));
 
       TermList tv = TermList(0, VarBank::QUERY_BANK); // put on QUERY_BANK to separate in from variables in headSort
       TermList o  = AtomicSort::boolSort();

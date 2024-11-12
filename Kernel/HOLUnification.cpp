@@ -13,7 +13,7 @@
  */
 
 #include "Kernel/HOLUnification.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Indexing/TermSharing.hpp"
 

@@ -22,7 +22,7 @@
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/Term.hpp"
 #include "Kernel/TermIterators.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Shell/Statistics.hpp"
 #include "Debug/TimeProfiling.hpp"
@@ -32,8 +32,6 @@
 using namespace std;
 using namespace Kernel;
 using namespace Indexing;
-
-typedef ApplicativeHelper AH;
 
 /**
  * Initialise the term sharing structure.

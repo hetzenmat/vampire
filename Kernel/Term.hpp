@@ -301,9 +301,6 @@ public:
   TermList finalResult();
   // return the weak head normal form of the term
   TermList whnfDeref(RobSubstitution* sub);
-  TermList betaNF();
-  TermList etaNF();
-  TermList betaEtaNF();
 
   TermList toBank(VarBank bank);
   // Use with care! Make sure that it is a term before calling

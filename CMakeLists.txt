@@ -304,8 +304,10 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/Polynomial.cpp
     Kernel/PolynomialNormalizer.hpp
     Kernel/PolynomialNormalizer.cpp
-    Kernel/ApplicativeHelper.hpp
-    Kernel/ApplicativeHelper.cpp
+    Kernel/HOL/ApplicativeHelper.hpp
+    Kernel/HOL/ApplicativeHelper.cpp
+    Kernel/HOL/BetaNormaliser.hpp
+    Kernel/HOL/BetaNormaliser.cpp
     Inferences/CNFOnTheFly.cpp
     Inferences/CNFOnTheFly.hpp
     Inferences/BetaEtaSimplify.hpp

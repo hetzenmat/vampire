@@ -13,7 +13,7 @@
 
 #include "Kernel/Term.hpp"
 #include "Kernel/Clause.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/Inference.hpp"
 #include "Kernel/SortHelper.hpp"
@@ -37,8 +37,8 @@ Clause* BetaEtaSimplify::simplify(Clause* c)
    TermList t0 = *lit->nthArgument(0);
    TermList t1 = *lit->nthArgument(1);
 
-   TermList t0r = t0.betaEtaNF();
-   TermList t1r = t1.betaEtaNF();
+   TermList t0r = ApplicativeHelper::betaEtaNF(t0);
+   TermList t1r = ApplicativeHelper::betaEtaNF(t1);
 
 
    if((t0r != t0) || (t1r != t1)){

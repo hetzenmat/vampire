@@ -18,7 +18,7 @@
 
 #include "Inferences/InductionHelper.hpp"
 
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/Clause.hpp"
 #include "Kernel/EqHelper.hpp"
 #include "Kernel/Formula.hpp"

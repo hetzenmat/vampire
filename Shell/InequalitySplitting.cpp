@@ -23,7 +23,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Term.hpp"
 #include "Kernel/Unit.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/TermIterators.hpp"
 
 #include "Indexing/TermSharing.hpp"

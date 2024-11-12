@@ -19,7 +19,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Signature.hpp"
 #include "Kernel/Inference.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/TermIterators.hpp"
 
 #include "Lib/Environment.hpp"
@@ -42,17 +42,14 @@ using namespace Kernel;
 using namespace Indexing;
 using namespace Saturation;
 
-
-typedef ApplicativeHelper AH;
-
 bool ElimLeibniz::polarity(Literal* lit) {
   TermList lhs = *lit->nthArgument(0);
   TermList rhs = *lit->nthArgument(1);
-  ASS(AH::isBool(lhs)  || AH::isBool(rhs));
-  if(AH::isBool(lhs)){ 
-    return lit->polarity() == AH::isTrue(lhs);
+  ASS(ApplicativeHelper::isBool(lhs)  || ApplicativeHelper::isBool(rhs));
+  if(ApplicativeHelper::isBool(lhs)){ 
+    return lit->polarity() == ApplicativeHelper::isTrue(lhs);
   }
-  return lit->polarity() == AH::isTrue(rhs);
+  return lit->polarity() == ApplicativeHelper::isTrue(rhs);
 }
 
 bool ElimLeibniz::isPair(Literal* l1, Literal* l2){
@@ -66,7 +63,7 @@ bool ElimLeibniz::isPair(Literal* l1, Literal* l2){
 ElimLeibniz::LeibEqRec ElimLeibniz::getLiteralInfo(Literal* lit){
   TermList lhs = *lit->nthArgument(0);
   TermList rhs = *lit->nthArgument(1);
-  TermList nonBooleanSide = AH::isBool(rhs) ? lhs : rhs;
+  TermList nonBooleanSide = ApplicativeHelper::isBool(rhs) ? lhs : rhs;
   ASS(nonBooleanSide.isTerm());
   Term* term = nonBooleanSide.term();
 
@@ -114,10 +111,10 @@ ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
     Literal* lit = (*premise)[i];
     TermList lhs = *lit->nthArgument(0);
     TermList rhs = *lit->nthArgument(1);
-    if(!AH::isBool(lhs) && !AH::isBool(rhs)){ continue; } 
-    TermList nonBooleanSide = AH::isBool(rhs) ? lhs : rhs;
+    if(!ApplicativeHelper::isBool(lhs) && !ApplicativeHelper::isBool(rhs)){ continue; } 
+    TermList nonBooleanSide = ApplicativeHelper::isBool(rhs) ? lhs : rhs;
 
-    AH::getHeadAndArgs(nonBooleanSide, head, args);
+    ApplicativeHelper::getHeadAndArgs(nonBooleanSide, head, args);
     if(!head.isVar() || args.size() != 1){ continue; }
     
     bool pol = polarity(lit);
@@ -154,9 +151,9 @@ afterLoop:
 
   TermList var = TermList(lerPosLit.var, false);
 
-  TermList vEquals = AH::equality(argS);
+  TermList vEquals = ApplicativeHelper::equality(argS);
   // creating the term  = arg  (which is eta-equivalent to ^x. arg = x)
-  TermList t1 = AH::app(vEquals, lerNegLit.arg);
+  TermList t1 = ApplicativeHelper::app(vEquals, lerNegLit.arg);
 
   // TODO MH
   // if (subst.unify(var, t1)) {
@@ -165,9 +162,9 @@ afterLoop:
   //   subst.reset();
   // }
 
-  TermList db = AH::getDeBruijnIndex(0, argS);
+  TermList db = ApplicativeHelper::getDeBruijnIndex(0, argS);
   // creating the term ^x. arg != x
-  TermList t2 = AH::lambda(argS, AH::app(AH::neg(), AH::app(AH::app(vEquals, lerPosLit.arg),db)));
+  TermList t2 = ApplicativeHelper::lambda(argS, ApplicativeHelper::app(ApplicativeHelper::neg(), ApplicativeHelper::app(ApplicativeHelper::app(vEquals, lerPosLit.arg),db)));
 
   // TODO MH
   // if(subst.unify(var, t2)){

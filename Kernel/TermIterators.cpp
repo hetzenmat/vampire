@@ -17,13 +17,13 @@
 #include "Term.hpp"
 #include "Signature.hpp"
 #include "TermIterators.hpp"
-#include "ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Lib/Deque.hpp"
 
 namespace Kernel
 {
+  namespace AH = ApplicativeHelper;
 
-typedef ApplicativeHelper AH;
 
 /**
  * True if there exists next variable

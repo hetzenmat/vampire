@@ -23,7 +23,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Shell/Statistics.hpp"
 #include "Shell/Skolem.hpp"
@@ -41,10 +41,6 @@ static TermList sigmaRemoval(TermList sigmaTerm, TermList expsrt);
 static TermList piRemoval(TermList piTerm, Clause* clause, TermList expsrt);
 static InferenceRule convert(Signature::Proxy cnst);
 static ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaIndex* index = 0);
-
-typedef ApplicativeHelper AH;
-
-
 
 ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaIndex* index)
 {
@@ -80,10 +76,10 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
     TermList rhs = *lit->nthArgument(1);
     TermList term;
     TermList boolVal;
-    if(AH::isBool(lhs)){
+    if(ApplicativeHelper::isBool(lhs)){
       boolVal = lhs;
       term = rhs;
-    } else if(AH::isBool(rhs)){
+    } else if(ApplicativeHelper::isBool(rhs)){
       boolVal = rhs;
       term = lhs;
     } else if(SortHelper::getEqualityArgumentSort(lit) == boolSort && !not_be) {
@@ -108,8 +104,8 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
       continue;
     }
 
-    AH::getHeadAndArgs(term, head, args);
-    Signature::Proxy prox = AH::getProxy(head);
+    ApplicativeHelper::getHeadAndArgs(term, head, args);
+    Signature::Proxy prox = ApplicativeHelper::getProxy(head);
     if(prox == Signature::NOT_PROXY || prox == Signature::IFF ||
        prox == Signature::XOR){
       continue;
@@ -135,7 +131,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
       }
     }
 
-    bool positive = AH::isTrue(boolVal) == lit->polarity();
+    bool positive = ApplicativeHelper::isTrue(boolVal) == lit->polarity();
 
     if((prox == Signature::OR) && (args.size() == 2)){
       if(positive){
@@ -232,7 +228,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
               TermList tS    = subst.apply(t, 0);
               TermList argS  = subst.apply(args[0],1);
 
-              TermList app   = AH::app(argS, tS);
+              TermList app   = ApplicativeHelper::app(argS, tS);
               Literal* l1   = Literal::createEquality(true, app, rhs, boolSort);
 
               unsigned clen   = c->length();
@@ -261,7 +257,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
             auto tqr = results.next();
             TermList skolemTerm = tqr.data->term; // TODO MH: use term or value?
             skolemTerm=tqr.unifier->applyToBoundResult(skolemTerm);
-            newTerm = AH::app(srt, args[0], skolemTerm);
+            newTerm = ApplicativeHelper::app(srt, args[0], skolemTerm);
             newTermCreated = true;
           }
         }
@@ -270,7 +266,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
           if(index){
             index->insertFormula(TypedTermList(term.term()), skolemTerm);
           }
-          newTerm = AH::app(srt, args[0], skolemTerm);
+          newTerm = ApplicativeHelper::app(srt, args[0], skolemTerm);
         }
         rule = convert(Signature::SIGMA);
       }
@@ -412,20 +408,20 @@ Clause* IFFXORRewriterISE::simplify(Clause* c){
     TermList rhs = *lit->nthArgument(1);
     TermList term;
     TermList boolVal;
-    if(AH::isBool(lhs)){
+    if(ApplicativeHelper::isBool(lhs)){
       boolVal = lhs;
       term = rhs;
-    } else if(AH::isBool(rhs)){
+    } else if(ApplicativeHelper::isBool(rhs)){
       boolVal = rhs;
       term = lhs;
     } else {
       continue;
     }
 
-    bool positive = AH::isTrue(boolVal) == lit->polarity();
+    bool positive = ApplicativeHelper::isTrue(boolVal) == lit->polarity();
 
-    AH::getHeadAndArgs(term, head, args);
-    Signature::Proxy prox = AH::getProxy(head);
+    ApplicativeHelper::getHeadAndArgs(term, head, args);
+    Signature::Proxy prox = ApplicativeHelper::getProxy(head);
 
     if((prox == Signature::IFF || prox == Signature::XOR) && (args.size() == 2)){
       bool polarity = (prox == Signature::IFF) == positive;

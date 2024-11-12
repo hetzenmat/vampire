@@ -336,18 +336,6 @@ TermList TermList::whnfDeref(RobSubstitution* sub) {
   // return WHNFDeref(sub).normalise(*this);
 }
 
-TermList TermList::betaNF(){
-  return BetaNormaliser().normalise(*this);
-}
-
-TermList TermList::etaNF(){
-  return EtaNormaliser().normalise(*this);
-}
-
-TermList TermList::betaEtaNF(){
-  return this->betaNF().etaNF();
-}
-
 TermList Term::head() {
   TermList trm = TermList(this);
   while(trm.isLambdaTerm()){

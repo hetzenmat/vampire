@@ -19,7 +19,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Shell/Statistics.hpp"
 
@@ -81,18 +81,16 @@ bool BoolSimp::areComplements(TermList t1, TermList t2){
 }
 
 TermList BoolSimp::boolSimplify(TermList term){
-  typedef ApplicativeHelper AH;
-
   static TermList troo(Term::foolTrue());
   static TermList fols(Term::foolFalse());
   static TermStack args;
   TermList head;
 
-  AH::getHeadAndArgs(term, head, args);
+  ApplicativeHelper::getHeadAndArgs(term, head, args);
 
   if(head.isVar()){ return term; }
 
-  switch(AH::getProxy(head)){
+  switch(ApplicativeHelper::getProxy(head)){
     case Signature::AND:{
       ASS(args.size() == 2);
       if(args[1] == fols || args[0] == fols){ return fols; }
@@ -118,15 +116,15 @@ TermList BoolSimp::boolSimplify(TermList term){
       if(areComplements(args[0], args[1])){ return args[0]; }
       if(args[0] == args[1]){ return troo; }
       if(args[0] == troo){ return troo; }
-      if(args[0] == fols){ return AH::app(AH::neg(), args[1]); }
+      if(args[0] == fols){ return ApplicativeHelper::app(ApplicativeHelper::neg(), args[1]); }
       break;
     }
     case Signature::IFF:{
       ASS(args.size() == 2);
       if(args[0] == troo){ return args[1]; } else
           if(args[1] == troo){ return args[0]; }
-      if(args[0] == fols){ return AH::app(AH::neg(), args[1]); } else
-          if(args[1] == fols){ return AH::app(AH::neg(), args[0]); }
+      if(args[0] == fols){ return ApplicativeHelper::app(ApplicativeHelper::neg(), args[1]); } else
+          if(args[1] == fols){ return ApplicativeHelper::app(ApplicativeHelper::neg(), args[0]); }
       if(args[0] == args[1]){ return troo; }
       if(areComplements(args[0], args[1])){ return fols; }
       break;
@@ -135,7 +133,7 @@ TermList BoolSimp::boolSimplify(TermList term){
       ASS(args.size() == 1);
       if(args[0] == troo){ return fols; }
       if(args[0] == fols){ return troo; }
-      AH::getHeadAndArgs(args[0], head, args);
+      ApplicativeHelper::getHeadAndArgs(args[0], head, args);
       if(head.isNot()){
         ASS(args.size() == 1);
         return args[0];

@@ -27,7 +27,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Unit.hpp"
 #include "Kernel/LiteralSelector.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Saturation/SaturationAlgorithm.hpp"
 

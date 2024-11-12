@@ -19,7 +19,7 @@
 #include "Ordering.hpp"
 #include "SortHelper.hpp"
 #include "TermIterators.hpp"
-#include "ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Lib/Metaiterators.hpp"
 #include "Matcher.hpp"
 

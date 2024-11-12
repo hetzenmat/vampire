@@ -4,7 +4,7 @@
 
 #include "HOLUtils.hpp"
 
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/TypedTermList.hpp"
 #include "Shell/LambdaConversion.hpp"
 

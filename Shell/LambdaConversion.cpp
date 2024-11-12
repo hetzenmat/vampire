@@ -29,7 +29,7 @@
 #include "Kernel/Formula.hpp"
 #include "Kernel/Signature.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/TermIterators.hpp"
 
 #include "Skolem.hpp"
@@ -40,8 +40,6 @@
 using namespace Lib;
 using namespace Kernel;
 using namespace Shell;
-
-typedef ApplicativeHelper AH;
 
 TermList LambdaConversion::convertLambda(Formula* formula)
 {
@@ -94,9 +92,9 @@ TermList LambdaConversion::convertLambda(Formula* formula, VarToIndexMap& map)
 
      TermList equalsSort = SortHelper::getEqualityArgumentSort(lit);
 
-     appTerm = AH::app2(AH::equality(equalsSort), lhs, rhs);
+     appTerm = ApplicativeHelper::app2(ApplicativeHelper::equality(equalsSort), lhs, rhs);
 
-     return lit->polarity() ? appTerm : AH::app(AH::neg(), appTerm);
+     return lit->polarity() ? appTerm : ApplicativeHelper::app(ApplicativeHelper::neg(), appTerm);
    }
    case IFF:
    case IMP:
@@ -110,7 +108,7 @@ TermList LambdaConversion::convertLambda(Formula* formula, VarToIndexMap& map)
      TermList form1 = convertLambda(lhs, map);
      TermList form2 = convertLambda(rhs, map);
 
-     return AH::app2(constant, form1, form2);;
+     return ApplicativeHelper::app2(constant, form1, form2);;
    }
    case AND:
    case OR:{
@@ -125,11 +123,11 @@ TermList LambdaConversion::convertLambda(Formula* formula, VarToIndexMap& map)
        Formula* arg = argsIt.next();
        form = convertLambda(arg, map);
        if(count == 1){
-         appTerm = AH::app(constant, form);
+         appTerm = ApplicativeHelper::app(constant, form);
        }else if(count == 2){
-         appTerm = AH::app(appTerm, form);
+         appTerm = ApplicativeHelper::app(appTerm, form);
        }else{
-         appTerm = AH::app2(constant, appTerm, form);
+         appTerm = ApplicativeHelper::app2(constant, appTerm, form);
        }
        count++;
      }
@@ -137,7 +135,7 @@ TermList LambdaConversion::convertLambda(Formula* formula, VarToIndexMap& map)
    }
    case NOT: {
      TermList form = convertLambda(formula->uarg(), map);
-     return  AH::app(AH::neg(), form);
+     return  ApplicativeHelper::app(ApplicativeHelper::neg(), form);
    }
    case FORALL:
    case EXISTS: {
@@ -157,7 +155,7 @@ TermList LambdaConversion::convertLambda(Formula* formula, VarToIndexMap& map)
        VList* var = VList::singleton(v);
        SList* sort = SList::singleton(s);
        auto t = TermList(Term::createLambda(form, var, sort, AtomicSort::boolSort()));
-       form = AH::app((pi ? AH::pi(s) : AH::sigma(s)), t);
+       form = ApplicativeHelper::app((pi ? ApplicativeHelper::pi(s) : ApplicativeHelper::sigma(s)), t);
      }
      return convertLambda(form, map);
    }
@@ -184,7 +182,7 @@ TermList LambdaConversion::convertLambda(TermList term, VarToIndexMap& map)
  if(term.isVar()){
    IndexSortPair p;
    if(map.find(term.var(), p)){
-     return AH::getDeBruijnIndex(p.first,p.second);
+     return ApplicativeHelper::getDeBruijnIndex(p.first,p.second);
    }
    return term;
  }
@@ -220,7 +218,7 @@ TermList LambdaConversion::convertLambda(TermList term, VarToIndexMap& map)
  TermList arg1 = *t->nthArgument(2);
  TermList arg2 = *t->nthArgument(3);
 
- return AH::app(s1, s2, convertLambda(arg1, map), convertLambda(arg2, map));
+ return ApplicativeHelper::app(s1, s2, convertLambda(arg1, map), convertLambda(arg2, map));
 }
 
 
@@ -245,7 +243,7 @@ TermList LambdaConversion::convertLambda(VList* vars, SList* sorts,
  }
 
  bodySort = converted.isVar() ? bodySort : sortOf(converted);
- return AH::lambda(s, bodySort, converted);
+ return ApplicativeHelper::lambda(s, bodySort, converted);
 }
 
 TermList LambdaConversion::convertLambda(Term* lambdaTerm)
@@ -269,9 +267,9 @@ void LambdaConversion::addFunctionExtensionalityAxiom(Problem& prb)
  unsigned diff = env.signature->getDiff();
 
  TermList diffT = TermList(Term::create2(diff, alpha, beta));
- TermList diffTApplied = AH::app2(diffT, x, y);
- TermList lhs = AH::app(alpha, beta, x, diffTApplied);
- TermList rhs = AH::app(alpha, beta, y, diffTApplied);
+ TermList diffTApplied = ApplicativeHelper::app2(diffT, x, y);
+ TermList lhs = ApplicativeHelper::app(alpha, beta, x, diffTApplied);
+ TermList rhs = ApplicativeHelper::app(alpha, beta, y, diffTApplied);
 
  Clause* funcExtAx = new(2) Clause(2,  NonspecificInference0(UnitInputType::AXIOM,InferenceRule::FUNC_EXT_AXIOM));
  (*funcExtAx)[0] = Literal::createEquality(false, lhs, rhs, beta);
@@ -295,13 +293,13 @@ void LambdaConversion::addChoiceAxiom(Problem& prb)
  unsigned choice = env.signature->getChoice();
 
  TermList choiceT = TermList(Term::create1(choice, alpha));
- TermList choiceTApplied = AH::app(alphaBool, alpha, choiceT, p);
- TermList px = AH::app(alpha, boolS, p, x);
- TermList pchoiceT = AH::app(alpha, boolS, p, choiceTApplied);
+ TermList choiceTApplied = ApplicativeHelper::app(alphaBool, alpha, choiceT, p);
+ TermList px = ApplicativeHelper::app(alpha, boolS, p, x);
+ TermList pchoiceT = ApplicativeHelper::app(alpha, boolS, p, choiceTApplied);
 
  Clause* choiceAx = new(2) Clause(2, NonspecificInference0(UnitInputType::AXIOM,InferenceRule::CHOICE_AXIOM));
- (*choiceAx)[0] = Literal::createEquality(true, px, AH::bottom(), boolS);
- (*choiceAx)[1] = Literal::createEquality(true, pchoiceT, AH::top(), boolS);
+ (*choiceAx)[0] = Literal::createEquality(true, px, ApplicativeHelper::bottom(), boolS);
+ (*choiceAx)[1] = Literal::createEquality(true, pchoiceT, ApplicativeHelper::top(), boolS);
  UnitList::push(choiceAx, prb.units());
 
 
@@ -324,105 +322,105 @@ void LambdaConversion::addProxyAxioms(Problem& prb)
  TermList sk2 = TermList(Term::create1(skolem2, s1));
 
  Clause* eqAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::EQUALITY_PROXY_AXIOM));
- (*eqAxiom1)[0] = toEquality(AH::app2(AH::equality(s1), x, y), true);
+ (*eqAxiom1)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::equality(s1), x, y), true);
  (*eqAxiom1)[1] = Literal::createEquality(false,x,y,s1);
  eqAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(eqAxiom1, prb.units());
 
  Clause* eqAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::EQUALITY_PROXY_AXIOM));
- (*eqAxiom2)[0] = toEquality(AH::app2(AH::equality(s1), x, y), false);
+ (*eqAxiom2)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::equality(s1), x, y), false);
  (*eqAxiom2)[1] = Literal::createEquality(true,x,y,s1);
  eqAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(eqAxiom2, prb.units());
 
  Clause* notAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::NOT_PROXY_AXIOM));
- (*notAxiom1)[0] = toEquality(AH::app(AH::neg(), x), true);
+ (*notAxiom1)[0] = toEquality(ApplicativeHelper::app(ApplicativeHelper::neg(), x), true);
  (*notAxiom1)[1] = toEquality(x, true);
  notAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(notAxiom1, prb.units());
 
  Clause* notAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::NOT_PROXY_AXIOM));
- (*notAxiom2)[0] = toEquality(AH::app(AH::neg(), x), false);
+ (*notAxiom2)[0] = toEquality(ApplicativeHelper::app(ApplicativeHelper::neg(), x), false);
  (*notAxiom2)[1] = toEquality(x, false);
  notAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(notAxiom2, prb.units());
 
  Clause* piAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::PI_PROXY_AXIOM));
- (*piAxiom1)[0] = toEquality(AH::app(AH::pi(s1), x), true);
- (*piAxiom1)[1] = toEquality(AH::app(s1, AtomicSort::boolSort(), x, AH::app(sk1, x)), false);
+ (*piAxiom1)[0] = toEquality(ApplicativeHelper::app(ApplicativeHelper::pi(s1), x), true);
+ (*piAxiom1)[1] = toEquality(ApplicativeHelper::app(s1, AtomicSort::boolSort(), x, ApplicativeHelper::app(sk1, x)), false);
  piAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(piAxiom1, prb.units());
 
  Clause* piAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::PI_PROXY_AXIOM));
- (*piAxiom2)[0] = toEquality(AH::app(AH::pi(s1), x), false);
- (*piAxiom2)[1] = toEquality(AH::app(s1, AtomicSort::boolSort(), x, y), true);
+ (*piAxiom2)[0] = toEquality(ApplicativeHelper::app(ApplicativeHelper::pi(s1), x), false);
+ (*piAxiom2)[1] = toEquality(ApplicativeHelper::app(s1, AtomicSort::boolSort(), x, y), true);
  piAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(piAxiom2, prb.units());
 
  Clause* sigmaAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::SIGMA_PROXY_AXIOM));
- (*sigmaAxiom1)[0] = toEquality(AH::app(AH::sigma(s1), x), true);
- (*sigmaAxiom1)[1] = toEquality(AH::app(s1, AtomicSort::boolSort(), x, y), false);
+ (*sigmaAxiom1)[0] = toEquality(ApplicativeHelper::app(ApplicativeHelper::sigma(s1), x), true);
+ (*sigmaAxiom1)[1] = toEquality(ApplicativeHelper::app(s1, AtomicSort::boolSort(), x, y), false);
  sigmaAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(sigmaAxiom1, prb.units());
 
  Clause* sigmaAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::SIGMA_PROXY_AXIOM));
- (*sigmaAxiom2)[0] = toEquality(AH::app(AH::sigma(s1), x), false);
- (*sigmaAxiom2)[1] = toEquality(AH::app(s1, AtomicSort::boolSort(), x, AH::app(sk2, x)), true);
+ (*sigmaAxiom2)[0] = toEquality(ApplicativeHelper::app(ApplicativeHelper::sigma(s1), x), false);
+ (*sigmaAxiom2)[1] = toEquality(ApplicativeHelper::app(s1, AtomicSort::boolSort(), x, ApplicativeHelper::app(sk2, x)), true);
  sigmaAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(sigmaAxiom2, prb.units());
 
  Clause* impAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::IMPLIES_PROXY_AXIOM));
- (*impAxiom1)[0] = toEquality(AH::app2(AH::imp(), x, y), true);
+ (*impAxiom1)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::imp(), x, y), true);
  (*impAxiom1)[1] = toEquality(x, true);
  impAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(impAxiom1, prb.units());
 
  Clause* impAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::IMPLIES_PROXY_AXIOM));
- (*impAxiom2)[0] = toEquality(AH::app2(AH::imp(), x, y), true);
+ (*impAxiom2)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::imp(), x, y), true);
  (*impAxiom2)[1] = toEquality(y, false);
  impAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(impAxiom2, prb.units());
 
  Clause* impAxiom3 = new(3) Clause(3, TheoryAxiom(InferenceRule::IMPLIES_PROXY_AXIOM));
- (*impAxiom3)[0] = toEquality(AH::app2(AH::imp(), x, y), false);
+ (*impAxiom3)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::imp(), x, y), false);
  (*impAxiom3)[1] = toEquality(x, false);
  (*impAxiom3)[2] = toEquality(y, true);
  impAxiom3->inference().setProxyAxiomsDescendant(true);
  UnitList::push(impAxiom3, prb.units());
 
  Clause* andAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::AND_PROXY_AXIOM));
- (*andAxiom1)[0] = toEquality(AH::app2(AH::conj(), x, y), false);
+ (*andAxiom1)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::conj(), x, y), false);
  (*andAxiom1)[1] = toEquality(x, true);
  andAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(andAxiom1, prb.units());
 
  Clause* andAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::AND_PROXY_AXIOM));
- (*andAxiom2)[0] = toEquality(AH::app2(AH::conj(), x, y), false);
+ (*andAxiom2)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::conj(), x, y), false);
  (*andAxiom2)[1] = toEquality(y, true);
  andAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(andAxiom2, prb.units());
 
  Clause* andAxiom3 = new(3) Clause(3, TheoryAxiom(InferenceRule::AND_PROXY_AXIOM));
- (*andAxiom3)[0] = toEquality(AH::app2(AH::conj(), x, y), true);
+ (*andAxiom3)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::conj(), x, y), true);
  (*andAxiom3)[1] = toEquality(x, false);
  (*andAxiom3)[2] = toEquality(y, false);
  andAxiom3->inference().setProxyAxiomsDescendant(true);
  UnitList::push(andAxiom3, prb.units());
 
  Clause* orAxiom1 = new(2) Clause(2, TheoryAxiom(InferenceRule::OR_PROXY_AXIOM));
- (*orAxiom1)[0] = toEquality(AH::app2(AH::disj(), x, y), true);
+ (*orAxiom1)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::disj(), x, y), true);
  (*orAxiom1)[1] = toEquality(x, false);
  orAxiom1->inference().setProxyAxiomsDescendant(true);
  UnitList::push(orAxiom1, prb.units());
 
  Clause* orAxiom2 = new(2) Clause(2, TheoryAxiom(InferenceRule::OR_PROXY_AXIOM));
- (*orAxiom2)[0] = toEquality(AH::app2(AH::disj(), x, y), true);
+ (*orAxiom2)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::disj(), x, y), true);
  (*orAxiom2)[1] = toEquality(y, false);
  orAxiom2->inference().setProxyAxiomsDescendant(true);
  UnitList::push(orAxiom2, prb.units());
 
  Clause* orAxiom3 = new(3) Clause(3, TheoryAxiom(InferenceRule::OR_PROXY_AXIOM));
- (*orAxiom3)[0] = toEquality(AH::app2(AH::disj(), x, y), false);
+ (*orAxiom3)[0] = toEquality(ApplicativeHelper::app2(ApplicativeHelper::disj(), x, y), false);
  (*orAxiom3)[1] = toEquality(x, true);
  (*orAxiom3)[2] = toEquality(y, true);
  orAxiom3->inference().setProxyAxiomsDescendant(true);

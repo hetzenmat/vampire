@@ -25,7 +25,7 @@
 #include "Kernel/Inference.hpp"
 #include "Kernel/SubstHelper.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 #include "Saturation/SaturationAlgorithm.hpp"
 
@@ -90,7 +90,6 @@ struct ImitateProject::ResultFn
       : _cl(cl), _cLen(cl->length()), _maxVar(TermList(cl->maxVar(), false)) {}
   ClauseIterator operator() (Literal* lit)
   {
-    typedef ApplicativeHelper AH;
 
     ASS(lit->isEquality());
     ASS(lit->isFlexRigid());
@@ -113,7 +112,7 @@ struct ImitateProject::ResultFn
     }
  
     TermStack bindings;
-    bool imitFound = AH::getProjAndImitBindings(flexTerm,rigidTerm,bindings,_maxVar);
+    bool imitFound = ApplicativeHelper::getProjAndImitBindings(flexTerm,rigidTerm,bindings,_maxVar);
 
     // some inefficiency below as we iterate the term twice. Once in
     // getProjAndImitBindings and again in the head() call below.
