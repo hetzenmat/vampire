@@ -23,23 +23,10 @@
 #include "Kernel/TermTransformer.hpp"
 #include "Kernel/RobSubstitution.hpp"
 #include "Kernel/HOL/BetaNormaliser.hpp"
+#include "Kernel/HOL/EtaNormaliser.hpp"
 
 using namespace Kernel;
 using namespace Shell;
-
-// reduce to eta short form
-// normalises top down carrying out parallel eta reductions
-// for terms such as ^^^.f 2 1 0
-// WARNING Recursing lurks here (even during proof search!)
-// This is BAD! However, an  (efficient) iterative implementation is tricky, so
-// I am leaving for now.
-class EtaNormaliser
-{
-public:
-
-  TermList normalise(TermList t);
-  TermList transformSubterm(TermList t);
-};
 
 namespace ApplicativeHelper {
   TermList app(TermList sort, TermList head, TermList arg);
@@ -149,29 +136,6 @@ namespace ApplicativeHelper {
     return etaNF(betaNF(t));
   }
 }
-
-
-
-
-
-// similar to BetaNormaliser, but places a term in WHNF instead
-// of into full normal form
-class WHNFDeref : public TermTransformer
-{
-public:
-
-  WHNFDeref(RobSubstitution* sub) : _sub(sub) {
-    dontTransformSorts();
-  }
-  TermSpec normalise(TermSpec t);
-  // puts term into weak head normal form
-  TermList transformSubterm(TermList t) override;
-  bool exploreSubterms(TermList orig, TermList newTerm) override;
-
-private:
-  int _index;
-  RobSubstitution* _sub;
-};
 
 
 class RedexReducer : public TermTransformer
