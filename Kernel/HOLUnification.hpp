@@ -17,8 +17,10 @@
 
 
 #include "Forwards.hpp"
+#include "RobSubstitution.hpp"
 
 #include "Term.hpp"
+#include "TermTransformer.hpp"
 #include "Lib/Hash.hpp"
 #include "Lib/DHMap.hpp"
 #include "Lib/Metaiterators.hpp"

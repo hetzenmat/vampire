@@ -20,10 +20,9 @@
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
-
 #include "Shell/Statistics.hpp"
-
 #include "BoolSimp.hpp"
+#include "Kernel/TermTransformer.hpp"
 
 namespace Inferences {
 

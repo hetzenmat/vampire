@@ -25,7 +25,7 @@
 
 #include "Term.hpp"
 #include "SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "TypedTermList.hpp"
 
 namespace Kernel {
 

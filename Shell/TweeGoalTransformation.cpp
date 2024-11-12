@@ -38,11 +38,7 @@
 
 #include "TweeGoalTransformation.hpp"
 
-using Kernel::Clause;
-using Kernel::Literal;
-using Kernel::Problem;
-using Kernel::Unit;
-using Kernel::UnitList;
+using namespace Kernel;
 
 /*
  * The actual worker for the twee trick.

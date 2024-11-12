@@ -31,6 +31,7 @@
 #include "Kernel/TermIterators.hpp"
 #include "Debug/Output.hpp"
 #include "Debug/Tracer.hpp"
+
 #define DEBUG(...) // DBG(__VA_ARGS__)
 #define DEBUG_FINALIZE(LVL, ...) if (LVL < 0) DBG(__VA_ARGS__)
 #define DEBUG_UNIFY(LVL, ...) if (LVL < 0) DBG(__VA_ARGS__)
@@ -285,7 +286,7 @@ Option<Literal*> UnificationConstraint::toLiteral(RobSubstitution& s)
 
 }
 
-bool AbstractingUnifier::fixedPointIteration(AbstractionOracle const& ao)
+bool Kernel::AbstractingUnifier::fixedPointIteration(AbstractionOracle const& ao)
 {
   TIME_TRACE("uwa fixed point")
   Recycled<Stack<UnificationConstraint>> todo;
@@ -314,7 +315,7 @@ bool AbstractingUnifier::fixedPointIteration(AbstractionOracle const& ao)
   return true;
 }
 
-Option<Recycled<Stack<unsigned>>> AbstractingUnifier::unifiableSymbols(AbstractionOracle const& ao, unsigned f)
+Option<Recycled<Stack<unsigned>>> Kernel::AbstractingUnifier::unifiableSymbols(AbstractionOracle const& ao, unsigned f)
 {
   auto anything = []() -> Option<Recycled<Stack<unsigned>>> { return {}; };
   auto nothing  = []() -> Option<Recycled<Stack<unsigned>>> { return some(recycledStack<unsigned>()); };
@@ -332,7 +333,7 @@ Option<Recycled<Stack<unsigned>>> AbstractingUnifier::unifiableSymbols(Abstracti
   ASSERTION_VIOLATION
 }
 
-bool AbstractingUnifier::unify(AbstractionOracle const& ao, TermList term1, unsigned bank1, TermList term2, unsigned bank2)
+bool Kernel::AbstractingUnifier::unify(AbstractionOracle const& ao, TermList term1, unsigned bank1, TermList term2, unsigned bank2)
 {
   if (ao._mode == Shell::Options::UnificationWithAbstraction::OFF) 
     return _subs->unify(term1, bank1, term2, bank2);
@@ -341,7 +342,7 @@ bool AbstractingUnifier::unify(AbstractionOracle const& ao, TermList term1, unsi
   return unify(ao, TermSpec(term1, bank1), TermSpec(term2, bank2), progress);
 }
 
-bool AbstractingUnifier::unify(AbstractionOracle const& ao, TermSpec t1, TermSpec t2, bool& progress)
+bool Kernel::AbstractingUnifier::unify(AbstractionOracle const& ao, TermSpec t1, TermSpec t2, bool& progress)
 {
   TIME_TRACE("unification with abstraction")
   ASS_NEQ(ao._mode, Shell::Options::UnificationWithAbstraction::OFF) 

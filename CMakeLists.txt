@@ -318,6 +318,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/HOL/TermShifter.cpp
     Kernel/HOL/SortDeref.hpp
     Kernel/HOL/SortDeref.cpp
+    Kernel/HOL/ToPlaceholders.hpp
+    Kernel/HOL/ToPlaceholders.cpp
     Inferences/CNFOnTheFly.cpp
     Inferences/CNFOnTheFly.hpp
     Inferences/BetaEtaSimplify.hpp

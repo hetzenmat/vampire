@@ -28,6 +28,7 @@
 
 #include "Term.hpp"
 #include "FormulaVarIterator.hpp"
+#include "HOL/ApplicativeHelper.hpp"
 
 using namespace std;
 using namespace Lib;

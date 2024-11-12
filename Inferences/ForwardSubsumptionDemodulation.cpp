@@ -26,6 +26,7 @@
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SubstHelper.hpp"
 #include "Kernel/Term.hpp"
+#include "Kernel/TermTransformer.hpp"
 #include "Lib/ScopeGuard.hpp"
 #include "Lib/STL.hpp"
 #include "Lib/STLAllocator.hpp"

@@ -15,20 +15,12 @@
 #ifndef __ApplicativeHelper__
 #define __ApplicativeHelper__
 
-#include "Forwards.hpp"
 #include "Kernel/Signature.hpp"
-#include "Lib/Deque.hpp"
-#include "Lib/BiMap.hpp"
-#include "Kernel/TypedTermList.hpp"
-#include "Kernel/TermTransformer.hpp"
-#include "Kernel/RobSubstitution.hpp"
-#include "Kernel/HOL/BetaNormaliser.hpp"
-#include "Kernel/HOL/EtaNormaliser.hpp"
-
-using namespace Kernel;
-using namespace Shell;
 
 namespace ApplicativeHelper {
+
+  using namespace Kernel;
+
   TermList app(TermList sort, TermList head, TermList arg);
   TermList app(TermList head, TermList arg);
   TermList app(TermList s1, TermList s2, TermList arg1, TermList arg2, bool shared = true);
@@ -37,12 +29,7 @@ namespace ApplicativeHelper {
 
   inline TermList app2(TermList sort, TermList head, TermList arg1, TermList arg2) { return app(app(sort, head, arg1), arg2); }
 
-  inline TermList app2(TermList head, TermList arg1, TermList arg2) {
-    ASS(head.isTerm());
-
-    TermList headSort = SortHelper::getResultSort(head.term());
-    return app2(headSort, head, arg1, arg2);
-  }
+  TermList app2(TermList head, TermList arg1, TermList arg2);
 
   TermList lambda(TermList varSort, TermList termSort, TermList term);
   TermList lambda(TermList varSort, TermList term);
@@ -124,13 +111,9 @@ namespace ApplicativeHelper {
 
   inline TermList sigma(TermList sort) { return TermList(Term::create1(env.signature->getPiSigmaProxy("vSIGMA"), sort)); }
 
-  inline TermList betaNF(TermList t) {
-    return BetaNormaliser().normalise(t);
-  }
+  TermList betaNF(TermList t);
 
-  inline TermList etaNF(TermList t) {
-    return EtaNormaliser().normalise(t);
-  }
+  TermList etaNF(TermList t);
 
   inline TermList betaEtaNF(TermList t) {
     return etaNF(betaNF(t));
@@ -140,31 +123,5 @@ namespace ApplicativeHelper {
 
 
 
-
-
-// replaces higher-order subterms (subterms with variable heads e.g., X a b &
-// lambda terms) with a special polymorphic constant we call a "placeholder".
-// Depending on the mode functional and Boolean subterms may also be replaced
-class ToPlaceholders : public TermTransformer
-{
-public:
-  ToPlaceholders()
-      : _nextIsPrefix(false),
-        _topLevel(true),
-        _mode(env.options->functionExtensionality())
-  {
-    dontTransformSorts();
-  }
-
-  TermList replace(TermList term);
-  TermList transformSubterm(TermList t) override;
-  void onTermEntry(Term* t) override;
-  void onTermExit(Term* t) override;
-
-private:
-  bool _nextIsPrefix;
-  bool _topLevel;
-  Shell::Options::FunctionExtensionality _mode;
-};
 
 #endif // __ApplicativeHelper__

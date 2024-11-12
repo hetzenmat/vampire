@@ -58,6 +58,7 @@
 #include "Lib/List.hpp"
 
 #include "Kernel/TermIterators.hpp"
+#include "Kernel/HOL/ApplicativeHelper.hpp"
 
 using namespace std;
 using namespace Shell;

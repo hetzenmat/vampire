@@ -11,8 +11,9 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/TermIterators.hpp"
-#include "Lib/SmartPtr.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/EtaNormaliser.hpp"
+#include "Kernel/HOL/BetaNormaliser.hpp"
 #include "Kernel/HOL/TermShifter.hpp"
 
 using namespace std;
@@ -72,6 +73,13 @@ TermList ApplicativeHelper::app(TermList head, TermStack& terms)
 
   TermList sort = SortHelper::getResultSort(head.term());
   return app(sort, head, terms);
+}
+
+TermList ApplicativeHelper::app2(TermList head, TermList arg1, TermList arg2) {
+  ASS(head.isTerm());
+
+  TermList headSort = SortHelper::getResultSort(head.term());
+  return app2(headSort, head, arg1, arg2);
 }
 
 TermList ApplicativeHelper::lambda(TermList varSort, TermList termSort, TermList term)
@@ -509,45 +517,17 @@ TermList ApplicativeHelper::surroundWithLambdas(TermList t, TermStack& sorts, Te
   return t;
 }
 
+TermList ApplicativeHelper::betaNF(TermList t) {
+  return BetaNormaliser().normalise(t);
+}
+
+TermList ApplicativeHelper::etaNF(TermList t) {
+  return EtaNormaliser().normalise(t);
+}
+
 //////////////////
 
 
 
 
 
-TermList ToPlaceholders::replace(TermList term)
-{
-  TermList transformed = transformSubterm(term);
-  if(transformed != term) return transformed;
-  _topLevel = false;
-  return transform(term);
-}
-
-TermList ToPlaceholders::transformSubterm(TermList t) {
-  if (_nextIsPrefix || t.isVar())
-    return t;
-
-  // Not expecting any unreduced redexes here
-  ASS(!t.head().isLambdaTerm());
-
-  auto sort = SortHelper::getResultSort(t.term());
-  if (t.isLambdaTerm() || t.head().isVar())
-    return ApplicativeHelper::placeholder(sort);
-
-  if (_mode == Options::FunctionExtensionality::ABSTRACTION) {
-    if (sort.isArrowSort() || sort.isVar() || (sort.isBoolSort() && !_topLevel)) {
-      return ApplicativeHelper::placeholder(sort);
-    }
-  }
-  return t;
-}
-
-void ToPlaceholders::onTermEntry(Term* t)
-{
-  if(t->isApplication()) _nextIsPrefix = true;
-}
-
-void ToPlaceholders::onTermExit(Term* t)
-{
-  _nextIsPrefix = false;
-}

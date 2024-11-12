@@ -30,6 +30,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/Term.hpp"
+#include "Kernel/TermTransformer.hpp"
 
 #include "Indexing/Index.hpp"
 #include "Indexing/LiteralIndex.hpp"
@@ -43,7 +44,6 @@
 
 #include "BackwardSubsumptionDemodulation.hpp"
 #include "SubsumptionDemodulationHelper.hpp"
-
 
 
 namespace Inferences
