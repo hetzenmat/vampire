@@ -13,10 +13,9 @@
  */
 
 #include "Kernel/HOLUnification.hpp"
+#include "Kernel/HOL/SortDeref.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
-
 #include "Indexing/TermSharing.hpp"
-
 #include "Lib/SkipList.hpp"
 
 namespace Kernel
