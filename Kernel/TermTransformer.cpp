@@ -15,6 +15,7 @@
 #include "SortHelper.hpp"
 #include "Term.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/TermShifter.hpp"
 #include "TermTransformer.hpp"
 #include "FormulaTransformer.hpp"
 

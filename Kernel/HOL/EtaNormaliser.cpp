@@ -12,6 +12,7 @@
  */
 
 #include "Kernel/HOL/EtaNormaliser.hpp"
+#include "Kernel/HOL/TermShifter.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
 #include "Kernel/TermTransformer.hpp"
 

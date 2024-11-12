@@ -12,6 +12,7 @@
  */
 
 #include "Kernel/HOL/RedexReducer.hpp"
+#include "Kernel/HOL/TermShifter.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
 
 TermList RedexReducer::reduce(TermList head, TermStack& args) {

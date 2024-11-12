@@ -11,10 +11,9 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/TermIterators.hpp"
-
 #include "Lib/SmartPtr.hpp"
-
 #include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/TermShifter.hpp"
 
 using namespace std;
 using namespace Lib;
@@ -515,91 +514,6 @@ TermList ApplicativeHelper::surroundWithLambdas(TermList t, TermStack& sorts, Te
 
 
 
-
-
-TermList TermShifter::shift(TermList term, int shiftBy)
-{
-  _cutOff = 0;
-  _shiftBy = shiftBy;
-
-  TermList transformed = transformSubterm(term);
-  if(transformed != term) return transformed;
-  return transform(term);
-}
-
-TermList TermShifter::transformSubterm(TermList t)
-{
-  if(t.deBruijnIndex().isSome()){
-    unsigned index = t.deBruijnIndex().unwrap();
-    if(index >= _cutOff){
-      // free index. lift
-      if(_shiftBy != 0){
-        TermList sort = SortHelper::getResultSort(t.term());
-        ASS(_shiftBy >= 0 || index >= std::abs(_shiftBy));
-        return ApplicativeHelper::getDeBruijnIndex(index + _shiftBy, sort);
-      } else {
-        int j = (int)(index - _cutOff);
-        if(j < _minFreeIndex || _minFreeIndex == -1){
-          _minFreeIndex = j;
-        }
-      }
-    }
-  }
-  return t;
-}
-
-void TermShifter::onTermEntry(Term* t)
-{
-  if(t->isLambdaTerm()) _cutOff++;
-}
-
-void TermShifter::onTermExit(Term* t)
-{
-  if(t->isLambdaTerm()) _cutOff--;
-}
-
-bool TermShifter::exploreSubterms(TermList orig, TermList newTerm)
-{
-  // already shifted, so must be DB index and won't have subterms anyway
-  return orig == newTerm && newTerm.term()->hasDBIndex();
-}
-
-TermSpec SortDeref::deref(TermList term)
-{
-  // assume term var here
-  if(term.isVar() || !term.term()->hasTermVar()) return {term, _index};
-  return {transform(term), _index};
-}
-
-TermList SortDeref::transformSubterm(TermList t)
-{
-  THROW_MH("");
-  /*
-  if(t.isVar() && _positions.top() < _typeArities.top()) {
-    t = _sub->derefBound(t);
-  }
-  unsigned pos = _positions.pop();
-  _positions.push(pos + 1);
-  return t;
-   */
-}
-
-void SortDeref::onTermEntry(Term* t){
-  _typeArities.push(t->isSort() ? t->arity() : t->numTypeArguments());
-  _positions.push(0);
-}
-
-void SortDeref::onTermExit(Term* t){
-  _typeArities.pop();
-  _positions.pop();
-}
-
-bool SortDeref::exploreSubterms(TermList orig, TermList newTerm)
-{
-  ASS(newTerm.isTerm());
-
-  return newTerm.term()->hasTermVar();
-}
 
 TermList ToPlaceholders::replace(TermList term)
 {

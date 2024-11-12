@@ -314,6 +314,10 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/HOL/WHNFDeref.cpp
     Kernel/HOL/RedexReducer.hpp
     Kernel/HOL/RedexReducer.cpp
+    Kernel/HOL/TermShifter.hpp
+    Kernel/HOL/TermShifter.cpp
+    Kernel/HOL/SortDeref.hpp
+    Kernel/HOL/SortDeref.cpp
     Inferences/CNFOnTheFly.cpp
     Inferences/CNFOnTheFly.hpp
     Inferences/BetaEtaSimplify.hpp

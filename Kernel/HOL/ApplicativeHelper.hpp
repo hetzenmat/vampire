@@ -137,49 +137,9 @@ namespace ApplicativeHelper {
   }
 }
 
-class TermShifter : public TermTransformer
-{
-public:
-  TermShifter() : _minFreeIndex(-1) {
-    dontTransformSorts();
-  }
-  // positive value -> shift up
-  // negative -> shift down
-  // 0 record minimum free index
-  TermList shift(TermList term, int shiftBy);
-  TermList transformSubterm(TermList t) override;
-  void onTermEntry(Term* t) override;
-  void onTermExit(Term* t) override;
-  bool exploreSubterms(TermList orig, TermList newTerm) override;
 
-  Option<unsigned> minFreeIndex(){
-    return _minFreeIndex > -1 ? Option<unsigned>((unsigned)_minFreeIndex) : Option<unsigned>();
-  }
 
-private:
-  unsigned _cutOff; // any index higher than _cutOff is a free index
-  int _shiftBy; // the amount to shift a free index by
-  int _minFreeIndex;
-};
 
-class SortDeref : public TermTransformer
-{
-public:
-  SortDeref(RobSubstitution* sub, int index) : _sub(sub), _index(index) {}
-  explicit SortDeref(RobSubstitution* sub) : _sub(sub), _index(-1) {}
-
-  TermSpec deref(TermList term);
-  TermList transformSubterm(TermList t) override;
-  void onTermEntry(Term* t) override;
-  void onTermExit(Term* t) override;
-  bool exploreSubterms(TermList orig, TermList newTerm) override;
-
-private:
-  RobSubstitution* _sub;
-  int _index;
-  Stack<unsigned> _typeArities;
-  Stack<unsigned> _positions;
-};
 
 
 // replaces higher-order subterms (subterms with variable heads e.g., X a b &
