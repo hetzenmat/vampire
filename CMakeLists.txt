@@ -312,6 +312,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/HOL/EtaNormaliser.cpp
     Kernel/HOL/WHNFDeref.hpp
     Kernel/HOL/WHNFDeref.cpp
+    Kernel/HOL/RedexReducer.hpp
+    Kernel/HOL/RedexReducer.cpp
     Inferences/CNFOnTheFly.cpp
     Inferences/CNFOnTheFly.hpp
     Inferences/BetaEtaSimplify.hpp

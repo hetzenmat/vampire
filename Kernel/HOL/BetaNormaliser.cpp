@@ -1,5 +1,5 @@
 /*
-* This file is part of the source code of the software program
+ * This file is part of the source code of the software program
  * Vampire. It is protected by applicable
  * copyright laws.
  *
@@ -12,6 +12,7 @@
  */
 
 #include "Kernel/HOL/BetaNormaliser.hpp"
+#include "Kernel/HOL/RedexReducer.hpp"
 #include "Kernel/HOL/ApplicativeHelper.hpp"
 
 TermList BetaNormaliser::normalise(TermList t) {

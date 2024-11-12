@@ -137,24 +137,6 @@ namespace ApplicativeHelper {
   }
 }
 
-
-class RedexReducer : public TermTransformer
-{
-public:
-  RedexReducer() {
-    dontTransformSorts();
-  }
-  TermList reduce(TermList head, TermStack& args);
-  TermList transformSubterm(TermList t) override;
-  void onTermEntry(Term* t) override;
-  void onTermExit(Term* t) override;
-  bool exploreSubterms(TermList orig, TermList newTerm) override;
-
-private:
-  TermList _t2; // term to replace index with (^x.t1) t2
-  unsigned _replace; // index to replace
-};
-
 class TermShifter : public TermTransformer
 {
 public:

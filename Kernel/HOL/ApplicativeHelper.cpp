@@ -513,64 +513,9 @@ TermList ApplicativeHelper::surroundWithLambdas(TermList t, TermStack& sorts, Te
 //////////////////
 
 
-TermList RedexReducer::reduce(TermList head, TermStack& args)
-{
-  ASS(ApplicativeHelper::canHeadReduce(head, args));
 
-  _replace = 0;
-  TermList t1 = head.lambdaBody();
-  TermList t1Sort = *head.term()->nthArgument(1);
-  _t2 = args.pop();
 
-  TermList transformed = transformSubterm(t1);
 
-  if(transformed != t1)
-    return ApplicativeHelper::app(t1Sort, transformed, args);
-  return ApplicativeHelper::app(t1Sort, transform(t1), args);
-}
-
-TermList RedexReducer::transformSubterm(TermList t) {
-  if (t.deBruijnIndex().isSome()) {
-    unsigned index = t.deBruijnIndex().unwrap();
-    if (index == _replace) {
-      // any free indices in _t2 need to be lifted by the number of extra lambdas
-      // that now surround them
-      return TermShifter().shift(_t2, _replace);
-    }
-    if (index > _replace) {
-      // free index. replace by index 1 less as now surrounded by one fewer lambdas
-      TermList sort = SortHelper::getResultSort(t.term());
-      return ApplicativeHelper::getDeBruijnIndex(index - 1, sort);
-    }
-  }
-
-  return t;
-}
-
-void RedexReducer::onTermEntry(Term* t)
-{
-  LOG("RedexReducer::onTermEntry", t->toString());
-
-  if(t->isLambdaTerm()) _replace++;
-}
-
-void RedexReducer::onTermExit(Term* t)
-{
-  LOG("RedexReducer::onTermExit", t->toString());
-
-  if(t->isLambdaTerm()) _replace--;
-}
-
-bool RedexReducer::exploreSubterms(TermList orig, TermList newTerm)
-{
-  return orig == newTerm && newTerm.term()->hasDBIndex();
-
-  /* if (orig != newTerm)
-    return false;
-  if (newTerm.term()->hasDBIndex())
-    return true;
-  return false; */
-}
 
 TermList TermShifter::shift(TermList term, int shiftBy)
 {
