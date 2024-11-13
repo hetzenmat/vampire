@@ -4,7 +4,7 @@
 
 #include "HOLUtils.hpp"
 
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TypedTermList.hpp"
 #include "Shell/LambdaConversion.hpp"
 
@@ -23,7 +23,7 @@ TypedTermList AP(TypedTermList lhs, TypedTermList rhs) {
 
   ASS(domain == rhs.sort());
 
-  return {ApplicativeHelper::app(lhs.sort(), lhs, rhs), result};
+  return {HOL::app(lhs.sort(), lhs, rhs), result};
 }
 
 TypedTermList AP_l(std::initializer_list<TypedTermList> terms) {

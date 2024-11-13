@@ -15,7 +15,7 @@
 
 #include "Test/UnitTesting.hpp"
 #include "Test/SyntaxSugar.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Shell/LambdaConversion.hpp"
 
 TermList toDeBruijnIndices(TermList t) {

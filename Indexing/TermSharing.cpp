@@ -22,7 +22,7 @@
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/Term.hpp"
 #include "Kernel/TermIterators.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Shell/Statistics.hpp"
 #include "Debug/TimeProfiling.hpp"

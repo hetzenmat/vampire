@@ -22,7 +22,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Lib/Environment.hpp"
 #include "Shell/Statistics.hpp"
@@ -68,8 +68,8 @@ ClauseIterator Injectivity::generateClauses(Clause* premise) {
   TermStack termArgSorts;
   TermList headLhs, headRhs, differingArg, differingArgSort;
 
-  ApplicativeHelper::getHeadAndArgs(lhsM, headLhs, argsLhs);
-  ApplicativeHelper::getHeadAndArgs(rhsM, headRhs, argsRhs);
+  HOL::getHeadAndArgs(lhsM, headLhs, argsLhs);
+  HOL::getHeadAndArgs(rhsM, headRhs, argsRhs);
 
   if(headLhs != headRhs || headLhs.isVar())
   { return ClauseIterator::getEmpty(); }
@@ -148,7 +148,7 @@ TermList Injectivity::createNewLhs(TermList oldhead, TermStack &termArgs, TermLi
   invFunc->setType(invFuncType);
   TermList invFuncHead = TermList(Term::create(iFunc, func->arity(), typeArgs.begin()));
 
-  return ApplicativeHelper::app(invFuncHead, termArgs);
+  return HOL::app(invFuncHead, termArgs);
 }
 
 }

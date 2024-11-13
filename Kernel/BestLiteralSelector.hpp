@@ -29,7 +29,7 @@
 #include "Term.hpp"
 #include "Clause.hpp"
 #include "Ordering.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "TermIterators.hpp"
 
 #include "LiteralSelector.hpp"

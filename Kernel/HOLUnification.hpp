@@ -28,7 +28,7 @@
 #include "Lib/Backtrackable.hpp"
 #include "Lib/Recycled.hpp"
 
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Signature.hpp"
 

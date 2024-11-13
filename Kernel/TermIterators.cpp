@@ -17,13 +17,11 @@
 #include "Term.hpp"
 #include "Signature.hpp"
 #include "TermIterators.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Lib/Deque.hpp"
 
 namespace Kernel
 {
-  namespace AH = ApplicativeHelper;
-
 
 /**
  * True if there exists next variable
@@ -244,7 +242,7 @@ Term* FirstOrderSubtermIt::next()
   Term* t = _stack.pop();
 
   if(!t->isLambdaTerm() || _goInsideLambdas) {
-    AH::getHeadAndArgs(t, head, args);
+    HOL::getHeadAndArgs(t, head, args);
     if (!head.isLambdaTerm()) {
       for (unsigned i = 0; i < args.size(); i++) {
         // TODO logic below is wrong
@@ -284,8 +282,8 @@ bool BooleanSubtermIt::hasNext()
   TermList head;
   while(!_stack.isEmpty()){
     Term* t = _stack.pop();
-    AH::getHeadAndArgs(t, head, args);
-    if(SortHelper::getResultSort(t) == AtomicSort::boolSort() && !AH::isBool(head)){
+    HOL::getHeadAndArgs(t, head, args);
+    if(SortHelper::getResultSort(t) == AtomicSort::boolSort() && !HOL::isBool(head)){
       _next = TermList(t);
       _used = false;
     }

@@ -19,7 +19,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Signature.hpp"
 #include "Kernel/Inference.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TermIterators.hpp"
 
 #include "Lib/Environment.hpp"
@@ -45,11 +45,11 @@ using namespace Saturation;
 bool ElimLeibniz::polarity(Literal* lit) {
   TermList lhs = *lit->nthArgument(0);
   TermList rhs = *lit->nthArgument(1);
-  ASS(ApplicativeHelper::isBool(lhs)  || ApplicativeHelper::isBool(rhs));
-  if(ApplicativeHelper::isBool(lhs)){ 
-    return lit->polarity() == ApplicativeHelper::isTrue(lhs);
+  ASS(HOL::isBool(lhs)  || HOL::isBool(rhs));
+  if(HOL::isBool(lhs)){
+    return lit->polarity() == HOL::isTrue(lhs);
   }
-  return lit->polarity() == ApplicativeHelper::isTrue(rhs);
+  return lit->polarity() == HOL::isTrue(rhs);
 }
 
 bool ElimLeibniz::isPair(Literal* l1, Literal* l2){
@@ -63,7 +63,7 @@ bool ElimLeibniz::isPair(Literal* l1, Literal* l2){
 ElimLeibniz::LeibEqRec ElimLeibniz::getLiteralInfo(Literal* lit){
   TermList lhs = *lit->nthArgument(0);
   TermList rhs = *lit->nthArgument(1);
-  TermList nonBooleanSide = ApplicativeHelper::isBool(rhs) ? lhs : rhs;
+  TermList nonBooleanSide = HOL::isBool(rhs) ? lhs : rhs;
   ASS(nonBooleanSide.isTerm());
   Term* term = nonBooleanSide.term();
 
@@ -111,10 +111,10 @@ ClauseIterator ElimLeibniz::generateClauses(Clause* premise)
     Literal* lit = (*premise)[i];
     TermList lhs = *lit->nthArgument(0);
     TermList rhs = *lit->nthArgument(1);
-    if(!ApplicativeHelper::isBool(lhs) && !ApplicativeHelper::isBool(rhs)){ continue; } 
-    TermList nonBooleanSide = ApplicativeHelper::isBool(rhs) ? lhs : rhs;
+    if(!HOL::isBool(lhs) && !HOL::isBool(rhs)){ continue; }
+    TermList nonBooleanSide = HOL::isBool(rhs) ? lhs : rhs;
 
-    ApplicativeHelper::getHeadAndArgs(nonBooleanSide, head, args);
+    HOL::getHeadAndArgs(nonBooleanSide, head, args);
     if(!head.isVar() || args.size() != 1){ continue; }
     
     bool pol = polarity(lit);
@@ -151,9 +151,9 @@ afterLoop:
 
   TermList var = TermList(lerPosLit.var, false);
 
-  TermList vEquals = ApplicativeHelper::equality(argS);
+  TermList vEquals = HOL::equality(argS);
   // creating the term  = arg  (which is eta-equivalent to ^x. arg = x)
-  TermList t1 = ApplicativeHelper::app(vEquals, lerNegLit.arg);
+  TermList t1 = HOL::app(vEquals, lerNegLit.arg);
 
   // TODO MH
   // if (subst.unify(var, t1)) {
@@ -162,9 +162,9 @@ afterLoop:
   //   subst.reset();
   // }
 
-  TermList db = ApplicativeHelper::getDeBruijnIndex(0, argS);
+  TermList db = HOL::getDeBruijnIndex(0, argS);
   // creating the term ^x. arg != x
-  TermList t2 = ApplicativeHelper::lambda(argS, ApplicativeHelper::app(ApplicativeHelper::neg(), ApplicativeHelper::app(ApplicativeHelper::app(vEquals, lerPosLit.arg),db)));
+  TermList t2 = HOL::lambda(argS, HOL::app(HOL::neg(), HOL::app(HOL::app(vEquals, lerPosLit.arg),db)));
 
   // TODO MH
   // if(subst.unify(var, t2)){

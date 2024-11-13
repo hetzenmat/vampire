@@ -30,7 +30,7 @@ TermList WHNFDeref::transformSubterm(TermList t) {
   TermList head;
   TermList sort;
   TermStack args;
-  ApplicativeHelper::getHeadSortAndArgs(t, head, sort, args);
+  HOL::getHeadSortAndArgs(t, head, sort, args);
   TermList newHead = _sub->derefBound(head);
   newHead = SortDeref(_sub).deref(newHead);
 
@@ -40,11 +40,11 @@ TermList WHNFDeref::transformSubterm(TermList t) {
   // that the head has changed
   bool headDereffed = newHead != head;
 
-  while(ApplicativeHelper::canHeadReduce(newHead, args)){
+  while(HOL::canHeadReduce(newHead, args)){
     headDereffed = false;
     t = RedexReducer().reduce(newHead, args);
     if(t.isLambdaTerm()) break;
-    ApplicativeHelper::getHeadSortAndArgs(t, head, sort, args);
+    HOL::getHeadSortAndArgs(t, head, sort, args);
     newHead = _sub->derefBound(head);
     newHead = SortDeref(_sub).deref(newHead);
     headDereffed = newHead != head;
@@ -52,7 +52,7 @@ TermList WHNFDeref::transformSubterm(TermList t) {
 
   return !headDereffed ? t :
          !args.size()  ? newHead : // TOOD MH maybe use args.empty() instead of !args.size()
-                         ApplicativeHelper::app(sort, newHead, args);
+                         HOL::app(sort, newHead, args);
 */
 
   /*if(!headDereffed){
@@ -60,7 +60,7 @@ TermList WHNFDeref::transformSubterm(TermList t) {
   } else if(!args.size()){
     return newHead;
   } else {
-    return ApplicativeHelper::app(sort, newHead, args);
+    return HOL::app(sort, newHead, args);
   }*/
 
 }

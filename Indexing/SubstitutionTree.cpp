@@ -24,7 +24,7 @@
 #include "Kernel/Renaming.hpp"
 #include "Kernel/SubstHelper.hpp"
 #include "Kernel/Term.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Lib/BinaryHeap.hpp"
 #include "Lib/Metaiterators.hpp"

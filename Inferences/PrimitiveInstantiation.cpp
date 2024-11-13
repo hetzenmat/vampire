@@ -20,7 +20,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/Inference.hpp"
 #include "Kernel/Substitution.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Lib/Environment.hpp"
 #include "Lib/Metaiterators.hpp"
@@ -65,41 +65,41 @@ struct PrimitiveInstantiation::ResultFn
     // of variables. The potential downside is that the whole RobSubstitution
     // mechanism is complicated and may add its own overhead. Worth investigating
     // though
-    _heads.push(ApplicativeHelper::top());
-    _heads.push(ApplicativeHelper::bottom());
+    _heads.push(HOL::top());
+    _heads.push(HOL::bottom());
     auto piSet = env.options->piSet();
     switch(piSet){
       case Options::PISet::ALL_EXCEPT_NOT_EQ:
       case Options::PISet::ALL:
-        _heads.push(ApplicativeHelper::conj());
-        _heads.push(ApplicativeHelper::disj());
-        _heads.push(ApplicativeHelper::neg());
-        _heads.push(ApplicativeHelper::equality(sortVar));
-        _heads.push(ApplicativeHelper::pi(sortVar));
-        _heads.push(ApplicativeHelper::sigma(sortVar));
+        _heads.push(HOL::conj());
+        _heads.push(HOL::disj());
+        _heads.push(HOL::neg());
+        _heads.push(HOL::equality(sortVar));
+        _heads.push(HOL::pi(sortVar));
+        _heads.push(HOL::sigma(sortVar));
         break;
       case Options::PISet::PRAGMATIC:
       case Options::PISet::NOT:
-        _heads.push(ApplicativeHelper::neg());
+        _heads.push(HOL::neg());
         break;
       // Equality and Pi and Sigma introduce polymorphism
       // into monomorphic problem...
       case Options::PISet::NOT_EQ_NOT_EQ:
-        _heads.push(ApplicativeHelper::neg());
-        _heads.push(ApplicativeHelper::equality(sortVar));
+        _heads.push(HOL::neg());
+        _heads.push(HOL::equality(sortVar));
         break;
       case Options::PISet::AND:
-        _heads.push(ApplicativeHelper::conj());
+        _heads.push(HOL::conj());
         break;
       case Options::PISet::OR:
-        _heads.push(ApplicativeHelper::disj());
+        _heads.push(HOL::disj());
         break;
       case Options::PISet::EQUALS:
-        _heads.push(ApplicativeHelper::equality(sortVar));
+        _heads.push(HOL::equality(sortVar));
         break;
       case Options::PISet::PI_SIGMA:
-        _heads.push(ApplicativeHelper::pi(sortVar));
-        _heads.push(ApplicativeHelper::sigma(sortVar));
+        _heads.push(HOL::pi(sortVar));
+        _heads.push(HOL::sigma(sortVar));
         break;
     }
   }
@@ -147,7 +147,7 @@ struct PrimitiveInstantiation::ResultFn
     TermStack argsFlex;
     TermStack sortsFlex; //sorts of arguments of flex head
 
-    ApplicativeHelper::getHeadArgsAndArgSorts(flexTerm, headFlex, argsFlex, sortsFlex);
+    HOL::getHeadArgsAndArgSorts(flexTerm, headFlex, argsFlex, sortsFlex);
     ASS(argsFlex.size() == sortsFlex.size());
 
     if(!argsFlex.size()){
@@ -160,7 +160,7 @@ struct PrimitiveInstantiation::ResultFn
     for(unsigned i =0; i < sortsFlex.size() && pragmatic; i++){
       if(sortsFlex[i].isBoolSort()){
         _subst.reset();
-        TermList gb = ApplicativeHelper::surroundWithLambdas(ApplicativeHelper::getDeBruijnIndex(i, sortsFlex[i]), sortsFlex);
+        TermList gb = HOL::surroundWithLambdas(HOL::getDeBruijnIndex(i, sortsFlex[i]), sortsFlex);
         _subst.bind(headFlex.var(), gb);
         results.push(createRes());
       }
@@ -173,31 +173,31 @@ struct PrimitiveInstantiation::ResultFn
         _subst.reset();
         IndexPair p = sameSortArgs[i];
 
-        TermList dbi = ApplicativeHelper::getDeBruijnIndex(p.first, sortsFlex[p.first]);
-        TermList dbj = ApplicativeHelper::getDeBruijnIndex(p.second, sortsFlex[p.second]);
+        TermList dbi = HOL::getDeBruijnIndex(p.first, sortsFlex[p.first]);
+        TermList dbj = HOL::getDeBruijnIndex(p.second, sortsFlex[p.second]);
 
         // creating term dbi = dbj
-        TermList tm = ApplicativeHelper::app2(ApplicativeHelper::equality(sortsFlex[p.first]), dbi, dbj);
-        TermList gb = ApplicativeHelper::surroundWithLambdas(tm, sortsFlex);
+        TermList tm = HOL::app2(HOL::equality(sortsFlex[p.first]), dbi, dbj);
+        TermList gb = HOL::surroundWithLambdas(tm, sortsFlex);
         _subst.bind(headFlex.var(), gb);
         results.push(createRes());
 
         //creating dbi != dbj
         _subst.reset();
-        gb = ApplicativeHelper::surroundWithLambdas(ApplicativeHelper::app(ApplicativeHelper::neg(), tm), sortsFlex);
+        gb = HOL::surroundWithLambdas(HOL::app(HOL::neg(), tm), sortsFlex);
         _subst.bind(headFlex.var(), gb);
         results.push(createRes());
 
         if(sortsFlex[p.first].isBoolSort()){
           //creating dbi \/ dbj
           _subst.reset();
-          gb = ApplicativeHelper::surroundWithLambdas(ApplicativeHelper::app2(ApplicativeHelper::disj(), dbi, dbj), sortsFlex);
+          gb = HOL::surroundWithLambdas(HOL::app2(HOL::disj(), dbi, dbj), sortsFlex);
           _subst.bind(headFlex.var(), gb);
           results.push(createRes());
 
           //creating dbi /\ dbj
           _subst.reset();
-          gb = ApplicativeHelper::surroundWithLambdas(ApplicativeHelper::app2(ApplicativeHelper::conj(), dbi, dbj), sortsFlex);
+          gb = HOL::surroundWithLambdas(HOL::app2(HOL::conj(), dbi, dbj), sortsFlex);
           _subst.bind(headFlex.var(), gb);
           results.push(createRes());
         }
@@ -210,8 +210,8 @@ struct PrimitiveInstantiation::ResultFn
       TermList fVar(_freshVar,false);
 
       bool surround = (!_heads[i].isEquals() || !include_not_eq);
-      TermList gb  = ApplicativeHelper::createGeneralBinding(fVar,_heads[i],sortsFlex,surround);
-      TermList gb2 = surround ? gb : ApplicativeHelper::surroundWithLambdas(gb, sortsFlex);
+      TermList gb  = HOL::createGeneralBinding(fVar,_heads[i],sortsFlex,surround);
+      TermList gb2 = surround ? gb : HOL::surroundWithLambdas(gb, sortsFlex);
 
       _subst.bind(headFlex.var(), gb2);
       results.push(createRes());
@@ -219,7 +219,7 @@ struct PrimitiveInstantiation::ResultFn
       if(!surround){
         // add not equals
         _subst.reset();
-        gb = ApplicativeHelper::surroundWithLambdas(ApplicativeHelper::app(ApplicativeHelper::neg(), gb), sortsFlex);
+        gb = HOL::surroundWithLambdas(HOL::app(HOL::neg(), gb), sortsFlex);
 
         _subst.bind(headFlex.var(), gb);
         results.push(createRes());

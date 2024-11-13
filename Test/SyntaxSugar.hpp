@@ -28,7 +28,7 @@
 #include "Kernel/Clause.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/NumTraits.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Indexing/TermSharing.hpp"
 #include "Kernel/Signature.hpp"
@@ -241,7 +241,7 @@ public:
   void setApply()
   {
     apply = [](TermList sort, TermList t1, TermList t2) {
-      TermList app = ApplicativeHelper::app(sort, t1, t2);
+      TermList app = HOL::app(sort, t1, t2);
       return app;
     };
   }
@@ -472,7 +472,7 @@ inline TermSugar fool(bool b)
 inline TermSugar operator-(TermSugar x) { return syntaxSugarGlobals().minus(x); }
 
 inline TermSugar ap(SortSugar sort, TermSugar lhs, TermSugar rhs) 
-{ return ApplicativeHelper::app(sort, lhs, rhs); }
+{ return HOL::app(sort, lhs, rhs); }
 
 inline TermSugar ap(TermSugar lhs, TermSugar rhs) 
 { return ap(lhs.sort(), lhs, rhs); }  

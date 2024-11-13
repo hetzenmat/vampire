@@ -14,7 +14,7 @@
 
 #include "Kernel/HOLUnification.hpp"
 #include "Kernel/HOL/SortDeref.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Indexing/TermSharing.hpp"
 #include "Lib/SkipList.hpp"
 
@@ -158,7 +158,7 @@ public:
       ASS(!lhsHead.isVar() || !rhsHead.isVar()); // otherwise we would be solved
       ASS(lhs.isVar() || rhs.isVar() || SortHelper::getResultSort(lhs.term()) == SortHelper::getResultSort(rhs.term()));
 
-      ApplicativeHelper::normaliseLambdaPrefixes(lhs, rhs);
+      HOL::normaliseLambdaPrefixes(lhs, rhs);
 
       // normalising can change the head of a term if it is a De Bruijn index
       // TODO only recompute head if it has changed above...
@@ -214,19 +214,19 @@ public:
         TermStack rhsArgs;
         TermStack sorts;
         TermList matrix;
-        ApplicativeHelper::getMatrixAndPrefSorts(lhs, matrix, sorts);
-        ApplicativeHelper::getHeadArgsAndArgSorts(matrix, lhsHead, lhsArgs, argSorts);
-        ApplicativeHelper::getHeadAndArgs(rhs, rhsHead, rhsArgs);
+        HOL::getMatrixAndPrefSorts(lhs, matrix, sorts);
+        HOL::getHeadArgsAndArgSorts(matrix, lhsHead, lhsArgs, argSorts);
+        HOL::getHeadAndArgs(rhs, rhsHead, rhsArgs);
         ASS(lhsArgs.size() == rhsArgs.size()); // size must be same due to normalisation of prefixes above
 
         for(unsigned i = 0; i < lhsArgs.size(); i++){
           auto t1 = lhsArgs[i].whnfDeref(_subst);
           THROW_MH();
           int t1Index = 0/0; // TODO MH;
-          t1 = ApplicativeHelper::surroundWithLambdas(t1, sorts, argSorts[i], /* traverse stack from top */ true);
+          t1 = HOL::surroundWithLambdas(t1, sorts, argSorts[i], /* traverse stack from top */ true);
           auto t2 = rhsArgs[i].whnfDeref(_subst);
           int t2Index = 0/0; // TODO MH;
-          t2 = ApplicativeHelper::surroundWithLambdas(t2, sorts, argSorts[i], true);
+          t2 = HOL::surroundWithLambdas(t2, sorts, argSorts[i], true);
 
           if (!trySolveTrivialPair({t1, t1Index}, {t2, t2Index})) {
             addToUnifPairs(HOLConstraint({t1, t1Index}, {t2, t2Index}), _bdStack->top());
@@ -266,7 +266,7 @@ public:
           BacktrackData& bd = _bdStack->top();
           bd.addClosure([this, fv = _freshVar](){ _freshVar = fv; });
 
-          ApplicativeHelper::getProjAndImitBindings(flexTerm, rigidTerm, projAndImitBindings, _freshVar.term);
+          HOL::getProjAndImitBindings(flexTerm, rigidTerm, projAndImitBindings, _freshVar.term);
 
           if(projAndImitBindings.isEmpty()){
             // no bindings for this pair of terms
@@ -451,7 +451,7 @@ SubstIterator HOLUnification::unifiers(TermSpec t1, TermSpec t2, RobSubstitution
       if(res == OracleResult::FAILURE) return SubstIterator::getEmpty();
       if(res == OracleResult::OUT_OF_FRAGMENT) return SubstIterator::getEmpty();
     } else {
-      if(!ApplicativeHelper::splittable(t1.term, true) || !ApplicativeHelper::splittable(t2.term, true)) {
+      if(!HOL::splittable(t1.term, true) || !HOL::splittable(t2.term, true)) {
         return SubstIterator::getEmpty();
       }
     }
@@ -506,7 +506,7 @@ OracleResult HOLUnification::fixpointUnify(TermSpec var, TermSpec t, RobSubstitu
       d++;
     }
 
-    ApplicativeHelper::getHeadAndArgs(term, head, args);
+    HOL::getHeadAndArgs(term, head, args);
 
     ASS(!head.isLambdaTerm());
     if (head.isVar()) {

@@ -28,7 +28,7 @@
 
 #include "Term.hpp"
 #include "FormulaVarIterator.hpp"
-#include "HOL/ApplicativeHelper.hpp"
+#include "HOL/HOL.hpp"
 
 using namespace std;
 using namespace Lib;
@@ -352,7 +352,7 @@ bool TermList::isLambdaTerm() const { return !isVar() && term()->isLambdaTerm();
 
 bool Term::isLambdaTerm() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->isLamFun(_functor); }
 
-bool TermList::isEtaExpandedVar(TermList& var) const { return ApplicativeHelper::isEtaExpandedVar(*this, var); }
+bool TermList::isEtaExpandedVar(TermList& var) const { return HOL::isEtaExpandedVar(*this, var); }
 
 bool TermList::isRedex() { return isApplication() && lhs().isLambdaTerm(); }
 
@@ -457,7 +457,7 @@ unsigned TermList::numOfAppVarsAndLambdas() const {
   } else if (isApplication()) {
     TermList head;
     TermStack args;
-    ApplicativeHelper::getHeadAndArgs(t, head, args);
+    HOL::getHeadAndArgs(t, head, args);
     ASS(!head.isLambdaTerm()); // should be beta-reduced
     if(head.isVar()) {
       res += env.options->hoFeaturesAppVarWeight();
@@ -845,10 +845,10 @@ vstring TermList::toString() const
   }
 
   if(env.higherOrderProblem() && env.options->holPrinting() == Options::HPrinting::PRETTY) {
-    if (ApplicativeHelper::isTrue(*this)) {
+    if (HOL::isTrue(*this)) {
       return "⊤";
     }
-    if (ApplicativeHelper::isFalse(*this)) {
+    if (HOL::isFalse(*this)) {
       return "⊥";
     }
   }
@@ -1004,7 +1004,7 @@ vstring Term::toString(bool topLevel, IndexVarStack& st) const
 
   TermList head;
   TermStack args;
-  ApplicativeHelper::getHeadAndArgs(this, head, args);
+  HOL::getHeadAndArgs(this, head, args);
   bool hasArgs = args.size();
 
   vstring headStr;
@@ -1020,8 +1020,8 @@ vstring Term::toString(bool topLevel, IndexVarStack& st) const
   else if(head.isImp()){ headStr = pretty ? "⇒" : "=>"; }
   else if(head.isChoice()){ headStr = pretty ? "ε" : "@@+"; }
   else if(head.isIff() || head.isEquals()){ headStr = pretty ? "≈" : "="; } // @=???
-  else if(ApplicativeHelper::isTrue(head)){ headStr = pretty ? "⊤" : "$true"; }
-  else if(ApplicativeHelper::isFalse(head)){ headStr = pretty ? "⊥" : "$false"; }
+  else if(HOL::isTrue(head)){ headStr = pretty ? "⊤" : "$true"; }
+  else if(HOL::isFalse(head)){ headStr = pretty ? "⊥" : "$false"; }
   else {
     headStr = head.term()->functionName();
     if(head.deBruijnIndex().isSome()){

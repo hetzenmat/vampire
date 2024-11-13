@@ -13,10 +13,10 @@
 
 #include "Kernel/HOL/RedexReducer.hpp"
 #include "Kernel/HOL/TermShifter.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 TermList RedexReducer::reduce(TermList head, TermStack& args) {
-  ASS(ApplicativeHelper::canHeadReduce(head, args));
+  ASS(HOL::canHeadReduce(head, args));
 
   _replace = 0;
   TermList t1 = head.lambdaBody();
@@ -26,8 +26,8 @@ TermList RedexReducer::reduce(TermList head, TermStack& args) {
   TermList transformed = transformSubterm(t1);
 
   if(transformed != t1)
-    return ApplicativeHelper::app(t1Sort, transformed, args);
-  return ApplicativeHelper::app(t1Sort, transform(t1), args);
+    return HOL::app(t1Sort, transformed, args);
+  return HOL::app(t1Sort, transform(t1), args);
 }
 
 TermList RedexReducer::transformSubterm(TermList t) {
@@ -41,7 +41,7 @@ TermList RedexReducer::transformSubterm(TermList t) {
     if (index > _replace) {
       // free index. replace by index 1 less as now surrounded by one fewer lambdas
       TermList sort = SortHelper::getResultSort(t.term());
-      return ApplicativeHelper::getDeBruijnIndex(index - 1, sort);
+      return HOL::getDeBruijnIndex(index - 1, sort);
     }
   }
 

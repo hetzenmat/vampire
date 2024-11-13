@@ -13,7 +13,7 @@
 
 #include "Kernel/HOL/EtaNormaliser.hpp"
 #include "Kernel/HOL/TermShifter.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TermTransformer.hpp"
 
 TermList EtaNormaliser::normalise(TermList t)
@@ -24,7 +24,7 @@ TermList EtaNormaliser::normalise(TermList t)
   if (t.isLambdaTerm()) {
     TermStack lambdaSorts;
     TermList matrix;
-    ApplicativeHelper::getMatrixAndPrefSorts(t, matrix, lambdaSorts);
+    HOL::getMatrixAndPrefSorts(t, matrix, lambdaSorts);
 
     if (matrix.isVar())
       return t; // ^^^^^^X can't eta reduce this
@@ -32,7 +32,7 @@ TermList EtaNormaliser::normalise(TermList t)
     TermList matrixSort = SortHelper::getResultSort(matrix.term());
     TermList reduced = normalise(matrix);
     if (reduced != matrix)
-      t = ApplicativeHelper::surroundWithLambdas(reduced, lambdaSorts, matrixSort, true);
+      t = HOL::surroundWithLambdas(reduced, lambdaSorts, matrixSort, true);
 
 
     return transformSubterm(t);
@@ -44,7 +44,7 @@ TermList EtaNormaliser::normalise(TermList t)
   TermList headSort;
   TermStack args;
   TermStack argsModified;
-  ApplicativeHelper::getHeadSortAndArgs(t, head, headSort, args);
+  HOL::getHeadSortAndArgs(t, head, headSort, args);
 
   bool changed = false;
   for (unsigned j = 0; j < args.size(); j++) {
@@ -55,7 +55,7 @@ TermList EtaNormaliser::normalise(TermList t)
   if (!changed)
     return t;
 
-  return ApplicativeHelper::app(headSort,head,argsModified);
+  return HOL::app(headSort,head,argsModified);
 }
 
 // uses algorithm for eta-reduction that can be found here:

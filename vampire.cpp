@@ -62,7 +62,7 @@
 
 #include "FMB/ModelCheck.hpp"
 
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Shell/LambdaConversion.hpp"
 
 using namespace std;

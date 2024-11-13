@@ -29,7 +29,7 @@
 #include "Kernel/SubformulaIterator.hpp"
 #include "Kernel/FormulaVarIterator.hpp"
 #include "Kernel/Term.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Shell/Statistics.hpp"
 #include "Shell/Options.hpp"
@@ -1140,7 +1140,7 @@ Literal* Naming::getDefinitionLiteral(Formula* f, VList* freeVars) {
     sym->markSkipCongruence();
     sym->setType(OperatorType::getConstantsType(sort, typeArgArity)); 
     TermList head = TermList(Term::create(fun, typeVars.size(), typeVars.begin()));
-    TermList t = ApplicativeHelper::app(head, termVars);
+    TermList t = HOL::app(head, termVars);
     return Literal::createEquality(true, TermList(t), TermList(Term::foolTrue()), AtomicSort::boolSort());
   }
 }

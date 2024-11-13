@@ -7,11 +7,14 @@
  * https://vprover.github.io/license.html
  * and in the source directory
  */
+/**
+ * @file HOL.cpp
+ */
 
 #include "Kernel/Signature.hpp"
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/TermIterators.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/HOL/EtaNormaliser.hpp"
 #include "Kernel/HOL/BetaNormaliser.hpp"
 #include "Kernel/HOL/TermShifter.hpp"
@@ -21,20 +24,20 @@ using namespace Lib;
 using namespace Kernel;
 using namespace Shell;
 
-TermList ApplicativeHelper::app(TermList sort, TermList head, TermList arg) {
+TermList HOL::app(TermList sort, TermList head, TermList arg) {
   auto s1 = getNthArg(sort, 1);
   auto s2 = getResultApplieadToNArgs(sort, 1);
 
   return app(s1, s2, head, arg);
 }
 
-TermList ApplicativeHelper::app(TermList head, TermList arg) {
+TermList HOL::app(TermList head, TermList arg) {
   ASS(head.isTerm())
 
   return app(SortHelper::getResultSort(head.term()), head, arg);
 }
 
-TermList ApplicativeHelper::app(TermList s1, TermList s2, TermList arg1, TermList arg2, bool shared) {
+TermList HOL::app(TermList s1, TermList s2, TermList arg1, TermList arg2, bool shared) {
   static TermStack args;
 
   args.reset();
@@ -50,7 +53,7 @@ TermList ApplicativeHelper::app(TermList s1, TermList s2, TermList arg1, TermLis
   return TermList(Term::createNonShared(app, 4, args.begin()));
 }
 
-TermList ApplicativeHelper::app(TermList sort, TermList head, TermStack& terms)
+TermList HOL::app(TermList sort, TermList head, TermStack& terms)
 {
   ASS(head.isVar() || SortHelper::getResultSort(head.term()) == sort);
 
@@ -67,7 +70,7 @@ TermList ApplicativeHelper::app(TermList sort, TermList head, TermStack& terms)
   return res;
 }
 
-TermList ApplicativeHelper::app(TermList head, TermStack& terms)
+TermList HOL::app(TermList head, TermStack& terms)
 {
   ASS(head.isTerm());
 
@@ -75,14 +78,14 @@ TermList ApplicativeHelper::app(TermList head, TermStack& terms)
   return app(sort, head, terms);
 }
 
-TermList ApplicativeHelper::app2(TermList head, TermList arg1, TermList arg2) {
+TermList HOL::app2(TermList head, TermList arg1, TermList arg2) {
   ASS(head.isTerm());
 
   TermList headSort = SortHelper::getResultSort(head.term());
   return app2(headSort, head, arg1, arg2);
 }
 
-TermList ApplicativeHelper::lambda(TermList varSort, TermList termSort, TermList term)
+TermList HOL::lambda(TermList varSort, TermList termSort, TermList term)
 {
   ASS(varSort.isVar()  || varSort.term()->isSort());
   ASS(termSort.isVar() || termSort.term()->isSort());
@@ -96,7 +99,7 @@ TermList ApplicativeHelper::lambda(TermList varSort, TermList termSort, TermList
   return TermList(Term::create(lam, 3, args.begin()));
 }
 
-TermList ApplicativeHelper::lambda(TermList varSort, TermList term)
+TermList HOL::lambda(TermList varSort, TermList term)
 {
   ASS(term.isTerm());
 
@@ -104,7 +107,7 @@ TermList ApplicativeHelper::lambda(TermList varSort, TermList term)
   return lambda(varSort, termSort, term);
 }
 
-TermList ApplicativeHelper::matrix(TermList t)
+TermList HOL::matrix(TermList t)
 {
   while(t.isLambdaTerm()){
     t = t.lambdaBody();
@@ -112,20 +115,20 @@ TermList ApplicativeHelper::matrix(TermList t)
   return t;
 }
 
-TermList ApplicativeHelper::getDeBruijnIndex(int index, TermList sort)
+TermList HOL::getDeBruijnIndex(int index, TermList sort)
 {
   unsigned fun = env.signature->getDeBruijnIndex(index);
   return TermList(Term::create1(fun, sort));
 }
 
-TermList ApplicativeHelper::placeholder(TermList sort)
+TermList HOL::placeholder(TermList sort)
 {
   unsigned fun = env.signature->getPlaceholder();
   return TermList(Term::create1(fun, sort));
 }
 
 /** indexed from 1 */
-TermList ApplicativeHelper::getNthArg(TermList arrowSort, unsigned argNum)
+TermList HOL::getNthArg(TermList arrowSort, unsigned argNum)
 {
   ASS(argNum > 0);
 
@@ -144,7 +147,7 @@ TermList ApplicativeHelper::getNthArg(TermList arrowSort, unsigned argNum)
 }
 
 /** indexed from 1 */
-TermList ApplicativeHelper::getResultApplieadToNArgs(TermList arrowSort, unsigned argNum)
+TermList HOL::getResultApplieadToNArgs(TermList arrowSort, unsigned argNum)
 {
   while (argNum > 0) {
     ASS(arrowSort.isArrowSort());
@@ -154,7 +157,7 @@ TermList ApplicativeHelper::getResultApplieadToNArgs(TermList arrowSort, unsigne
   return arrowSort;
 }
 
-unsigned ApplicativeHelper::getArity(TermList sort) {
+unsigned HOL::getArity(TermList sort) {
   unsigned arity = 0;
   while (sort.isArrowSort()) {
     sort = sort.result();
@@ -163,7 +166,7 @@ unsigned ApplicativeHelper::getArity(TermList sort) {
   return arity;
 }
 
-void ApplicativeHelper::getHeadAndArgs(TermList term, TermList& head, TermStack& args) {
+void HOL::getHeadAndArgs(TermList term, TermList& head, TermStack& args) {
   if (!args.isEmpty())
     args.reset();
 
@@ -176,7 +179,7 @@ void ApplicativeHelper::getHeadAndArgs(TermList term, TermList& head, TermStack&
   head = term;
 }
 
-void ApplicativeHelper::getHeadSortAndArgs(TermList term, TermList& head,
+void HOL::getHeadSortAndArgs(TermList term, TermList& head,
                                            TermList& headSort, TermStack& args) {
   if(!args.isEmpty())
     args.reset();
@@ -194,7 +197,7 @@ void ApplicativeHelper::getHeadSortAndArgs(TermList term, TermList& head,
   head = term;
 }
 
-void ApplicativeHelper::getHeadArgsAndArgSorts(TermList t, TermList& head, TermStack& args, TermStack& argSorts) {
+void HOL::getHeadArgsAndArgSorts(TermList t, TermList& head, TermStack& args, TermStack& argSorts) {
   if (!args.isEmpty())
     args.reset();
   if (!argSorts.isEmpty())
@@ -211,7 +214,7 @@ void ApplicativeHelper::getHeadArgsAndArgSorts(TermList t, TermList& head, TermS
   head = t;
 }
 
-TermList ApplicativeHelper::lhsSort(TermList t) {
+TermList HOL::lhsSort(TermList t) {
   ASS(t.isApplication());
 
   TermList s1 = *t.term()->nthArgument(0);
@@ -219,13 +222,13 @@ TermList ApplicativeHelper::lhsSort(TermList t) {
   return AtomicSort::arrowSort(s1,s2);
 }
 
-TermList ApplicativeHelper::rhsSort(TermList t) {
+TermList HOL::rhsSort(TermList t) {
   ASS(t.isApplication());
 
   return *t.term()->nthArgument(0);
 }
 
-void ApplicativeHelper::getMatrixAndPrefSorts(TermList t, TermList& matrix, TermStack& sorts) {
+void HOL::getMatrixAndPrefSorts(TermList t, TermList& matrix, TermStack& sorts) {
   while (t.isLambdaTerm()) {
     sorts.push(*t.term()->nthArgument(0));
     t = t.lambdaBody();
@@ -233,7 +236,7 @@ void ApplicativeHelper::getMatrixAndPrefSorts(TermList t, TermList& matrix, Term
   matrix = t;
 }
 
-void ApplicativeHelper::getArgSorts(TermList t, TermStack& sorts) {
+void HOL::getArgSorts(TermList t, TermStack& sorts) {
   while (t.isArrowSort()) {
     sorts.push(t.domain());
     t = t.result();
@@ -247,12 +250,12 @@ void ApplicativeHelper::getArgSorts(TermList t, TermStack& sorts) {
   }
 }
 
-Signature::Proxy ApplicativeHelper::getProxy(const TermList& t) {
+Signature::Proxy HOL::getProxy(const TermList& t) {
   return t.isVar() ? Signature::NOT_PROXY
                    : env.signature->getFunction(t.term()->functor())->proxy();
 }
 
-void ApplicativeHelper::getAbstractionTerms(Literal* lit, TermStack& terms) {
+void HOL::getAbstractionTerms(Literal* lit, TermStack& terms) {
   ASS(lit->isEquality());
 
   TermList lhs = *lit->nthArgument(0);
@@ -288,7 +291,7 @@ void ApplicativeHelper::getAbstractionTerms(Literal* lit, TermStack& terms) {
   }
 }
 
-bool ApplicativeHelper::splittable(TermList t, bool topLevel) {
+bool HOL::splittable(TermList t, bool topLevel) {
   if (t.isVar())
     return true;
 
@@ -305,7 +308,7 @@ bool ApplicativeHelper::splittable(TermList t, bool topLevel) {
   return true;
 }
 
-bool ApplicativeHelper::isEtaExpandedVar(TermList t, TermList& var){
+bool HOL::isEtaExpandedVar(TermList t, TermList& var){
   // TODO code sharing with Eta reducer above
   TermList body = t;
   unsigned l = 0; // number of lambda binders
@@ -327,7 +330,7 @@ bool ApplicativeHelper::isEtaExpandedVar(TermList t, TermList& var){
   return n == l && var.isVar();
 }
 
-void ApplicativeHelper::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
+void HOL::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
 {
   if (t1.isVar() && t2.isVar())
     return;
@@ -389,7 +392,7 @@ void ApplicativeHelper::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
     t1 = etaExpand(t1c, t1s, prefSorts1, n - m);
 }
 
-bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings,
+bool HOL::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings,
                                                TermList& fVar)
 {
   ASS(bindings.isEmpty());
@@ -464,7 +467,7 @@ bool ApplicativeHelper::getProjAndImitBindings(TermList flexTerm, TermList rigid
   return imit;
 }
 
-TermList ApplicativeHelper::createGeneralBinding(TermList& freshVar, TermList head,
+TermList HOL::createGeneralBinding(TermList& freshVar, TermList head,
                                                  TermStack& sorts, bool surround){
   ASS(head.isTerm()); // in the future may wish to reconsider this assertion
 
@@ -494,14 +497,14 @@ TermList ApplicativeHelper::createGeneralBinding(TermList& freshVar, TermList he
   return surround ? surroundWithLambdas(pb, sorts) : pb;
 }
 
-TermList ApplicativeHelper::surroundWithLambdas(TermList t, TermStack& sorts, bool fromTop)
+TermList HOL::surroundWithLambdas(TermList t, TermStack& sorts, bool fromTop)
 {
   ASS(t.isTerm());
   TermList sort = SortHelper::getResultSort(t.term());
   return surroundWithLambdas(t, sorts, sort, fromTop);
 }
 
-TermList ApplicativeHelper::surroundWithLambdas(TermList t, TermStack& sorts, TermList sort, bool fromTop)
+TermList HOL::surroundWithLambdas(TermList t, TermStack& sorts, TermList sort, bool fromTop)
 {
   if (!fromTop) { // TODO fromTop is very hacky. See if can merge these two into one loop
     for (unsigned i = 0; i < sorts.size(); i++) {
@@ -517,11 +520,11 @@ TermList ApplicativeHelper::surroundWithLambdas(TermList t, TermStack& sorts, Te
   return t;
 }
 
-TermList ApplicativeHelper::betaNF(TermList t) {
+TermList HOL::betaNF(TermList t) {
   return BetaNormaliser().normalise(t);
 }
 
-TermList ApplicativeHelper::etaNF(TermList t) {
+TermList HOL::etaNF(TermList t) {
   return EtaNormaliser().normalise(t);
 }
 

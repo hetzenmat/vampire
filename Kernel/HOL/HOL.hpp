@@ -8,16 +8,15 @@
  * and in the source directory
  */
 /**
- * @file ApplicativeHelper.hpp
- * Defines class ApplicativeHelper.
+ * @file HOL.hpp
  */
 
-#ifndef __ApplicativeHelper__
-#define __ApplicativeHelper__
+#ifndef __HOL__
+#define __HOL__
 
 #include "Kernel/Signature.hpp"
 
-namespace ApplicativeHelper {
+namespace HOL {
 
   using namespace Kernel;
 
@@ -120,8 +119,4 @@ namespace ApplicativeHelper {
   }
 }
 
-
-
-
-
-#endif // __ApplicativeHelper__
+#endif // __HOL__

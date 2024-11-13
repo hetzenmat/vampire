@@ -12,7 +12,7 @@
  */
 
 #include "Kernel/HOL/TermShifter.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 TermList TermShifter::shift(TermList term, int shiftBy) {
   _cutOff = 0;
@@ -31,7 +31,7 @@ TermList TermShifter::transformSubterm(TermList t) {
       if (_shiftBy != 0) {
         TermList sort = SortHelper::getResultSort(t.term());
         ASS(_shiftBy >= 0 || index >= std::abs(_shiftBy));
-        return ApplicativeHelper::getDeBruijnIndex(index + _shiftBy, sort);
+        return HOL::getDeBruijnIndex(index + _shiftBy, sort);
       }
       auto j = index - _cutOff;
       if (j < _minFreeIndex || _minFreeIndex == -1)

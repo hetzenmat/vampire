@@ -58,7 +58,7 @@
 #include "Lib/List.hpp"
 
 #include "Kernel/TermIterators.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 using namespace std;
 using namespace Shell;
@@ -529,7 +529,7 @@ void Preprocess::findAbstractions(UnitList*& units) {
     for(unsigned i = 0; i < c->length(); i++){
       Literal* lit = (*c)[i];
       TermStack abstractionTerms;
-      ApplicativeHelper::getAbstractionTerms(lit, abstractionTerms);
+      HOL::getAbstractionTerms(lit, abstractionTerms);
       while(!abstractionTerms.isEmpty()){
         env.signature->addInstantiation(abstractionTerms.pop());
       }

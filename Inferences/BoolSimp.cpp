@@ -19,7 +19,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Shell/Statistics.hpp"
 #include "BoolSimp.hpp"
 #include "Kernel/TermTransformer.hpp"
@@ -70,10 +70,10 @@ bool BoolSimp::areComplements(TermList t1, TermList t2){
   static TermStack args;
   TermList head;
 
-  ApplicativeHelper::getHeadAndArgs(t1, head, args);
+  HOL::getHeadAndArgs(t1, head, args);
   if(head.isNot() && args[0] == t2) return true;
 
-  ApplicativeHelper::getHeadAndArgs(t2, head, args);
+  HOL::getHeadAndArgs(t2, head, args);
   if(head.isNot() && args[0] == t1) return true;
 
   return false;
@@ -85,11 +85,11 @@ TermList BoolSimp::boolSimplify(TermList term){
   static TermStack args;
   TermList head;
 
-  ApplicativeHelper::getHeadAndArgs(term, head, args);
+  HOL::getHeadAndArgs(term, head, args);
 
   if(head.isVar()){ return term; }
 
-  switch(ApplicativeHelper::getProxy(head)){
+  switch(HOL::getProxy(head)){
     case Signature::AND:{
       ASS(args.size() == 2);
       if(args[1] == fols || args[0] == fols){ return fols; }
@@ -115,15 +115,15 @@ TermList BoolSimp::boolSimplify(TermList term){
       if(areComplements(args[0], args[1])){ return args[0]; }
       if(args[0] == args[1]){ return troo; }
       if(args[0] == troo){ return troo; }
-      if(args[0] == fols){ return ApplicativeHelper::app(ApplicativeHelper::neg(), args[1]); }
+      if(args[0] == fols){ return HOL::app(HOL::neg(), args[1]); }
       break;
     }
     case Signature::IFF:{
       ASS(args.size() == 2);
       if(args[0] == troo){ return args[1]; } else
           if(args[1] == troo){ return args[0]; }
-      if(args[0] == fols){ return ApplicativeHelper::app(ApplicativeHelper::neg(), args[1]); } else
-          if(args[1] == fols){ return ApplicativeHelper::app(ApplicativeHelper::neg(), args[0]); }
+      if(args[0] == fols){ return HOL::app(HOL::neg(), args[1]); } else
+          if(args[1] == fols){ return HOL::app(HOL::neg(), args[0]); }
       if(args[0] == args[1]){ return troo; }
       if(areComplements(args[0], args[1])){ return fols; }
       break;
@@ -132,7 +132,7 @@ TermList BoolSimp::boolSimplify(TermList term){
       ASS(args.size() == 1);
       if(args[0] == troo){ return fols; }
       if(args[0] == fols){ return troo; }
-      ApplicativeHelper::getHeadAndArgs(args[0], head, args);
+      HOL::getHeadAndArgs(args[0], head, args);
       if(head.isNot()){
         ASS(args.size() == 1);
         return args[0];

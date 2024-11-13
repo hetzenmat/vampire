@@ -24,7 +24,7 @@
 #include "Kernel/Clause.hpp"
 #include "Kernel/Unit.hpp"
 #include "Kernel/Inference.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/LiteralSelector.hpp"
 #include "Saturation/SaturationAlgorithm.hpp"
@@ -82,7 +82,7 @@ struct PositiveExt::ResultFn
          }
 
          if(!occursInC){
-           TermList sort = ApplicativeHelper::lhsSort(lhs);
+           TermList sort = HOL::lhsSort(lhs);
            // f = g
            Literal* newLit = Literal::createEquality(true, left1, left2, sort);
 

@@ -23,7 +23,7 @@
 #include "Kernel/Signature.hpp"
 #include "Kernel/OperatorType.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Shell/Statistics.hpp"
 #include "Shell/Skolem.hpp"
@@ -76,10 +76,10 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
     TermList rhs = *lit->nthArgument(1);
     TermList term;
     TermList boolVal;
-    if(ApplicativeHelper::isBool(lhs)){
+    if(HOL::isBool(lhs)){
       boolVal = lhs;
       term = rhs;
-    } else if(ApplicativeHelper::isBool(rhs)){
+    } else if(HOL::isBool(rhs)){
       boolVal = rhs;
       term = lhs;
     } else if(SortHelper::getEqualityArgumentSort(lit) == boolSort && !not_be) {
@@ -104,8 +104,8 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
       continue;
     }
 
-    ApplicativeHelper::getHeadAndArgs(term, head, args);
-    Signature::Proxy prox = ApplicativeHelper::getProxy(head);
+    HOL::getHeadAndArgs(term, head, args);
+    Signature::Proxy prox = HOL::getProxy(head);
     if(prox == Signature::NOT_PROXY || prox == Signature::IFF ||
        prox == Signature::XOR){
       continue;
@@ -131,7 +131,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
       }
     }
 
-    bool positive = ApplicativeHelper::isTrue(boolVal) == lit->polarity();
+    bool positive = HOL::isTrue(boolVal) == lit->polarity();
 
     if((prox == Signature::OR) && (args.size() == 2)){
       if(positive){
@@ -228,7 +228,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
               TermList tS    = subst.apply(t, 0);
               TermList argS  = subst.apply(args[0],1);
 
-              TermList app   = ApplicativeHelper::app(argS, tS);
+              TermList app   = HOL::app(argS, tS);
               Literal* l1   = Literal::createEquality(true, app, rhs, boolSort);
 
               unsigned clen   = c->length();
@@ -257,7 +257,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
             auto tqr = results.next();
             TermList skolemTerm = tqr.data->term; // TODO MH: use term or value?
             skolemTerm=tqr.unifier->applyToBoundResult(skolemTerm);
-            newTerm = ApplicativeHelper::app(srt, args[0], skolemTerm);
+            newTerm = HOL::app(srt, args[0], skolemTerm);
             newTermCreated = true;
           }
         }
@@ -266,7 +266,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
           if(index){
             index->insertFormula(TypedTermList(term.term()), skolemTerm);
           }
-          newTerm = ApplicativeHelper::app(srt, args[0], skolemTerm);
+          newTerm = HOL::app(srt, args[0], skolemTerm);
         }
         rule = convert(Signature::SIGMA);
       }
@@ -374,7 +374,7 @@ TermList sigmaRemoval(TermList sigmaTerm, TermList expsrt){
   TermList skSymSort = AtomicSort::arrowSort(termVarSorts, resultSort);
   unsigned fun = Skolem::addSkolemFunction(typeVars.size(), typeVars.size(), 0, skSymSort);
   TermList head = TermList(Term::create(fun, typeVars.size(), typeVars.begin()));
-  TermList skolemTerm = ApplicativeHelper::app(SortHelper::getResultSort(head.term()), head, termVars);
+  TermList skolemTerm = HOL::app(SortHelper::getResultSort(head.term()), head, termVars);
 
   ASS(*expsrt.term()->nthArgument(1) == AtomicSort::boolSort());
   //cout << "OUT OF sigmaRemoval " + sigmaTerm.toString() << endl;
@@ -388,7 +388,7 @@ TermList piRemoval(TermList piTerm, Clause* clause, TermList expsrt){
   do{ 
     maxVar++;
     TermList newVar = TermList(maxVar, false);
-    piTerm = ApplicativeHelper::app(expsrt, piTerm, newVar);
+    piTerm = HOL::app(expsrt, piTerm, newVar);
     expsrt = *expsrt.term()->nthArgument(1);
   }while(expsrt != AtomicSort::boolSort()); 
   
@@ -408,20 +408,20 @@ Clause* IFFXORRewriterISE::simplify(Clause* c){
     TermList rhs = *lit->nthArgument(1);
     TermList term;
     TermList boolVal;
-    if(ApplicativeHelper::isBool(lhs)){
+    if(HOL::isBool(lhs)){
       boolVal = lhs;
       term = rhs;
-    } else if(ApplicativeHelper::isBool(rhs)){
+    } else if(HOL::isBool(rhs)){
       boolVal = rhs;
       term = lhs;
     } else {
       continue;
     }
 
-    bool positive = ApplicativeHelper::isTrue(boolVal) == lit->polarity();
+    bool positive = HOL::isTrue(boolVal) == lit->polarity();
 
-    ApplicativeHelper::getHeadAndArgs(term, head, args);
-    Signature::Proxy prox = ApplicativeHelper::getProxy(head);
+    HOL::getHeadAndArgs(term, head, args);
+    Signature::Proxy prox = HOL::getProxy(head);
 
     if((prox == Signature::IFF || prox == Signature::XOR) && (args.size() == 2)){
       bool polarity = (prox == Signature::IFF) == positive;

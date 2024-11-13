@@ -23,7 +23,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/SubformulaIterator.hpp"
 #include "Kernel/TermIterators.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Lib/SharedSet.hpp"
 
 #include "Shell/Statistics.hpp"
@@ -483,7 +483,7 @@ Formula* Skolem::skolemise (Formula* f)
           TermList skSymSort = AtomicSort::arrowSort(termVarSorts, rangeSort);
           sym = addSkolemFunction(typeVars.size(), 0, skSymSort, v, typeVars.size());
           TermList head = TermList(Term::create(sym, typeVars.size(), typeVars.begin()));
-          skolemTerm = ApplicativeHelper::app(head, termVars).term();
+          skolemTerm = HOL::app(head, termVars).term();
         }
         _introducedSkolemSyms.push(make_pair(skolemisingTypeVar, sym));
 

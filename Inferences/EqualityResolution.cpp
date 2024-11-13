@@ -31,7 +31,7 @@
 #include "Kernel/Ordering.hpp"
 #include "Kernel/LiteralSelector.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/HOLUnification.hpp"
 
 #include "Saturation/SaturationAlgorithm.hpp"

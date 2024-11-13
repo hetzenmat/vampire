@@ -13,7 +13,7 @@
 
 #include "Kernel/HOL/BetaNormaliser.hpp"
 #include "Kernel/HOL/RedexReducer.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 TermList BetaNormaliser::normalise(TermList t) {
  // term transformer does not work at the top level...
@@ -27,13 +27,13 @@ TermList BetaNormaliser::transformSubterm(TermList t) {
 
   TermList head;
   TermStack args;
-  ApplicativeHelper::getHeadAndArgs(t, head, args);
+  HOL::getHeadAndArgs(t, head, args);
 
-  while (ApplicativeHelper::canHeadReduce(head, args)) {
+  while (HOL::canHeadReduce(head, args)) {
     t = RedexReducer().reduce(head, args);
     if (t.isLambdaTerm())
       break;
-    ApplicativeHelper::getHeadAndArgs(t, head, args);
+    HOL::getHeadAndArgs(t, head, args);
   }
 
   return t;

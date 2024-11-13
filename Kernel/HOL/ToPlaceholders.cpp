@@ -12,7 +12,7 @@
  */
 
 #include "Kernel/HOL/ToPlaceholders.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 ToPlaceholders::ToPlaceholders()
       : _nextIsPrefix(false),
@@ -40,11 +40,11 @@ TermList ToPlaceholders::transformSubterm(TermList t) {
 
   auto sort = SortHelper::getResultSort(t.term());
   if (t.isLambdaTerm() || t.head().isVar())
-    return ApplicativeHelper::placeholder(sort);
+    return HOL::placeholder(sort);
 
   if (_mode == Options::FunctionExtensionality::ABSTRACTION) {
     if (sort.isArrowSort() || sort.isVar() || (sort.isBoolSort() && !_topLevel)) {
-      return ApplicativeHelper::placeholder(sort);
+      return HOL::placeholder(sort);
     }
   }
   return t;

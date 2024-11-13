@@ -25,7 +25,7 @@
 #include "Kernel/Inference.hpp"
 #include "Kernel/SubstHelper.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 
 #include "Saturation/SaturationAlgorithm.hpp"
 
@@ -112,7 +112,7 @@ struct ImitateProject::ResultFn
     }
  
     TermStack bindings;
-    bool imitFound = ApplicativeHelper::getProjAndImitBindings(flexTerm,rigidTerm,bindings,_maxVar);
+    bool imitFound = HOL::getProjAndImitBindings(flexTerm,rigidTerm,bindings,_maxVar);
 
     // some inefficiency below as we iterate the term twice. Once in
     // getProjAndImitBindings and again in the head() call below.

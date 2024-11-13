@@ -29,7 +29,7 @@
 #include "Kernel/Inference.hpp"
 #include "Kernel/EqHelper.hpp"
 #include "Kernel/SortHelper.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/LiteralSelector.hpp"
 #include "Saturation/SaturationAlgorithm.hpp"
@@ -131,10 +131,10 @@ struct NegativeExt::ResultFn
     TermList head = TermList(Term::create(fun, typeVars.size(), typeVars.begin()));
     //cout << "the head is " + head.toString() << endl;
     //cout << "It has sort " + skSymSort.toString() << endl;
-    TermList skolemTerm = ApplicativeHelper::app(head, termVars);
+    TermList skolemTerm = HOL::app(head, termVars);
 
-    TermList newLhs = ApplicativeHelper::app(alpha1, alpha2, lhs, skolemTerm);
-    TermList newRhs = ApplicativeHelper::app(alpha1, alpha2, rhs, skolemTerm);
+    TermList newLhs = HOL::app(alpha1, alpha2, lhs, skolemTerm);
+    TermList newRhs = HOL::app(alpha1, alpha2, rhs, skolemTerm);
 
     Literal* newLit = Literal::createEquality(false, newLhs, newRhs, alpha2);
 

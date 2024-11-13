@@ -23,7 +23,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Term.hpp"
 #include "Kernel/Unit.hpp"
-#include "Kernel/HOL/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TermIterators.hpp"
 
 #include "Indexing/TermSharing.hpp"
@@ -227,9 +227,9 @@ Literal* InequalitySplitting::makeNameLiteral(unsigned predNum, TermList arg, bo
     vars.push(arg);
     return Literal::create(predNum, vars.size(), polarity, false, vars.begin());
   } else {
-    TermList boolT = polarity ? ApplicativeHelper::top() : ApplicativeHelper::bottom();
+    TermList boolT = polarity ? HOL::top() : HOL::bottom();
     TermList head = TermList(Term::create(predNum, vars.size(), vars.begin()));
-    TermList t = ApplicativeHelper::app(head, arg);
+    TermList t = HOL::app(head, arg);
     return Literal::createEquality(true, t, boolT, AtomicSort::boolSort());
   }
 
