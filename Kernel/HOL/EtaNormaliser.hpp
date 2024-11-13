@@ -8,6 +8,13 @@
  * and in the source directory
  */
 /**
+//////////////////
+
+
+
+
+
+
  * @file EtaNormaliser.hpp
  */
 
@@ -24,12 +31,10 @@ using namespace Kernel;
 // WARNING Recursing lurks here (even during proof search!)
 // This is BAD! However, an  (efficient) iterative implementation is tricky, so
 // I am leaving for now.
-class EtaNormaliser
-{
-public:
+namespace EtaNormaliser {
   TermList normalise(TermList t);
   TermList transformSubterm(TermList t);
-};
+}
 
 
 

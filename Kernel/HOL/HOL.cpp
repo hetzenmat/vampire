@@ -19,11 +19,6 @@
 #include "Kernel/HOL/BetaNormaliser.hpp"
 #include "Kernel/HOL/TermShifter.hpp"
 
-using namespace std;
-using namespace Lib;
-using namespace Kernel;
-using namespace Shell;
-
 TermList HOL::app(TermList sort, TermList head, TermList arg) {
   auto s1 = getNthArg(sort, 1);
   auto s2 = getResultApplieadToNArgs(sort, 1);
@@ -99,30 +94,26 @@ TermList HOL::lambda(TermList varSort, TermList termSort, TermList term)
   return TermList(Term::create(lam, 3, args.begin()));
 }
 
-TermList HOL::lambda(TermList varSort, TermList term)
-{
-  ASS(term.isTerm());
+TermList HOL::lambda(TermList varSort, TermList term) {
+  ASS(term.isTerm())
 
   TermList termSort = SortHelper::getResultSort(term.term());
   return lambda(varSort, termSort, term);
 }
 
-TermList HOL::matrix(TermList t)
-{
-  while(t.isLambdaTerm()){
+TermList HOL::matrix(TermList t) {
+  while (t.isLambdaTerm()) {
     t = t.lambdaBody();
   }
   return t;
 }
 
-TermList HOL::getDeBruijnIndex(int index, TermList sort)
-{
+TermList HOL::getDeBruijnIndex(int index, TermList sort) {
   unsigned fun = env.signature->getDeBruijnIndex(index);
   return TermList(Term::create1(fun, sort));
 }
 
-TermList HOL::placeholder(TermList sort)
-{
+TermList HOL::placeholder(TermList sort) {
   unsigned fun = env.signature->getPlaceholder();
   return TermList(Term::create1(fun, sort));
 }
@@ -130,15 +121,16 @@ TermList HOL::placeholder(TermList sort)
 /** indexed from 1 */
 TermList HOL::getNthArg(TermList arrowSort, unsigned argNum)
 {
-  ASS(argNum > 0);
+  ASS(argNum > 0)
 
   TermList res;
-  while (argNum >=1) {
+  while (argNum >= 1) {
     if (!arrowSort.isArrowSort()) {
       std::cout << arrowSort.toString() << std::endl;
       std::cout << "";
     }
-    ASS(arrowSort.isArrowSort());
+    ASS(arrowSort.isArrowSort())
+
     res = arrowSort.domain();
     arrowSort = arrowSort.result();
     argNum--;
@@ -179,9 +171,8 @@ void HOL::getHeadAndArgs(TermList term, TermList& head, TermStack& args) {
   head = term;
 }
 
-void HOL::getHeadSortAndArgs(TermList term, TermList& head,
-                                           TermList& headSort, TermStack& args) {
-  if(!args.isEmpty())
+void HOL::getHeadSortAndArgs(TermList term, TermList& head, TermList& headSort, TermStack& args) {
+  if (!args.isEmpty())
     args.reset();
 
   term = matrix(term);
@@ -200,6 +191,7 @@ void HOL::getHeadSortAndArgs(TermList term, TermList& head,
 void HOL::getHeadArgsAndArgSorts(TermList t, TermList& head, TermStack& args, TermStack& argSorts) {
   if (!args.isEmpty())
     args.reset();
+
   if (!argSorts.isEmpty())
     argSorts.reset();
 
@@ -295,7 +287,8 @@ bool HOL::splittable(TermList t, bool topLevel) {
   if (t.isVar())
     return true;
 
-  ASS(!t.head().isLambdaTerm()); // assume t is in head normal form
+  ASS(!t.head().isLambdaTerm()) // assume t is in head normal form
+
   if (t.isLambdaTerm() ||  t.head().isVar())
     return false;
 
@@ -318,10 +311,10 @@ bool HOL::isEtaExpandedVar(TermList t, TermList& var){
   }
 
   unsigned n = 0; // number of De bruijn indices at end of term
-  while(body.isApplication()){
+  while (body.isApplication()) {
     auto dbIndex = body.rhs().deBruijnIndex();
-    if(!dbIndex.isSome() || dbIndex.unwrap() != n)
-    { break; }
+    if (!dbIndex.isSome() || dbIndex.unwrap() != n)
+      break;
     body = body.lhs();
     n++;
   }
@@ -330,10 +323,10 @@ bool HOL::isEtaExpandedVar(TermList t, TermList& var){
   return n == l && var.isVar();
 }
 
-void HOL::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
-{
+void HOL::normaliseLambdaPrefixes(TermList& t1, TermList& t2) {
   if (t1.isVar() && t2.isVar())
     return;
+
   TermList nonVar = t1.isVar() ? t2 : t1;
   TermList sort = SortHelper::getResultSort(nonVar.term());
 
@@ -392,9 +385,7 @@ void HOL::normaliseLambdaPrefixes(TermList& t1, TermList& t2)
     t1 = etaExpand(t1c, t1s, prefSorts1, n - m);
 }
 
-bool HOL::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings,
-                                               TermList& fVar)
-{
+bool HOL::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStack& bindings, TermList& fVar) {
   ASS(bindings.isEmpty());
 
   // if flexTerm is of form X t1 t2 : i > i and t1 : int and t2 : tau
@@ -467,8 +458,7 @@ bool HOL::getProjAndImitBindings(TermList flexTerm, TermList rigidTerm, TermStac
   return imit;
 }
 
-TermList HOL::createGeneralBinding(TermList& freshVar, TermList head,
-                                                 TermStack& sorts, bool surround){
+TermList HOL::createGeneralBinding(TermList& freshVar, TermList head, TermStack& sorts, bool surround) {
   ASS(head.isTerm()); // in the future may wish to reconsider this assertion
 
   TermStack args;
@@ -497,15 +487,14 @@ TermList HOL::createGeneralBinding(TermList& freshVar, TermList head,
   return surround ? surroundWithLambdas(pb, sorts) : pb;
 }
 
-TermList HOL::surroundWithLambdas(TermList t, TermStack& sorts, bool fromTop)
-{
-  ASS(t.isTerm());
+TermList HOL::surroundWithLambdas(TermList t, TermStack& sorts, bool fromTop) {
+  ASS(t.isTerm())
+
   TermList sort = SortHelper::getResultSort(t.term());
   return surroundWithLambdas(t, sorts, sort, fromTop);
 }
 
-TermList HOL::surroundWithLambdas(TermList t, TermStack& sorts, TermList sort, bool fromTop)
-{
+TermList HOL::surroundWithLambdas(TermList t, TermStack& sorts, TermList sort, bool fromTop) {
   if (!fromTop) { // TODO fromTop is very hacky. See if can merge these two into one loop
     for (unsigned i = 0; i < sorts.size(); i++) {
       t = lambda(sorts[i], sort, t);
@@ -525,12 +514,5 @@ TermList HOL::betaNF(TermList t) {
 }
 
 TermList HOL::etaNF(TermList t) {
-  return EtaNormaliser().normalise(t);
+  return EtaNormaliser::normalise(t);
 }
-
-//////////////////
-
-
-
-
-

@@ -674,7 +674,7 @@ unsigned Signature::getApp()
 {
   bool added = false;
   unsigned app = addFunction("vAPP", 4, added);
-  if(added){
+  if (added) {
     _appFun = app;
     TermList tv1 = TermList(0, false);
     TermList tv2 = TermList(1, false);
@@ -690,7 +690,7 @@ unsigned Signature::getLam()
 {
   bool added = false;
   unsigned lam = addFunction("vLAM", 3, added);
-  if(added){
+  if (added) {
     _lamFun = lam;
     TermList tv1 = TermList(0, false);
     TermList tv2 = TermList(1, false);
@@ -702,10 +702,10 @@ unsigned Signature::getLam()
   return lam;
 }
 
-unsigned Signature::getDiff(){
+unsigned Signature::getDiff() {
   bool added = false;
   unsigned diff = addFunction("diff",2, added);      
-  if(added){
+  if (added) {
     TermList alpha = TermList(0, false);
     TermList beta = TermList(1, false);
     TermList alphaBeta = AtomicSort::arrowSort(alpha, beta);
@@ -754,10 +754,10 @@ unsigned Signature::getBoolDef(unsigned fn)
   return p;
 }
 
-unsigned Signature::getChoice(){
+unsigned Signature::getChoice() {
   bool added = false;
   unsigned choice = addFunction("vEPSILON",1, added);      
-  if(added) {
+  if (added) {
     _choiceFun = choice;
     TermList alpha = TermList(0, false);
     TermList bs = AtomicSort::boolSort();
@@ -769,11 +769,10 @@ unsigned Signature::getChoice(){
   return choice;
 }
 
-unsigned Signature::getDeBruijnIndex(int index)
-{
+unsigned Signature::getDeBruijnIndex(int index) {
   bool added = false;
   unsigned fun = addFunction("db" + Int::toString(index), 1, added);
-  if(added) {
+  if (added) {
     TermList alpha = TermList(0, false);
     Symbol * sym = getFunction(fun);
     sym->setType(OperatorType::getConstantsType(alpha, 1));
@@ -782,9 +781,8 @@ unsigned Signature::getDeBruijnIndex(int index)
   return fun;
 }
 
-unsigned Signature::getPlaceholder()
-{
-  if(_placeholderFun != UINT_MAX) {
+unsigned Signature::getPlaceholder() {
+  if (_placeholderFun != UINT_MAX) {
     return _placeholderFun;
   }
 
@@ -796,7 +794,7 @@ unsigned Signature::getPlaceholder()
   return fun;
 }
 
-void Signature::incrementFormulaCount(Term* t){
+void Signature::incrementFormulaCount(Term* t) {
   ASS(SortHelper::getResultSort(t) == AtomicSort::boolSort());
 
   if(_formulaCounts.find(t)){
@@ -809,27 +807,26 @@ void Signature::incrementFormulaCount(Term* t){
   }
 }
 
-void Signature::decrementFormulaCount(Term* t){
-  ASS(SortHelper::getResultSort(t) == AtomicSort::boolSort());
-
+void Signature::decrementFormulaCount(Term* t) {
+  ASS(SortHelper::getResultSort(t) == AtomicSort::boolSort())
   ASS(_formulaCounts.find(t))
+
   int count = _formulaCounts.get(t);
-  if(count != -1){
+  if(count != -1)
     _formulaCounts.set(t, count - 1);
-  }
 }
 
-void Signature::formulaNamed(Term* t){
-  ASS(SortHelper::getResultSort(t) == AtomicSort::boolSort());
+void Signature::formulaNamed(Term* t) {
+  ASS(SortHelper::getResultSort(t) == AtomicSort::boolSort())
+  ASS(_formulaCounts.find(t))
 
-  ASS(_formulaCounts.find(t));
   _formulaCounts.set(t, -1);
 }
 
-unsigned Signature::formulaCount(Term* t){
-  if(_formulaCounts.find(t)){
+unsigned Signature::formulaCount(Term* t) {
+  if (_formulaCounts.find(t))
     return _formulaCounts.get(t);
-  }
+
   return 0;
 }
 
@@ -838,10 +835,7 @@ unsigned Signature::formulaCount(Term* t){
  * If a type constructor with this name and arity exists, return its number.
  * Otherwise, add a new one and return its number.
  */
-unsigned Signature::addTypeCon (const vstring& name,
-         unsigned arity,
-         bool& added)
-{
+unsigned Signature::addTypeCon (const vstring& name, unsigned arity, bool& added) {
   vstring symbolKey = key(name,arity);
   unsigned result;
   if (_typeConNames.find(symbolKey,result)) {

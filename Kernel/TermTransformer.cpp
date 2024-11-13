@@ -147,14 +147,14 @@ Term* TermTransformer::transform(Term* term)
       if (terms.isEmpty()) {
         //we're done, args stack contains modified arguments
         //of the literal.
-        ASS(toDo.isEmpty());
+        ASS(toDo.isEmpty())
         break;
       }
       Term* orig = terms.pop();
 
       onTermExit(orig);
 
-      ASS(!orig->isSpecial());
+      ASS(!orig->isSpecial())
       if (!modified.pop()) {
         args.truncate(args.length() - orig->arity());
         args.push(TermList(orig));

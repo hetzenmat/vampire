@@ -16,8 +16,7 @@
 #include "Kernel/HOL/HOL.hpp"
 #include "Kernel/TermTransformer.hpp"
 
-TermList EtaNormaliser::normalise(TermList t)
-{
+TermList EtaNormaliser::normalise(TermList t) {
   if (t.isVar() || !t.term()->hasLambda())
     return t;
 
@@ -64,17 +63,19 @@ TermList EtaNormaliser::normalise(TermList t)
 TermList EtaNormaliser::transformSubterm(TermList t) {
   TermList body = t;
   unsigned l = 0; // number of lambda binders
-  while(body.isLambdaTerm()){
+  while (body.isLambdaTerm()) {
     l++;
     body = body.lambdaBody();
   }
-  if(!l) return t; //not a lambda term, cannot eta reduce
+
+  if (l == 0)
+    return t; //not a lambda term, cannot eta reduce
 
   unsigned n = 0; // number of De bruijn indices at end of term
   TermList newBody = body;
-  while(body.isApplication()){
+  while (body.isApplication()) {
     auto dbIndex = body.rhs().deBruijnIndex();
-    if(!dbIndex.isSome() || dbIndex.unwrap() != n){
+    if (!dbIndex.isSome() || dbIndex.unwrap() != n) {
       break;
     }
     body = body.lhs();
@@ -85,26 +86,24 @@ TermList EtaNormaliser::transformSubterm(TermList t) {
   ts.shift(body, 0);
   auto mfi = ts.minFreeIndex();
   unsigned j = mfi.isSome() ? mfi.unwrap() : UINT_MAX; // j is minimum free index
-  unsigned k = std::min(l, std::min(n, j));
+  unsigned k = std::min({l,n,j});
 
-  if(!k){
+  if(k == 0)
     return t;
-  }
 
-  for(unsigned i = 0; i < k; i++){
+  for (unsigned i = 0; i < k; i++)
     newBody = newBody.lhs();
-  }
+
   newBody = TermShifter().shift(newBody, 0 - k);
 
   body = t;
-  for(unsigned i = 0; i < l - k; i++){
+  for (unsigned i = 0; i < l - k; i++)
     body = body.lambdaBody();
-  }
+
 
   // TermTransform doesn't work at top level...
-  if (body == t) {
+  if (body == t)
     return newBody;
-  }
 
   return SubtermReplacer(body, newBody).transform(t);
 }

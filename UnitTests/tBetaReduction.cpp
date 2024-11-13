@@ -12,11 +12,14 @@
  * @author Ahmed Bhayat
  */
 
-
+#include "Kernel/HOL/EtaNormaliser.hpp"
 #include "Test/UnitTesting.hpp"
 #include "Test/SyntaxSugar.hpp"
 #include "Kernel/HOL/HOL.hpp"
 #include "Shell/LambdaConversion.hpp"
+
+#include <Kernel/HOL/BetaNormaliser.hpp>
+#include <Kernel/HOL/ToPlaceholders.hpp>
 
 TermList toDeBruijnIndices(TermList t) {
   return LambdaConversion::convertLambda(t);
@@ -32,9 +35,8 @@ TEST_FUN(beta_reduction01) {
   DECL_HOL_VAR(x0, 0, srt)
   DECL_CONST(a, srt)    
 
-  BetaNormaliser bn;
   auto t = ap(lam(x0,x0),a);
-  auto reduced = bn.normalise(toDeBruijnIndices(t));
+  auto reduced = HOL::betaNF(toDeBruijnIndices(t));
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
@@ -47,13 +49,10 @@ TEST_FUN(beta_reduction02) {
   DECL_CONST(a, srt)    
   DECL_CONST(f,fSrt)  
 
-  BetaNormaliser bn;
   // t = (\x. f x) a
   // -> f a
   auto t = ap(lam(x0,ap(f, x0)),a);
-  auto t2 = toDeBruijnIndices(t);
-  
-  auto reduced = bn.normalise(t2);
+  auto reduced = HOL::betaNF(toDeBruijnIndices(t));
   auto result = ap(f, a).sugaredExpr();
 
   ASS_EQ(reduced, result);
@@ -67,9 +66,8 @@ TEST_FUN(beta_reduction03) {
   DECL_HOL_VAR(y, 1, srt)
   DECL_CONST(a, srt)     
 
-  BetaNormaliser bn;
   auto t = ap(  lam(x,ap(x,a)) , lam(y, y)  );
-  auto reduced = bn.normalise(  toDeBruijnIndices(t)   );
+  auto reduced = HOL::betaNF(  toDeBruijnIndices(t)   );
 
   ASS_EQ(reduced, a.sugaredExpr());
 }
@@ -83,9 +81,8 @@ TEST_FUN(beta_reduction04) {
   DECL_CONST(a, srt)     
   DECL_CONST(f, xSrt)     
 
-  BetaNormaliser bn;
   auto t = ap(f,  ap(  lam(x,ap(x,a)) , lam(y, y)  )  );
-  auto reduced = bn.normalise( toDeBruijnIndices(t)  );
+  auto reduced = HOL::betaNF( toDeBruijnIndices(t)  );
 
   ASS_EQ(reduced, ap(f, a).sugaredExpr());
 }
@@ -97,14 +94,13 @@ TEST_FUN(beta_reduction05) {
   DECL_HOL_VAR(y, 1, srt)
   DECL_HOL_VAR(z, 2, srt)  
 
-  BetaNormaliser bn;
   TermSugar lam_z_y = lam(z, y);
   TermSugar lam_y_z_y = lam(y, lam_z_y);
   TermSugar tApp = ap(lam_y_z_y, x);
   TermSugar t = lam(x, tApp);
 
   auto res = lam(x,lam(z, x));
-  auto reduced = bn.normalise( toDeBruijnIndices(t) );
+  auto reduced = HOL::betaNF(toDeBruijnIndices(t));
 
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
@@ -119,10 +115,9 @@ TEST_FUN(beta_reduction06) {
   DECL_ARROW_SORT(fSrt, {srt, srt, srt})
   DECL_CONST(f, fSrt)     
 
-  BetaNormaliser bn;
   auto t = ap( ap( lam(x, lam(y, ap(ap(f, x), y))), a), b) ;
   auto res = ap(ap(f, a), b);
-  auto reduced = bn.normalise( toDeBruijnIndices(t) );
+  auto reduced = HOL::betaNF( toDeBruijnIndices(t) );
 
   ASS_EQ(reduced, res.sugaredExpr());
 }
@@ -136,10 +131,9 @@ TEST_FUN(eta_reduction01) {
   DECL_ARROW_SORT(fSrt, {srt, srt, srt, srt})  
   DECL_CONST(f, fSrt)     
 
-  EtaNormaliser en;
   auto t = lam(x, lam(y, lam(z, ap(ap(ap(f, x), y), z))));
 
-  auto reduced = en.normalise( toDeBruijnIndices(t) );
+  auto reduced = HOL::etaNF( toDeBruijnIndices(t) );
 
   ASS_EQ(reduced, f.sugaredExpr());
 }
@@ -153,11 +147,10 @@ TEST_FUN(eta_reduction02) {
   DECL_ARROW_SORT(fSrt, {srt, srt, srt, srt})  
   DECL_CONST(f, fSrt)     
 
-  EtaNormaliser en;
   auto t = lam(x, lam(y, lam(z, ap(ap(ap(f, x), z), y))));
   auto tdb = toDeBruijnIndices(t);
 
-  auto reduced = en.normalise( tdb );
+  auto reduced = HOL::etaNF( tdb );
 
   ASS_EQ(reduced, tdb);
 }
@@ -170,12 +163,11 @@ TEST_FUN(eta_reduction03) {
   DECL_ARROW_SORT(fSrt, {srt, srt, srt, srt})  
   DECL_CONST(f, fSrt)     
 
-  EtaNormaliser en;
   auto t = lam(x, lam(y, lam(z, ap(ap(ap(f, y), x), z))));
   auto tdb = toDeBruijnIndices(t);
   auto res = lam(x, lam(y, ap(ap(f, y), x) ));
 
-  auto reduced = en.normalise( tdb );
+  auto reduced = HOL::etaNF(tdb);
 
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
@@ -188,12 +180,12 @@ TEST_FUN(eta_reduction04) {
   DECL_HOL_VAR(y, 1, srt)
   DECL_HOL_VAR(z, 2, srt)  
 
-  EtaNormaliser en;
+
   auto t = lam(x, lam(y, lam(z, ap(ap(x, y), z))));
   auto tdb = toDeBruijnIndices(t);
   auto res = lam(x, x);
 
-  auto reduced = en.normalise( tdb );
+  auto reduced = HOL::etaNF(tdb);
 
   ASS_EQ(reduced, toDeBruijnIndices(res));
 }
@@ -204,11 +196,10 @@ TEST_FUN(eta_reduction05) {
   DECL_ARROW_SORT(fSrt, {srt, srt, srt})  
   DECL_CONST(f, fSrt)     
 
-  EtaNormaliser en;
   auto t = lam(x, ap(ap(f, x), x));
   auto tdb = toDeBruijnIndices(t);
 
-  auto reduced = en.normalise( tdb );
+  auto reduced = HOL::etaNF(tdb);
 
   ASS_EQ(reduced, tdb);
 }
@@ -224,11 +215,8 @@ TEST_FUN(eta_reduction06) {
   // TODO wierd stuff below...      
   DECL_CONST(f, arrow(arrow(srt,srt),srt)) 
 
-  EtaNormaliser en;
   auto t = lam(x, ap(f, lam(y, ap(x,y))));
-  auto tdb = toDeBruijnIndices(t);
-
-  auto reduced = en.normalise( tdb );
+  auto reduced = HOL::etaNF(toDeBruijnIndices(t));
 
   ASS_EQ(reduced, f.sugaredExpr());
 }
@@ -261,11 +249,10 @@ TEST_FUN(eta_reduction07) {
   DECL_CONST(f, fSrt)     
   DECL_CONST(g, gSrt)     
 
-  EtaNormaliser en;
   auto t = lam(x, ap(ap(f, lam(y, ap(g, y))), x));
   auto tdb = toDeBruijnIndices(t);
 
-  auto reduced = en.normalise( tdb );
+  auto reduced = HOL::etaNF( tdb );
 
   ASS_EQ(reduced, ap(f,g).sugaredExpr()); 
 }
