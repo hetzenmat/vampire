@@ -24,7 +24,7 @@
 #include "Kernel/Renaming.hpp"
 #include "Kernel/SubstHelper.hpp"
 #include "Kernel/Term.hpp"
-#include "Kernel/HOL/HOL.hpp"
+#include "Kernel/ApplicativeHelper.hpp"
 
 #include "Lib/BinaryHeap.hpp"
 #include "Lib/Metaiterators.hpp"
@@ -500,6 +500,17 @@ void SubstitutionTree<LeafData_>::Node::split(Node** pnode, TermList* where, int
   Node** nodePosition=newNode->childByTop(node->top(), true);
   ASS(!*nodePosition);
   *nodePosition=node;
+}
+
+template<class LeafData_>
+void SubstitutionTree<LeafData_>::IntermediateNode::loadChildren(NodeIterator children)
+{
+  while(children.hasNext()) {
+    Node* ext=*children.next();
+    Node** own=childByTop(ext->top(), true);
+    ASS(! *own);
+    *own=ext;
+  }
 }
 
 template<class LeafData_>
