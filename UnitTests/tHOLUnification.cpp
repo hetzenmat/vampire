@@ -20,36 +20,56 @@
 #include "Test/TestUtils.hpp"
 #include "Test/HOLUtils.hpp"
 
+#include <Kernel/HOL/ToPlaceholders.hpp>
+
 using namespace HOLUtils;
 
+// x a b =?= f b a
+// x, f : srt > srt > srt
+// a, b : srt
 
 TEST_FUN(unif1) {
   Problem prb;
   prb.forceHigherOrder();
   env.setMainProblem(&prb);
 
-  TermSubstitutionTree<TermWithoutValue> index(SplittingAlgo::HOL_UNIF);
+  TermSubstitutionTree<TermWithValue<TermList>> index(SplittingAlgo::HOL_UNIF);
+  index.setPreprocessor([](TermWithValue<TermList>* t) {
+    LOG("preprocess before", t->term.toString());
+    auto skeleton = TypedTermList(ToPlaceholders().replace(t->term), t->term.sort());
+    t->term = skeleton;
+    t->value = static_cast<TermList>(t->term);
+    LOG("preprocess after", t->term.toString());
+
+    // sort(t->value) == t->term.sort()
+  });
+
+  // if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
+  //   // replace higher-order terms with placeholder constants
+  //   //tt = TypedTermList(ToPlaceholders().replace(tt), tt.sort());
+  //   THROW_MH("");
+  // }
 
   auto srt = TermList(AtomicSort::createConstant("srt"));
   auto srtSrt = TermList(AtomicSort::arrowSort(srt, srt));
+  auto fSrt = TermList(AtomicSort::arrowSort(srt, srt, srt));
 
-  auto x1 = TypedTermList(TermList::var(1), srt);
+  DECL_VAR(x, 0, fSrt)
+  DECL_CONST(f, fSrt)
+  DECL_CONST(a, srt)
+  DECL_CONST(b, srt)
 
-  unsigned fIndex = env.signature->addFunction("f", 0); \
-  env.signature->getFunction(fIndex)->setType(OperatorType::getFunctionType({}, srtSrt)); \
-  auto f = TypedTermList(TermList(Term::createConstant(fIndex)), srtSrt);
-
-
-  unsigned cIndex = env.signature->addFunction("c", 0); \
-  env.signature->getFunction(cIndex)->setType(OperatorType::getFunctionType({}, srt)); \
-  auto c = TypedTermList(TermList(Term::createConstant(cIndex)), srt);
-
-  const std::initializer_list terms = {x1, f, c, AP(f, c), AP(f, x1), AP(f, AP(f, c))};
-  for (const auto term : terms) {
-    index.insert(TermWithoutValue(term));
-  }
+  auto xab = AP_l({x, a, b});
+  index.insert(TermWithValue(xab, static_cast<TermList>(xab)));
 
   std::cout << multiline(index) << std::endl;
+
+  auto fba = AP_l({f, b, a});
+
+  auto i = iterTraits(index.getHOLUnifiers(fba, true));
+  for (const auto& result : i) {
+    std::cout << result << std::endl;
+  }
 }
 
 TEST_FUN(unif2) {

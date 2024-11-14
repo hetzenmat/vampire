@@ -1487,7 +1487,7 @@ Term* Term::createNonShared(Term* t)
   int arity = t->arity();
   Term* s = new(arity) Term(*t);
   TermList* ss = s->args();
-  for (int i = 0;i < arity;i++) {
+  for (int i = 0; i < arity; i++) {
     (*ss--).makeSpecialVar(0);
   }
   return s;
@@ -1502,7 +1502,7 @@ Term* Term::cloneNonShared(Term* t)
   TermList* args = t->args();
   Term* s = new(arity) Term(*t);
   TermList* ss = s->args();
-  for (int i = 0;i < arity;i++) {
+  for (int i = 0; i < arity; i++) {
     *ss-- = args[-i];
   }
   return s;
@@ -1515,29 +1515,29 @@ Term* Term::create2(unsigned fn, TermList arg1, TermList arg2)
 { return Term::create(fn, {arg1, arg2}); }
 
 
-Term* Term::create(unsigned fn, std::initializer_list<TermList> args)
-{ return Term::create(fn, args.size(), args.begin()); }
+Term* Term::create(unsigned fn, std::initializer_list<TermList> args) {
+  return create(fn, args.size(), args.begin());
+}
 
 /**
  * Create singleton FOOL constants
  */ 
-Term* Term::foolTrue(){
+Term* Term::foolTrue() {
   static Term* _foolTrue = createConstant(env.signature->getFoolConstantSymbol(true));
   return _foolTrue;
 }
 
-Term* Term::foolFalse(){
+Term* Term::foolFalse() {
   static Term* _foolFalse = createConstant(env.signature->getFoolConstantSymbol(false));
   return _foolFalse;
 }
 
-bool Term::isFreeVariable(unsigned var) const
-{
+bool Term::isFreeVariable(unsigned var) const {
   FormulaVarIterator fvi(this);
   while (fvi.hasNext()) {
-    if (var == fvi.next()) {
+    if (var == fvi.next())
       return true;
-    }
+
   }
   return false;
 }
@@ -1546,32 +1546,32 @@ bool Term::isFreeVariable(unsigned var) const
  * NOTE: by design the term that represent $tType is not shared
  * and also is not linked to a symbol in the signature.
  */
-TermList AtomicSort::superSort(){
+TermList AtomicSort::superSort() {
   static AtomicSort* _super = createNonSharedConstant(0);
   return TermList(_super);
 }
 
-TermList AtomicSort::defaultSort(){
+TermList AtomicSort::defaultSort() {
   static AtomicSort* _default = createConstant(env.signature->getDefaultSort());
   return TermList(_default); 
 }
   
-TermList AtomicSort::boolSort(){
+TermList AtomicSort::boolSort() {
   static AtomicSort* _bool = createConstant(env.signature->getBoolSort()); 
   return TermList(_bool); 
 }
 
-TermList AtomicSort::intSort(){
+TermList AtomicSort::intSort() {
   static AtomicSort* _int = createConstant(env.signature->getIntSort()); 
   return TermList(_int); 
 }
  
-TermList AtomicSort::realSort(){
+TermList AtomicSort::realSort() {
   static AtomicSort* _real = createConstant(env.signature->getRealSort()); 
   return TermList(_real); 
 }
 
-TermList AtomicSort::rationalSort(){
+TermList AtomicSort::rationalSort() {
   static AtomicSort* _rat = createConstant(env.signature->getRatSort());
   return TermList(_rat); 
 }
@@ -1581,33 +1581,30 @@ TermList AtomicSort::arrowSort(TermList s1, TermList s2){
   return TermList(create2(arrow, s1, s2));
 }
 
-TermList AtomicSort::arrowSort(TermList s1, TermList s2, TermList s3){
+TermList AtomicSort::arrowSort(TermList s1, TermList s2, TermList s3) {
   return arrowSort(s1, arrowSort(s2, s3));
 }
 
-TermList AtomicSort::arrowSort(TermStack& domSorts, TermList range)
-{
+TermList AtomicSort::arrowSort(TermStack& domSorts, TermList range) {
   TermList res = range;
 
-  for(unsigned i = 0; i < domSorts.size(); i++){
+  for (unsigned i = 0; i < domSorts.size(); i++) {
     res = arrowSort(domSorts[i], res);
   }
   return res;
 }
 
-AtomicSort* AtomicSort::createConstant(const vstring& name)
-{
+AtomicSort* AtomicSort::createConstant(const vstring& name) {
   bool added;
   unsigned newSort = env.signature->addTypeCon(name,0,added);
-  if(added){
+  if (added) {
     OperatorType* ot = OperatorType::getConstantsType(superSort());
     env.signature->getTypeCon(newSort)->setType(ot);
   }
   return createConstant(newSort);
 }
 
-TermList AtomicSort::arraySort(TermList indexSort, TermList innerSort)
-{
+TermList AtomicSort::arraySort(TermList indexSort, TermList innerSort) {
   unsigned array = env.signature->getArrayConstructor();
   TermList sort = TermList(create2(array, indexSort, innerSort));
   return sort;

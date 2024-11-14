@@ -29,7 +29,7 @@ TypedTermList AP(TypedTermList lhs, TypedTermList rhs) {
 TypedTermList AP_l(std::initializer_list<TypedTermList> terms) {
   auto size = terms.size();
 
-  ASS(size > 0);
+  ASS(size > 0)
   auto a = std::data(terms);
   TypedTermList res = a[0];
 

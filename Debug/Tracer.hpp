@@ -92,6 +92,22 @@ template<class... A> void printDbg2(int diffIndent, const char* file, unsigned l
   if (diffIndent > 0) Indent::value += diffIndent;
 }
 
+template<class... A> void printDbgIndent(unsigned indent, const char* file, unsigned line, const A&... msg)
+{
+  const char* slashIdx = nullptr;
+  while (*file != 0) {
+    if (*file == '/') slashIdx = file + 1;
+    ++file;
+  }
+
+  for (unsigned i = 0; i < indent; i++)
+    std::cout << " ";
+
+  std::cout << slashIdx << ":" << line << " @ ";
+  ((std::cout << " " << msg), ...);
+  std::cout << std::endl;
+}
+
 } // namespace Debug
 
 
@@ -101,6 +117,7 @@ template<class... A> void printDbg2(int diffIndent, const char* file, unsigned l
 #if VDEBUG
 #  define DBG(...) { Debug::printDbg(__FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__); }
 #  define LOG(...) { Debug::printDbg2(0, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__); }
+#  define LOGI(indent,...) { Debug::printDbgIndent(indent, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__); }
 #  define LOG_ENTER(...) { Debug::printDbg2(4, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__); }
 #  define LOG_RETURN(...) { Debug::printDbg2(-4, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__); }
 #define LOGFN(...) log(__FILE__, __LINE__, __VA_ARGS__)
