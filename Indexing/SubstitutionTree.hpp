@@ -36,7 +36,7 @@
 #include "Lib/ArrayMap.hpp"
 #include "Lib/Array.hpp"
 #include "Lib/BiMap.hpp"
-#include "Kernel/ApplicativeHelper.hpp"
+#include "Kernel/HOL/HOL.hpp"
 #include "Lib/Recycled.hpp"
 
 #include "Kernel/RobSubstitution.hpp"
@@ -916,8 +916,13 @@ public:
           ASS(!q || !t.isSpecialVar());
         }
 
-        std::string toString()
-        { return (q ? "q|" : "n|")+t.toString(); }
+        vstring toString() const {
+          return (q ? "q|" : "n|") + t.toString();
+        }
+
+        friend std::ostream& operator<<(std::ostream& out, TermSpec const& ts) {
+          return out << ts.toString();
+        }
 
         /**
          * Return true if the @b t field can be use as a binding for a query

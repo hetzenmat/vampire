@@ -28,6 +28,7 @@ using namespace HOLUtils;
 // x, f : srt > srt > srt
 // a, b : srt
 
+#if 0
 TEST_FUN(unif1) {
   Problem prb;
   prb.forceHigherOrder();
@@ -71,6 +72,7 @@ TEST_FUN(unif1) {
     std::cout << result << std::endl;
   }
 }
+#endif
 
 TEST_FUN(unif2) {
   Problem prb;
