@@ -14,6 +14,7 @@
 
 #include "Kernel/HOLUnification.hpp"
 #include "Indexing/TermSubstitutionTree.hpp"
+#include "Indexing/HOLSubstitutionTree.hpp"
 #include "Shell/LambdaConversion.hpp"
 
 #include "Test/UnitTesting.hpp"
@@ -80,6 +81,8 @@ TEST_FUN(unif2) {
 
   env.setMainProblem(&prb);
   env.options->set("hol_unif_depth", "2");
+
+  HOLSubstitutionTree<TermWithValue<std::string>> index;
 
   // example of paper "A Higher-Order Vampire (Short Paper)"
   // unification problem: x a b =?= f b a

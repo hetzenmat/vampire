@@ -15,6 +15,8 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/HOL/HOL.hpp"
+
+#include "ToPlaceholders.hpp"
 #include "Kernel/HOL/EtaNormaliser.hpp"
 #include "Kernel/HOL/BetaNormaliser.hpp"
 #include "Kernel/HOL/TermShifter.hpp"
@@ -515,4 +517,8 @@ TermList HOL::betaNF(TermList t) {
 
 TermList HOL::etaNF(TermList t) {
   return EtaNormaliser::normalise(t);
+}
+
+TypedTermList HOL::toPlaceholders(TypedTermList t) {
+  return {ToPlaceholders().replace(t), t.sort()};
 }

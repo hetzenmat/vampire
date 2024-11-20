@@ -15,6 +15,7 @@
 #define __HOL__
 
 #include "Kernel/Signature.hpp"
+#include "Kernel/TypedTermList.hpp"
 
 namespace HOL {
 
@@ -26,7 +27,9 @@ namespace HOL {
   TermList app(TermList sort, TermList head, TermStack& terms); // todo const termstack
   TermList app(TermList head, TermStack& terms);
 
-  inline TermList app2(TermList sort, TermList head, TermList arg1, TermList arg2) { return app(app(sort, head, arg1), arg2); }
+  inline TermList app2(TermList sort, TermList head, TermList arg1, TermList arg2) {
+    return app(app(sort, head, arg1), arg2);
+  }
 
   TermList app2(TermList head, TermList arg1, TermList arg2);
 
@@ -117,6 +120,8 @@ namespace HOL {
   inline TermList betaEtaNF(TermList t) {
     return etaNF(betaNF(t));
   }
+
+  TypedTermList toPlaceholders(TypedTermList t);
 }
 
 #endif // __HOL__
