@@ -34,14 +34,6 @@ public:
   ResultIt getHOLGeneralizations(TypedTermList t) override  { NOT_IMPLEMENTED; }
 
   void handle(Data d, bool insert) override {
-    // replace higher-order terms with placeholder constants
-
-    // if(env.getMainProblem()->isHigherOrder() && _algo == SplittingAlgo::HOL_UNIF) {
-    //   // replace higher-order terms with placeholder constants
-    //   //tt = TypedTermList(ToPlaceholders().replace(tt), tt.sort());
-    //   THROW_MH("");
-    // }
-
     inner.handle({ HOL::toPlaceholders(d.key()), d}, insert);
   }
 

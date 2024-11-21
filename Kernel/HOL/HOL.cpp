@@ -161,8 +161,7 @@ unsigned HOL::getArity(TermList sort) {
 }
 
 void HOL::getHeadAndArgs(TermList term, TermList& head, TermStack& args) {
-  if (!args.isEmpty())
-    args.reset();
+  args.reset();
 
   term = matrix(term);
 

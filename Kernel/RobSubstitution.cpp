@@ -302,7 +302,7 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
       }
   };
 
-  bool mismatch=false;
+  bool mismatch = false;
   // Iteratively resolve unification pairs in toDo
   // the current pair is always in t1 and t2 with their dereferenced
   // version in dt1 and dt2
@@ -317,13 +317,13 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
     // Deal with the case where either are variables
     // Do an occurs-check and note that the variable 
     // cannot be currently bound as we already dereferenced
-    } else if(dt1.isVar() && !occurs(dt1.varSpec(), dt2)) {
+    } else if (dt1.isVar() && !occurs(dt1.varSpec(), dt2)) {
       bind(dt1.varSpec(), dt2);
 
-    } else if(dt2.isVar() && !occurs(dt2.varSpec(), dt1)) {
+    } else if (dt2.isVar() && !occurs(dt2.varSpec(), dt1)) {
       bind(dt2.varSpec(), dt1);
 
-    } else if(dt1.isTerm() && dt2.isTerm() 
+    } else if (dt1.isTerm() && dt2.isTerm()
            && dt1.functor() == dt2.functor()) {
 
       for (auto c : dt1.allArgs().zip(dt2.allArgs())) {
@@ -338,16 +338,16 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
     ASS(!mismatch)
   }
 
-  if(mismatch) {
+  if (mismatch) {
     toDo.reset();
   }
 
   bdDone();
 
-  if(mismatch) {
+  if (mismatch) {
     localBD.backtrack();
   } else {
-    if(bdIsRecording()) {
+    if (bdIsRecording()) {
       bdCommit(localBD);
     }
     localBD.drop();
@@ -467,7 +467,7 @@ bool RobSubstitution::applicativeUnify(TermSpec s, TermSpec t) {
  */
 bool RobSubstitution::match(TermSpec base, TermSpec instance)
 {
-  if(base.sameTermContent(instance)) {
+  if (base.sameTermContent(instance)) {
     return true;
   }
 
