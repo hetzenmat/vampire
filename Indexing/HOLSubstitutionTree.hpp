@@ -24,7 +24,7 @@ namespace Indexing {
 
 
 using namespace Kernel;
-using namespace UnificationAlgorithms;
+using UnificationAlgorithms::PreUnification;
 
 template<class Data>
 class HOLSubstitutionTree final : public TermIndexingStructure<Data>  {
@@ -38,7 +38,7 @@ public:
 
     return pvi(iterTraits(inner.getUnifications(tp, false))
                    .flatMap([query](auto v) {
-                     return PreUnification<Data>(query, v.data->original, false);
+                     return PreUnification(query, v.data->original, false);
                    }));
   }
 

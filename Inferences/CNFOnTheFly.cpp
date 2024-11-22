@@ -218,7 +218,7 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
           while(it.hasNext()){
             TermList t = it.next();
             ASS(t.isTerm());
-            static RobSubstitutionTS subst;
+            static RobSubstitution subst;
             subst.reset();
 
             TermList tSort = SortHelper::getResultSort(t.term());
@@ -249,11 +249,11 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
           }
         }
       } else {
-        ASS(term.isTerm());
+        ASS(term.isTerm())
         bool newTermCreated = false;
-        if(index){
+        if (index) {
           auto results = index->getHOLGeneralizations(TypedTermList(term.term()));
-          if(results.hasNext()){
+          if (results.hasNext()) {
             auto tqr = results.next();
             TermList skolemTerm = tqr.data->term; // TODO MH: use term or value?
             skolemTerm=tqr.unifier->applyToBoundResult(skolemTerm);
@@ -261,9 +261,9 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
             newTermCreated = true;
           }
         }
-        if(!newTermCreated){
+        if (!newTermCreated) {
           TermList skolemTerm = sigmaRemoval(args[0], srt);
-          if(index){
+          if (index) {
             index->insertFormula(TypedTermList(term.term()), skolemTerm);
           }
           newTerm = HOL::app(srt, args[0], skolemTerm);
@@ -275,7 +275,6 @@ ClauseIterator produceClauses(Clause* c, bool generating, SkolemisingFormulaInde
       resultStack.push(res);
       goto afterLoop;
     }
-
   }
   
   return ClauseIterator::getEmpty(); 

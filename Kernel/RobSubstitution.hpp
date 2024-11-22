@@ -292,13 +292,12 @@ public:
 using namespace Lib;
 
 class AbstractingUnifier;
-class UnificationConstraint;
 
 class RobSubstitution
 :public Backtrackable
 {
   friend class AbstractingUnifier;
-  friend class UnificationConstraint;
+  // friend class UnificationConstraint;
   // friend class UnificationAlgorithms::HOLUnification;
   // friend class UnificationAlgorithms::HigherOrderUnifiersItWrapper;
   // friend class UnificationAlgorithms::HigherOrderUnifiersIt;
@@ -359,19 +358,17 @@ public:
   template<class... Args>
   TermSpec createTerm(unsigned functor, Args... args)
   {
-    TermSpec out;
     if (iterItems(args...).count() == 0) {
       return TermSpec(TermList(Term::create(functor, 0, nullptr)), /* index */ 0);
     }
     auto firstIndex = iterItems(args...).tryNext().unwrap().index;
     if (iterItems(args...).all([&](auto a) { return a.index == firstIndex; })) {
       return TermSpec(TermList(Term::create(functor, {args.term...})), firstIndex);
-    } else {
-      return TermSpec(TermList(Term::create(functor, { 
-              (args.index == GLUE_INDEX ? args.term 
-                                        : TermList::var(introGlueVar(args).var))... 
-              })), GLUE_INDEX);
     }
+    return TermSpec(TermList(Term::create(functor, {
+            (args.index == GLUE_INDEX ? args.term
+                                      : TermList::var(introGlueVar(args).var))...
+            })), GLUE_INDEX);
   }
 
   void reset()
@@ -396,8 +393,8 @@ public:
   void bindSpecialVar(unsigned var, TermList t, int index)
   {
     VarSpec vs(var, SPECIAL_INDEX);
-    ASS(!_bindings.find(vs));
-    bind(vs, TermSpec(t,index));
+    ASS(!_bindings.find(vs))
+    bind(vs, TermSpec(t, index));
   }
 
   TermList::Top getSpecialVarTop(unsigned specialVar) const;
@@ -415,11 +412,10 @@ public:
 
   friend std::ostream& operator<<(std::ostream& out, VarSpec const& self)
   {
-    if(self.index == SPECIAL_INDEX) {
+    if (self.index == SPECIAL_INDEX)
       return out << "S" << self.var;
-    } else {
-      return out << "X" << self.var << "/" << self.index;
-    }
+
+    return out << "X" << self.var << "/" << self.index;
   }
 
 
@@ -442,13 +438,13 @@ private:
   bool occurs(VarSpec const& vs, TermSpec const& ts);
 
   TermSpec root(TermSpec v) const {
-    ASS(v.isVar());
+    ASS(v.isVar())
 
     for(;;) {
       auto binding = _bindings.find(v.varSpec());
-      if(binding.isNone() || binding->isTerm() || binding->index == static_cast<int>(VarBank::OUTPUT_BANK)) {
+      if(binding.isNone() || binding->isTerm() || binding->index == static_cast<int>(VarBank::OUTPUT_BANK))
         return v;
-      }
+
       v = binding.unwrap();
     }
   }
@@ -471,45 +467,7 @@ private:
 };
 
 inline AutoDerefTermSpec::AutoDerefTermSpec(TermSpec const& t, RobSubstitution const* s) : term(s->derefBound(t)) {}
-
-// TODO MH
-class RobSubstitutionTL {
-public:
-  TermList derefBound(TermList x) {
-    THROW_MH("");
-  }
-
-  TermList apply(TermList, int) {
-    THROW_MH("");
-  }
-
-  Literal* apply(Literal *, int) {
-    THROW_MH("");
-  }
-
-  bool unify(TermList, TermList) {
-    THROW_MH("");
-  }
-  bool unify(TermList, int, TermList, int) {
-    THROW_MH("");
-  }
-
-  bool match(TermList, TermList, int) {THROW_MH("");}
-
-
-  void reset() { THROW_MH(""); }
-};
-
-// TODO MH
-class RobSubstitutionTS {
-public:
-  void reset() {}
-  bool unify(TermList a, int b, TermList c, int d) { THROW_MH(""); }
-  TermList apply(TermList a, int b) { THROW_MH(""); }
-  Literal* apply(Literal* a, int b) { THROW_MH(""); }
-};
-
-};
+}
 
 namespace Lib {
   template<>
