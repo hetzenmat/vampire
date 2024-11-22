@@ -101,6 +101,6 @@ TEST_FUN(unif2) {
   auto lhs = AP(AP(x, a), b);
   auto rhs = AP(AP(f, b), a);
 
-  auto unif = new UnificationAlgorithms::HigherOrderUnifiersItWrapper({static_cast<TermList>(lhs), QUERY_BANK}, lhs.sort(), {static_cast<TermList>(rhs), RESULT_BANK}, rhs.sort(), false);
+  // auto unif = new UnificationAlgorithms::HigherOrderUnifiersItWrapper({static_cast<TermList>(lhs), QUERY_BANK}, lhs.sort(), {static_cast<TermList>(rhs), RESULT_BANK}, rhs.sort(), false);
 
 }

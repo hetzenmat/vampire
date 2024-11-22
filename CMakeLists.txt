@@ -232,7 +232,7 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/Problem.cpp
     Kernel/Renaming.cpp
     Kernel/RobSubstitution.cpp
-    Kernel/HOLUnification.cpp
+    # Kernel/HOLUnification.cpp
     Kernel/UnificationWithAbstraction.cpp
     Kernel/Signature.cpp
     Kernel/SortHelper.cpp

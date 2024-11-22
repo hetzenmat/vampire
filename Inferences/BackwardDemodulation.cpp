@@ -30,6 +30,7 @@
 #include "Kernel/SortHelper.hpp"
 #include "Kernel/Term.hpp"
 #include "Kernel/RobSubstitution.hpp"
+#include "Kernel/TermTransformer.hpp"
 
 #include "Indexing/Index.hpp"
 #include "Indexing/TermIndex.hpp"
@@ -42,6 +43,8 @@
 #include "Shell/Statistics.hpp"
 
 #include "BackwardDemodulation.hpp"
+
+
 
 namespace Inferences {
 

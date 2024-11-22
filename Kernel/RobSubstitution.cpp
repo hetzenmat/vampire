@@ -33,7 +33,6 @@
 namespace Kernel
 {
 
-using namespace std;
 using namespace Lib;
 
 std::ostream& operator<<(std::ostream& out, TermSpec const& self)
@@ -268,74 +267,65 @@ bool RobSubstitution::unify(TermSpec s, TermSpec t)
 #define DEBUG_UNIFY(lvl, ...) if (lvl < 1) DBG("unify: ", __VA_ARGS__)
   DEBUG_UNIFY(0, *this, ".unify(", s, ",", t, ")")
 
-
-  if(s.sameTermContent(t)) {
+  if (s.sameTermContent(t))
     return true;
-  }
 
   BacktrackData localBD;
   bdRecord(localBD);
 
-  static Stack<pair<TermSpec, TermSpec>> toDo(64);
-  ASS(toDo.isEmpty());
-  toDo.push(make_pair(std::move(s), std::move(t)));
+  static Stack<std::pair<TermSpec, TermSpec>> toDo(64);
+  ASS(toDo.isEmpty())
+  toDo.push(std::make_pair(s, t));
 
   // Save encountered unification pairs to avoid
   // recomputing their unification
-  static DHSet<pair<TermSpec, TermSpec>> encountered_;
+  static DHSet<std::pair<TermSpec, TermSpec>> encountered_;
   auto encountered = &encountered_;
   encountered->reset();
-  
-
-  auto pushTodo = [&](auto pair) {
-      // we unify each subterm pair at most once, to avoid worst-case exponential runtimes
-      // in order to safe memory we do ot do this for variables.
-      // (Note by joe:  didn't make this decision, but just keeping the implemenntation 
-      // working as before. i.e. as described in the paper "Comparing Unification 
-      // Algorithms in First-Order Theorem Proving", by Krystof and Andrei)
-      if (pair.first.isVar() && isUnbound(pair.first.varSpec()) &&
-          pair.second.isVar() && isUnbound(pair.second.varSpec())) {
-        toDo.push(std::move(pair));
-      } else if (!encountered->find(pair)) {
-        encountered->insert(pair);
-        toDo.push(std::move(pair));
-      }
-  };
 
   bool mismatch = false;
   // Iteratively resolve unification pairs in toDo
   // the current pair is always in t1 and t2 with their dereferenced
   // version in dt1 and dt2
-  while (toDo.isNonEmpty()) {
-    auto x = toDo.pop();
-    TermSpec dt1 = derefBound(x.first);
-    TermSpec dt2 = derefBound(x.second);
-    DEBUG_UNIFY(1, "next pair: ", tie(dt1, dt2))
+  while (!mismatch && toDo.isNonEmpty()) {
+    const auto& [t1, t2] = toDo.pop();
+    auto dt1 = derefBound(t1);
+    auto dt2 = derefBound(t2);
+    DEBUG_UNIFY(1, "next pair: ", std::tie(dt1, dt2))
     // If they have the same content then skip
     // (note that sameTermContent is best-effort)
-    if (dt1.sameTermContent(dt2)) {
+    // HOL: if one of the terms is a placeholder we also want to pass.
+    // This is used in HOLSubstitutionTree for filtering out all compatible first-order skeletons
+    if (dt1.sameTermContent(dt2) || dt1.isPlaceholder() || dt2.isPlaceholder())
+      continue;
+
     // Deal with the case where either are variables
     // Do an occurs-check and note that the variable 
     // cannot be currently bound as we already dereferenced
-    } else if (dt1.isVar() && !occurs(dt1.varSpec(), dt2)) {
+    if (dt1.isVar() && !occurs(dt1.varSpec(), dt2)) {
       bind(dt1.varSpec(), dt2);
-
     } else if (dt2.isVar() && !occurs(dt2.varSpec(), dt1)) {
       bind(dt2.varSpec(), dt1);
-
     } else if (dt1.isTerm() && dt2.isTerm()
            && dt1.functor() == dt2.functor()) {
-
-      for (auto c : dt1.allArgs().zip(dt2.allArgs())) {
-        pushTodo(make_pair(std::move(c.first), std::move(c.second)));
+      for (auto pair : dt1.allArgs().zip(dt2.allArgs())) {
+        const auto& [leftArg, rightArg] = pair;
+        // we unify each subterm pair at most once, to avoid worst-case exponential runtimes
+        // in order to safe memory we do ot do this for variables.
+        // (Note by joe:  didn't make this decision, but just keeping the implemenntation
+        // working as before. i.e. as described in the paper "Comparing Unification
+        // Algorithms in First-Order Theorem Proving", by Krystof and Andrei)
+        if (leftArg.isVar() && isUnbound(leftArg.varSpec()) &&
+            rightArg.isVar() && isUnbound(rightArg.varSpec())) {
+          toDo.push(std::move(pair));
+        } else if (!encountered->find(pair)) {
+          encountered->insert(pair);
+          toDo.push(std::move(pair));
+        }
       }
-
     } else {
       mismatch = true;
-      break;
     }
-
-    ASS(!mismatch)
   }
 
   if (mismatch) {
@@ -366,13 +356,13 @@ bool RobSubstitution::applicativeUnify(TermSpec s, TermSpec t) {
   BacktrackData localBD;
   bdRecord(localBD);
 
-  static Stack<pair<TermSpec, TermSpec>> toDo(64);
+  static Stack<std::pair<TermSpec, TermSpec>> toDo(64);
   ASS(toDo.isEmpty());
-  toDo.push(make_pair(std::move(s), std::move(t)));
+  toDo.push(std::make_pair(std::move(s), std::move(t)));
 
   // Save encountered unification pairs to avoid
   // recomputing their unification
-  static DHSet<pair<TermSpec, TermSpec>> encountered_;
+  static DHSet<std::pair<TermSpec, TermSpec>> encountered_;
   auto encountered = &encountered_;
   encountered->reset();
 
@@ -412,7 +402,7 @@ bool RobSubstitution::applicativeUnify(TermSpec s, TermSpec t) {
     auto x = toDo.pop();
     TermSpec dt1 = derefBound(x.first);
     TermSpec dt2 = derefBound(x.second);
-    DEBUG_UNIFY(1, "next pair: ", tie(dt1, dt2))
+    DEBUG_UNIFY(1, "next pair: ", std::tie(dt1, dt2))
     // If they have the same content then skip
     // (note that sameTermContent is best-effort)
     if (dt1.sameTermContent(dt2)) {
@@ -425,8 +415,8 @@ bool RobSubstitution::applicativeUnify(TermSpec s, TermSpec t) {
       bind(dt2.varSpec(), dt1);
     } else if (dt1.isTerm() && dt2.isTerm() && dt1.functor() == dt2.functor()) {
 
-      for (auto c : dt1.allArgs().zip(dt2.allArgs())) {
-        pushTodo(make_pair(std::move(c.first), std::move(c.second)));
+      for (auto [leftArg, rightArg] : dt1.allArgs().zip(dt2.allArgs())) {
+        pushTodo(std::make_pair(leftArg, rightArg));
       }
 
     } else {

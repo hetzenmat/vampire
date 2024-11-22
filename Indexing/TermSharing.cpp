@@ -86,7 +86,6 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
 
     unsigned weight = 1;
     unsigned vars = 0;
-    bool hasSortVar = false;
     bool hasInterpretedConstants=t->arity()==0 &&
 	env.signature->getFunction(t->functor())->interpreted();
     bool hasTermVar = false;
@@ -102,16 +101,14 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
       TermList* tt = t->nthArgument(i);
       if (tt->isVar()) {
         ASS(tt->isOrdinaryVar());
-        if(i < typeArity){
+        if (i < typeArity) {
           hasTermVar = true;
         }
         vars++;
         weight += 1;
-      }
-      else 
-      {
-        ASS(tt->isTerm());
-        ASS_REP(tt->term()->shared(), tt->term()->toString());
+      } else {
+        ASS(tt->isTerm())
+        ASS_REP(tt->term()->shared(), tt->term()->toString())
         
         Term* r = tt->term();
   
@@ -161,9 +158,9 @@ void TermSharing::computeAndSetSharedTermData(Term* t)
 /** same as `TermSharing::computeAndSetSharedTermData(Term*)` but for sorts */
 void TermSharing::computeAndSetSharedSortData(AtomicSort *sort)
 {
-  ASS(!sort->isLiteral());
-  ASS(!sort->isSpecial());
-  ASS(sort->isSort());
+  ASS(!sort->isLiteral())
+  ASS(!sort->isSpecial())
+  ASS(sort->isSort())
 
   TIME_TRACE("sort sharing");
 
@@ -180,9 +177,8 @@ void TermSharing::computeAndSetSharedSortData(AtomicSort *sort)
       hasTermVar = true;
       vars++;
       weight += 1;
-    }
-    else {
-      ASS_REP(tt->term()->shared(), tt->term()->toString());
+    } else {
+      ASS_REP(tt->term()->shared(), tt->term()->toString())
 
       Term *r = tt->term();
 
@@ -197,7 +193,7 @@ void TermSharing::computeAndSetSharedSortData(AtomicSort *sort)
   sort->setWeight(weight);
   sort->setHasTermVar(hasTermVar);
 
-  ASS_REP(SortHelper::allTopLevelArgsAreSorts(sort), sort->toString());
+  ASS_REP(SortHelper::allTopLevelArgsAreSorts(sort), sort->toString())
   if (!SortHelper::allTopLevelArgsAreSorts(sort)) {
     USER_ERROR("Immediate subterms of sort " + sort->toString() + " are not all sorts as mandated in rank-1 polymorphism!");
   }
@@ -210,12 +206,12 @@ void TermSharing::computeAndSetSharedSortData(AtomicSort *sort)
  */
 void TermSharing::computeAndSetSharedLiteralData(Literal* t)
 {
-  ASS(t->isLiteral());
-  ASS(!t->isSort());
-  ASS(!t->isSpecial());
+  ASS(t->isLiteral())
+  ASS(!t->isSort())
+  ASS(!t->isSpecial())
 
   //equalities between variables must be inserted using insertVariableEquality() function
-  ASS_REP(!t->isEquality() || !t->nthArgument(0)->isVar() || !t->nthArgument(1)->isVar(), t->toString());
+  ASS_REP(!t->isEquality() || !t->nthArgument(0)->isVar() || !t->nthArgument(1)->isVar(), t->toString())
 
   TIME_TRACE(TimeTrace::TERM_SHARING);
 
@@ -224,18 +220,17 @@ void TermSharing::computeAndSetSharedLiteralData(Literal* t)
     Color color = COLOR_TRANSPARENT;
     bool hasInterpretedConstants=false;
 
-    if(t->isEquality()){
+    if (t->isEquality()) {
       weight += SortHelper::getEqualityArgumentSort(t).weight() - 1;
     }
 
     for (TermList* tt = t->args(); ! tt->isEmpty(); tt = tt->next()) {
       if (tt->isVar()) {
-        ASS(tt->isOrdinaryVar());
+        ASS(tt->isOrdinaryVar())
         vars++;
         weight += 1;
-      }
-      else {
-        ASS_REP(tt->term()->shared(), tt->term()->toString());
+      } else {
+        ASS_REP(tt->term()->shared(), tt->term()->toString())
         Term* r = tt->term();
         vars += r->numVarOccs();
         weight += r->weight();
@@ -244,7 +239,7 @@ void TermSharing::computeAndSetSharedLiteralData(Literal* t)
           ASS(color == COLOR_TRANSPARENT || r->color() == COLOR_TRANSPARENT || color == r->color());
           color = static_cast<Color>(color | r->color());
         }
-        if(!hasInterpretedConstants && r->hasInterpretedConstants()) {
+        if (!hasInterpretedConstants && r->hasInterpretedConstants()) {
           hasInterpretedConstants=true;
         }
       }
@@ -271,12 +266,12 @@ void TermSharing::computeAndSetSharedLiteralData(Literal* t)
 /** same as `TermSharing::computeAndSetSharedTermData(Term*)` but for two variable equlities */
 void TermSharing::computeAndSetSharedVarEqData(Literal* t, TermList sort)
 {
-  ASS(t->isLiteral());
-  ASS(t->commutative());
-  ASS(t->isEquality());
-  ASS(t->nthArgument(0)->isVar());
-  ASS(t->nthArgument(1)->isVar());
-  ASS(!t->isSpecial());
+  ASS(t->isLiteral())
+  ASS(t->commutative())
+  ASS(t->isEquality())
+  ASS(t->nthArgument(0)->isVar())
+  ASS(t->nthArgument(1)->isVar())
+  ASS(!t->isSpecial())
 
   TIME_TRACE(TimeTrace::TERM_SHARING);
 
@@ -316,12 +311,15 @@ void TermSharing::computeAndSetSharedVarEqData(Literal* t, TermList sort)
 Literal* TermSharing::tryGetOpposite(Literal* l)
 {
   // the complementary literal is shared iff l is shared
-  if (!l->shared()) return nullptr; 
+  if (!l->shared())
+    return nullptr;
+
   Literal* res;
-  if(_literals.find(OpLitWrapper(l), res)) {
+  if (_literals.find(OpLitWrapper(l), res)) {
     return res;
   }
-  return 0;
+
+  return nullptr;
 }
 
 /**
@@ -333,20 +331,20 @@ Literal* TermSharing::tryGetOpposite(Literal* l)
  */
 bool TermSharing::argNormGt(TermList t1, TermList t2)
 {
-  if(t1.tag()!=t2.tag()) {
-    return t1.tag()>t2.tag();
+  if (t1.tag()!=t2.tag()) {
+    return t1.tag() > t2.tag();
   }
-  if(!t1.isTerm()) {
-    return t1.content()>t2.content();
+  if (!t1.isTerm()) {
+    return t1.content() > t2.content();
   }
-  Term* trm1=t1.term();
-  Term* trm2=t2.term();
+  Term* trm1 = t1.term();
+  Term* trm2 = t2.term();
 
   // if both shared, we can just use ids (can they ever be non-shared here?)
-  ASS_REP(trm1->shared(), trm1->toString());
-  ASS_REP(trm2->shared(), trm2->toString());
+  ASS_REP(trm1->shared(), trm1->toString())
+  ASS_REP(trm2->shared(), trm2->toString())
 
-  return (trm1->getId() > trm2->getId());
+  return trm1->getId() > trm2->getId();
 }
 
 
@@ -358,7 +356,8 @@ bool TermSharing::argNormGt(TermList t1, TermList t2)
  */
 bool TermSharing::equals(const Term* s,const Term* t)
 {
-  if (s->functor() != t->functor()) return false;
+  if (s->functor() != t->functor())
+    return false;
 
   const TermList* ss = s->args();
   const TermList* tt = t->args();

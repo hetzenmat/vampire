@@ -26,7 +26,6 @@
 #include "Index.hpp"
 #include "TermIndexingStructure.hpp"
 #include "SubstitutionTree.hpp"
-#include "Kernel/HOLUnification.hpp"
 
 namespace Indexing {
 
@@ -51,9 +50,6 @@ class TermSubstitutionTree
   using LDIterator                  = typename SubstitutionTree::LDIterator;
   using Leaf                        = typename SubstitutionTree::Leaf;
   using LeafIterator                = typename SubstitutionTree::LeafIterator;
-  using HOLAlgo = UnificationAlgorithms::HOLUnification;
-  using HOLInstAlgo = UnificationAlgorithms::HOLInstantiation;
-  using HOLGenAlgo = UnificationAlgorithms::HOLGeneralisation;
 
   Indexing::SubstitutionTree<LeafData_> _inner;
 public:
@@ -134,7 +130,7 @@ public:
   VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getUnifications(TypedTermList t, bool retrieveSubstitutions) override
   { return pvi(getResultIterator<typename SubstitutionTree::template Iterator<RetrievalAlgorithms::RobUnification>>(t, retrieveSubstitutions)); }
 
-  VirtualIterator<QueryRes<ResultSubstitutionSP, LeafData>> getHOLUnifiers(TypedTermList t) final override {
+  VirtualIterator<QueryRes<SmartPtr<PartialUnifier>, LeafData>> getHOLUnifiers(TypedTermList t) final override {
     THROW_MH("");
   }
 

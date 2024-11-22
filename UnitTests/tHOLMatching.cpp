@@ -20,6 +20,8 @@
 #include "Test/HOLUtils.hpp"
 
 using namespace HOLUtils;
+using namespace Indexing;
+
 
 #define DECL_ATOMIC_SORT(name) TermList name = TermList(AtomicSort::createConstant(#name));
 

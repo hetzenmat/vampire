@@ -104,9 +104,18 @@ struct TermSpec {
 
   bool isVar() const { return term.isVar(); }
   VarSpec varSpec() const { return VarSpec(term.var(), term.isSpecialVar() ? SPECIAL_INDEX : index); }
-  bool isTerm() const { return term.isTerm(); }
 
-  TermSpec termArgSort(unsigned i) const { return TermSpec(SortHelper::getTermArgSort(term.term(), i), index); }
+  bool isTerm() const {
+    return term.isTerm();
+  }
+
+  bool isPlaceholder() const {
+    return term.isPlaceholder();
+  }
+
+  TermSpec termArgSort(unsigned i) const {
+    return TermSpec(SortHelper::getTermArgSort(term.term(), i), index);
+  }
 
   unsigned nTypeArgs() const { return term.term()->numTermArguments(); }
   unsigned nTermArgs() const { return term.term()->numTermArguments(); }
@@ -200,6 +209,8 @@ struct TermSpec {
     return 0;
   }
 };
+static_assert(std::is_trivially_copyable_v<TermSpec>,
+              "TermSpec is trivially copyable");
 
 /** A wrapper around TermSpec that automatically dereferences the TermSpec with respect to some RobSubstition when 
  * used with BottomUpEvaluation.  This means for example if we evaluate some TermSpec * `g(X, Y)` in a context 
@@ -280,16 +291,6 @@ public:
 
 using namespace Lib;
 
-namespace UnificationAlgorithms {
-//class AbstractingUnification;
-  class HOLUnification;
-  class HigherOrderUnifiersItWrapper;
-  class HigherOrderUnifiersIt;
-//class HOLInstantiation;
-//class HOLGeneralisation;
-//class RobUnification;
-}
-
 class AbstractingUnifier;
 class UnificationConstraint;
 
@@ -298,9 +299,9 @@ class RobSubstitution
 {
   friend class AbstractingUnifier;
   friend class UnificationConstraint;
-  friend class UnificationAlgorithms::HOLUnification;
-  friend class UnificationAlgorithms::HigherOrderUnifiersItWrapper;
-  friend class UnificationAlgorithms::HigherOrderUnifiersIt;
+  // friend class UnificationAlgorithms::HOLUnification;
+  // friend class UnificationAlgorithms::HigherOrderUnifiersItWrapper;
+  // friend class UnificationAlgorithms::HigherOrderUnifiersIt;
 
   DHMap<VarSpec, TermSpec> _bindings;
   mutable DHMap<VarSpec, unsigned> _outputVarBindings;

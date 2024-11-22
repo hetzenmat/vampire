@@ -32,6 +32,7 @@
 #include "Kernel/TermIterators.hpp"
 #include "Kernel/ColorHelper.hpp"
 #include "Kernel/RobSubstitution.hpp"
+#include "Kernel/TermTransformer.hpp"
 
 #include "Indexing/Index.hpp"
 #include "Indexing/IndexManager.hpp"

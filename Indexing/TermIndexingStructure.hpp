@@ -18,6 +18,10 @@
 
 #include "Index.hpp"
 
+namespace Kernel {
+struct PartialUnifier;
+}
+
 namespace Indexing {
 
 template<class Data>
@@ -35,7 +39,7 @@ public:
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getGeneralizations(TypedTermList t, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getInstances(TypedTermList t, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED; }
 
-  virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLUnifiers(TypedTermList t) { NOT_IMPLEMENTED; }
+  virtual VirtualIterator<QueryRes<SmartPtr<PartialUnifier>, Data>> getHOLUnifiers(TypedTermList t) { NOT_IMPLEMENTED; }
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLInstances(TypedTermList t, bool retrieveSubstitutions = true) { NOT_IMPLEMENTED;; }
   virtual VirtualIterator<QueryRes<ResultSubstitutionSP, Data>> getHOLGeneralizations(TypedTermList t) { NOT_IMPLEMENTED; }
 
