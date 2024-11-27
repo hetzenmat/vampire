@@ -357,7 +357,7 @@ bool TermList::isLambdaTerm() const { return !isVar() && term()->isLambdaTerm();
 
 bool Term::isLambdaTerm() const { return !isSort() && !isLiteral() && !isSpecial() && env.signature->isLamFun(_functor); }
 
-bool TermList::isEtaExpandedVar(TermList& var) const { return HOL::isEtaExpandedVar(*this, var); }
+Option<TermList> TermList::isEtaExpandedVar() const { return HOL::isEtaExpandedVar(*this); }
 
 bool TermList::isRedex() { return isApplication() && lhs().isLambdaTerm(); }
 

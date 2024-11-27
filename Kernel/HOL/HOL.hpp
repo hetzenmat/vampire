@@ -82,7 +82,9 @@ namespace HOL {
 
   inline bool canHeadReduce(const TermList& head, const TermStack& args) { return head.isLambdaTerm() && args.size(); }
 
-  bool isEtaExpandedVar(TermList t, TermList& var);
+  // bool isEtaExpandedVar(TermList t, TermList& var);
+
+  Option<TermList> isEtaExpandedVar(const TermList& t);
 
   void normaliseLambdaPrefixes(TermList& t1, TermList& t2);
 

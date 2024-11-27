@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& out, TermSpec const& self)
 
 
 
-TermList TermSpec::toTerm(RobSubstitution& s) const
+TermList TermSpec::toTerm(const RobSubstitution& s) const
 { return s.apply(this->term, this->index); }
 
 /**
@@ -185,36 +185,32 @@ unsigned RobSubstitution::findOrIntroduceOutputVariable(VarSpec v) const
       }));
     }
   }
-  ASS(_bindings.find(v).isNone());
-  auto found = _outputVarBindings.find(v);
-  if (found.isSome()) {
-    return *found;
-  } else {
-    auto newVar = _nextUnboundAvailable++;
-    _outputVarBindings.set(v, newVar);
-    _applyMemo.reset();
-    return newVar;
-  }
+  ASS(_bindings.find(v).isNone())
+
+  if (auto found = _outputVarBindings.find(v); found.isSome())
+    return found.unwrap();
+
+  auto newVar = _nextUnboundAvailable++;
+  _outputVarBindings.set(v, newVar);
+  _applyMemo.reset();
+  return newVar;
 }
 
 VarSpec RobSubstitution::introGlueVar(TermSpec forTerm)
 {
+  if (auto old = _gluedTerms.find(forTerm); old.isSome())
+    return VarSpec(old.unwrap(), GLUE_INDEX);
 
-  auto old = _gluedTerms.find(forTerm);
-  if (old) {
-    return VarSpec(*old, GLUE_INDEX);
-  } else {
-    auto v = VarSpec(_nextGlueAvailable++, GLUE_INDEX);
-    _gluedTerms.insert(forTerm, v.var);
-    if (bdIsRecording()) {
-      bdAdd(BacktrackObject::fromClosure([this, forTerm](){
-        _nextGlueAvailable--;
-        _gluedTerms.remove(forTerm);
-      }));
-    }
-    bind(v, forTerm);
-    return v;
+  auto v = VarSpec(_nextGlueAvailable++, GLUE_INDEX);
+  _gluedTerms.insert(forTerm, v.var);
+  if (bdIsRecording()) {
+    bdAdd(BacktrackObject::fromClosure([this, forTerm](){
+      _nextGlueAvailable--;
+      _gluedTerms.remove(forTerm);
+    }));
   }
+  bind(v, forTerm);
+  return v;
 }
 
 void RobSubstitution::bind(const VarSpec& v, TermSpec b)
@@ -222,37 +218,36 @@ void RobSubstitution::bind(const VarSpec& v, TermSpec b)
   //Aux terms don't contain special variables, ergo
   //should be shared.
   //ASS(!b.term.isTerm() || b.index!=AUX_INDEX || b.term.term()->shared());
-  ASS_NEQ(v.index, UNBOUND_INDEX);
+  ASS_NEQ(v.index, UNBOUND_INDEX)
 
-  bind(_bindings, v, std::move(b));
+  bind(_bindings, v, b);
 }
 
 void RobSubstitution::bindVar(const VarSpec& var, const VarSpec& to)
 {
-  ASS_NEQ(var,to);
+  ASS_NEQ(var, to)
 
   bind(var,TermSpec(to));
 }
 
-bool RobSubstitution::occurs(VarSpec const& toFind, TermSpec const& ts) 
+bool RobSubstitution::occurs(VarSpec const& toFind, TermSpec const& ts) const
 {
 
    Recycled<DHSet<TermSpec>> encountered;
    Recycled<Stack<TermSpec>> todo;
-   todo->push(std::move(ts));
+   todo->push(ts);
 
-   while (todo->isNonEmpty()){
+   while (todo->isNonEmpty()) {
      auto ts = todo->pop();
      auto dt = derefBound(ts);
      if (!encountered->find(dt)) {
        encountered->insert(dt);
        if (dt.isVar()) {
-         if(dt.varSpec() == toFind) {
+         if (dt.varSpec() == toFind) {
            return true;
          } else {
            /* nothing to do */
          }
- 
        } else {
          todo->loadFromIterator(dt.allArgs());
        }
@@ -358,7 +353,7 @@ bool RobSubstitution::applicativeUnify(TermSpec s, TermSpec t) {
 
   static Stack<std::pair<TermSpec, TermSpec>> toDo(64);
   ASS(toDo.isEmpty());
-  toDo.push(std::make_pair(std::move(s), std::move(t)));
+  toDo.push(std::make_pair(s, t));
 
   // Save encountered unification pairs to avoid
   // recomputing their unification

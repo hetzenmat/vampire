@@ -41,6 +41,7 @@ public:
   PreUnification& operator=(PreUnification&&) = default;
   PreUnification(PreUnification&&) = default;
   PreUnification(TypedTermList query, Data data, bool funcExt) {}
+  PreUnification(TypedTermList query, Data data) : PreUnification(query, data, env.options->functionExtensionality() == Options::FunctionExtensionality::ABSTRACTION) {}
   bool hasNext() { NOT_IMPLEMENTED; }
   _ElementType next() { NOT_IMPLEMENTED; }
 
@@ -49,12 +50,21 @@ private:
 };
 
 // TODO if we implement solid fragment, this will not work...
-enum class OracleResult
-{
-  SUCCESS=1,
-  FAILURE=2,
-  OUT_OF_FRAGMENT=3
+enum class OracleResult {
+  SUCCESS,
+  FAILURE,
+  OUT_OF_FRAGMENT
 };
+
+OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub) {
+
+  // var can be an eta expanded var due to the normalisation of lambda prefixes
+
+  auto res = var.term.isEtaExpandedVar();
+  if (res.isNone())
+    return OracleResult::OUT_OF_FRAGMENT;
+  var = TermSpec(res.unwrap(), var.index);
+}
 
 //class HOLInstantiation;
 //class HOLGeneralisation;

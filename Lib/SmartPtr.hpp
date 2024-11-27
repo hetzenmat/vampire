@@ -39,7 +39,7 @@ private:
 
 public:
   inline
-  SmartPtr() : _obj(0), _refCnt(0) {}
+  explicit SmartPtr() : _obj(0), _refCnt(0) {}
   /**
    * Create a smart pointer containing pointer @b obj. If @b nondisposable
    * is true, the object will not be destroyed even after all references to

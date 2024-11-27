@@ -302,11 +302,12 @@ bool HOL::splittable(TermList t, bool topLevel) {
   return true;
 }
 
-bool HOL::isEtaExpandedVar(TermList t, TermList& var){
-  // TODO code sharing with Eta reducer above
+Option<TermList> HOL::isEtaExpandedVar(const TermList& t) {
+
+  // TODO code sharing with Eta reducer
   TermList body = t;
   unsigned l = 0; // number of lambda binders
-  while(body.isLambdaTerm()){
+  while (body.isLambdaTerm()) {
     l++;
     body = body.lambdaBody();
   }
@@ -314,14 +315,17 @@ bool HOL::isEtaExpandedVar(TermList t, TermList& var){
   unsigned n = 0; // number of De bruijn indices at end of term
   while (body.isApplication()) {
     auto dbIndex = body.rhs().deBruijnIndex();
-    if (!dbIndex.isSome() || dbIndex.unwrap() != n)
+    if (dbIndex.isNone() || dbIndex.unwrap() != n)
       break;
     body = body.lhs();
     n++;
   }
 
-  var = body;
-  return n == l && var.isVar();
+  TermList var = body;
+
+  if (n == l && var.isVar())
+    return Option<TermList>(var);
+  return Option<TermList>();
 }
 
 void HOL::normaliseLambdaPrefixes(TermList& t1, TermList& t2) {

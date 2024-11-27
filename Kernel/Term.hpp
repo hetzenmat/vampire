@@ -292,7 +292,7 @@ public:
 
 
   bool isLambdaTerm() const;
-  bool isEtaExpandedVar(TermList& var) const;
+  Option<TermList> isEtaExpandedVar() const;
   bool isRedex();
   bool isNot() const;
   bool isSigma() const;

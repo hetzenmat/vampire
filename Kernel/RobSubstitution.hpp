@@ -134,22 +134,24 @@ struct TermSpec {
     if (t1.term.sameContent(t2.term)) {
       return t1.isVar() ? t1.index == t2.index 
                         : (t1.index == t2.index || t1.term.term()->ground());
-    } else {
-      if (t1.isTerm() != t2.isTerm()) return false;
-      if (t1.isVar()) {
-        ASS(t2.isVar() && (t1.term.var() != t2.term.var() || t1.term.isSpecialVar() != t2.term.isSpecialVar()))
-        return false;
-      }
-      return t1.functor() == t2.functor() 
-        && t1.allArgs().zip(t2.allArgs()).all([](auto pair) { return pair.first.deepEqCheck(pair.second); });
     }
+
+    if (t1.isTerm() != t2.isTerm())
+      return false;
+    if (t1.isVar()) {
+      ASS(t2.isVar() && (t1.term.var() != t2.term.var() || t1.term.isSpecialVar() != t2.term.isSpecialVar()))
+      return false;
+    }
+    return t1.functor() == t2.functor()
+      && t1.allArgs().zip(t2.allArgs()).all([](auto pair) { return pair.first.deepEqCheck(pair.second); });
+
   }
 
 
   TermList::Top top() const { return this->term.top(); }
   unsigned functor() const { return term.term()->functor(); }
 
-  TermList toTerm(Kernel::RobSubstitution& s) const;
+  TermList toTerm(const RobSubstitution& s) const;
 
   bool isSort() const
   { return this->term.term()->isSort(); }
@@ -435,7 +437,7 @@ private:
   bool match(TermSpec base, TermSpec instance);
   bool unify(TermSpec t1, TermSpec t2);
   bool applicativeUnify(TermSpec t1, TermSpec t2);
-  bool occurs(VarSpec const& vs, TermSpec const& ts);
+  bool occurs(VarSpec const& vs, TermSpec const& ts) const;
 
   TermSpec root(TermSpec v) const {
     ASS(v.isVar())
