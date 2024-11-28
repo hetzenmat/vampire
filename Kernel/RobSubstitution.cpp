@@ -142,16 +142,14 @@ TermSpec const& RobSubstitution::derefBound(TermSpec const& t_) const
 {
   TermSpec const* t = &t_;
   for(;;) {
-    if (t->isTerm()) {
+    if (t->isTerm())
       return *t;
-    } else {
-      auto binding = _bindings.find(t->varSpec());
-      if (!binding) {
-        return *t;
-      } else {
-        t = &binding.unwrap();
-      }
-    }
+
+    auto binding = _bindings.find(t->varSpec());
+    if (!binding)
+      return *t;
+
+    t = &binding.unwrap();
   }
 }
 

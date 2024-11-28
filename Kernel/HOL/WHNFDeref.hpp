@@ -28,7 +28,7 @@ public:
   WHNFDeref(RobSubstitution* sub) : _sub(sub) {
     dontTransformSorts();
   }
-  TermSpec normalise(TermSpec t);
+  TermList normalise(TermSpec t);
   // puts term into weak head normal form
   TermList transformSubterm(TermList t) override;
   bool exploreSubterms(TermList orig, TermList newTerm) override;

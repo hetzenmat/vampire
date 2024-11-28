@@ -25,7 +25,7 @@ public:
   SortDeref(RobSubstitution* sub, int index) : _sub(sub), _index(index) {}
   explicit SortDeref(RobSubstitution* sub) : _sub(sub), _index(-1) {}
 
-  TermSpec deref(TermList term);
+  TermSpec deref(TermSpec term);
   TermList transformSubterm(TermList t) override;
   void onTermEntry(Term* t) override;
   void onTermExit(Term* t) override;

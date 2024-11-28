@@ -13,13 +13,14 @@
 
 #include "Kernel/HOL/SortDeref.hpp"
 
-TermSpec SortDeref::deref(TermList term)
+TermSpec SortDeref::deref(TermSpec t)
 {
+  const auto term = t.term;
   // assume term var here
   if (term.isVar() || !term.term()->hasTermVar())
     return {term, _index};
 
-  return {transform(term), _index};
+  return {transform(term), t.index};
 }
 
 TermList SortDeref::transformSubterm(TermList t)

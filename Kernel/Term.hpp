@@ -319,7 +319,7 @@ public:
   TermList result();
   TermList finalResult();
   // return the weak head normal form of the term
-  TermList whnfDeref(RobSubstitution* sub);
+  TermList whnfDeref(RobSubstitution* sub, int index);
 
   TermList toBank(VarBank bank);
   // Use with care! Make sure that it is a term before calling

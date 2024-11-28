@@ -13,26 +13,32 @@
 
 #include "Kernel/HOL/WHNFDeref.hpp"
 
-TermSpec WHNFDeref::normalise(TermSpec t) {
-  THROW_MH("");
-  _index = t.index;
-  // term transformer does not work at the top level...
-  auto transformed = transformSubterm(t.term);
+#include "HOL.hpp"
+#include "RedexReducer.hpp"
+#include "SortDeref.hpp"
 
-  // return transformed.isLambdaTerm() ? transform(transformed) : transformed;
+TermList WHNFDeref::normalise(TermSpec t) {
+  _index = t.index;
+  TermList term = t.term;
+  term = transformSubterm(term);
+  return term.isLambdaTerm() ? transform(term) : term;
 }
 
 TermList WHNFDeref::transformSubterm(TermList t) {
-  THROW_MH("");
-
-  /*if(t.isLambdaTerm()) return t;
+  if(t.isLambdaTerm())
+    return t;
 
   TermList head;
   TermList sort;
   TermStack args;
   HOL::getHeadSortAndArgs(t, head, sort, args);
-  TermList newHead = _sub->derefBound(head);
-  newHead = SortDeref(_sub).deref(newHead);
+
+  TermSpec _newHead = _sub->derefBound({head, _index});
+  ASS(_newHead.index == _index)
+  _newHead = SortDeref(_sub).deref(_newHead);
+  ASS(_newHead.index == _index)
+
+  TermList newHead = _newHead.term;
 
   // if the head is a bound variable, then
   // either it is bound to a lambda term creating a redex on dereferencing,
@@ -40,29 +46,29 @@ TermList WHNFDeref::transformSubterm(TermList t) {
   // that the head has changed
   bool headDereffed = newHead != head;
 
-  while(HOL::canHeadReduce(newHead, args)){
+  while (HOL::canHeadReduce(newHead, args)) {
     headDereffed = false;
     t = RedexReducer().reduce(newHead, args);
-    if(t.isLambdaTerm()) break;
+    if (t.isLambdaTerm())
+      break;
     HOL::getHeadSortAndArgs(t, head, sort, args);
-    newHead = _sub->derefBound(head);
-    newHead = SortDeref(_sub).deref(newHead);
+
+    _newHead = _sub->derefBound({head, _index});
+    ASS(_newHead.index == _index)
+    _newHead = SortDeref(_sub).deref(_newHead);
+    ASS(_newHead.index == _index)
+    newHead = _newHead.term;
+
     headDereffed = newHead != head;
   }
 
-  return !headDereffed ? t :
-         !args.size()  ? newHead : // TOOD MH maybe use args.empty() instead of !args.size()
-                         HOL::app(sort, newHead, args);
-*/
-
-  /*if(!headDereffed){
+  if (!headDereffed)
     return t;
-  } else if(!args.size()){
-    return newHead;
-  } else {
-    return HOL::app(sort, newHead, args);
-  }*/
 
+  if(!args.size())
+    return newHead;
+
+  return HOL::app(sort, newHead, args);
 }
 
 bool WHNFDeref::exploreSubterms(TermList orig, TermList newTerm) {

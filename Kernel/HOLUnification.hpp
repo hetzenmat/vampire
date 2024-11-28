@@ -56,15 +56,7 @@ enum class OracleResult {
   OUT_OF_FRAGMENT
 };
 
-OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub) {
-
-  // var can be an eta expanded var due to the normalisation of lambda prefixes
-
-  auto res = var.term.isEtaExpandedVar();
-  if (res.isNone())
-    return OracleResult::OUT_OF_FRAGMENT;
-  var = TermSpec(res.unwrap(), var.index);
-}
+OracleResult fixpointUnify(TermSpec var, TermSpec t, RobSubstitution* sub);
 
 //class HOLInstantiation;
 //class HOLGeneralisation;

@@ -29,6 +29,7 @@
 #include "Term.hpp"
 #include "FormulaVarIterator.hpp"
 #include "HOL/HOL.hpp"
+#include "HOL/WHNFDeref.hpp"
 
 using namespace std;
 using namespace Lib;
@@ -337,9 +338,8 @@ TermList TermList::finalResult(){
   return isVar() || !isArrowSort() ? *this : static_cast<AtomicSort*>(term())->finalResult();
 }
 
-TermList TermList::whnfDeref(RobSubstitution* sub) {
-  THROW_MH("");
-  // return WHNFDeref(sub).normalise(*this);
+TermList TermList::whnfDeref(RobSubstitution* sub, int index) {
+  return WHNFDeref(sub).normalise({*this, index});
 }
 
 TermList Term::head() {
