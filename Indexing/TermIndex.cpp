@@ -45,8 +45,7 @@ void SuperpositionSubtermIndex::handleClause(Clause* c, bool adding)
   unsigned selCnt=c->numSelected();
   for (unsigned i=0; i<selCnt; i++) {
     Literal* lit=(*c)[i];
-    auto rsti = env.options->combinatorySup() ? EqHelper::getFoSubtermIterator(lit,_ord)
-                                              : EqHelper::getSubtermIterator(lit,_ord);
+    auto rsti = EqHelper::getSubtermIterator(lit,_ord);
     while (rsti.hasNext()) {
       auto tt = TypedTermList(rsti.next());
       ((TermSubstitutionTree<TermLiteralClause>*)&*_is)->handle(TermLiteralClause{ tt, lit, c }, adding);
@@ -223,32 +222,7 @@ void StructInductionTermIndex::handleClause(Clause* c, bool adding)
 // Indices for higher-order inferences from here on//
 /////////////////////////////////////////////////////
 
-void SubVarSupSubtermIndex::handleClause(Clause* c, bool adding)
-{
-  DHSet<unsigned> unstableVars;
-  c->collectUnstableVars(unstableVars);
 
-  unsigned selCnt=c->numSelected();
-  for (unsigned i=0; i<selCnt; i++) {
-    Literal* lit=(*c)[i];
-    auto rvi = EqHelper::getRewritableVarsIterator(&unstableVars, lit,_ord);
-    while(rvi.hasNext()){
-      _is->handle(TermLiteralClause{ rvi.next(), lit, c }, adding);
-    }
-  }
-}
-
-void SubVarSupLHSIndex::handleClause(Clause* c, bool adding)
-{
-  unsigned selCnt=c->numSelected();
-  for (unsigned i=0; i<selCnt; i++) {
-    Literal* lit=(*c)[i];
-    auto lhsi = EqHelper::getSubVarSupLHSIterator(lit, _ord);
-    while (lhsi.hasNext()) {
-      _is->handle(TermLiteralClause{ lhsi.next(), lit, c }, adding);
-    }
-  }
-}
 void PrimitiveInstantiationIndex::populateIndex()
 {
   typedef ApplicativeHelper AH;

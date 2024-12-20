@@ -83,8 +83,6 @@
 #include "Inferences/Induction.hpp"
 #include "Inferences/ArithmeticSubtermGeneralization.hpp"
 #include "Inferences/TautologyDeletionISE.hpp"
-#include "Inferences/CombinatorDemodISE.hpp"
-#include "Inferences/CombinatorNormalisationISE.hpp"
 #include "Inferences/BoolSimp.hpp"
 #include "Inferences/CasesSimp.hpp"
 #include "Inferences/Cases.hpp"
@@ -1675,11 +1673,6 @@ ImmediateSimplificationEngine *SaturationAlgorithm::createISE(Problem& prb, cons
       break;
     case Options::Condensation::OFF:
       break;
-  }
-
-  if (env.options->combinatorySup()) {
-    res->addFront(new CombinatorDemodISE());
-    res->addFront(new CombinatorNormalisationISE());
   }
 
   if (env.options->choiceReasoning()) {

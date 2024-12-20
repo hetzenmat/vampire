@@ -346,9 +346,6 @@ public:
   unsigned getNumeralWeight() const;
 
   void collectVars(DHSet<unsigned>& acc);
-  void collectUnstableVars(DHSet<unsigned>& acc);
-
-
   unsigned varCnt();
   unsigned maxVar(); // useful to create fresh variables w.r.t. the clause
 

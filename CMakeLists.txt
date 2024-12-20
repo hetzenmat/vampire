@@ -295,22 +295,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Kernel/PolynomialNormalizer.cpp
     Kernel/ApplicativeHelper.hpp
     Kernel/ApplicativeHelper.cpp
-    Kernel/SKIKBO.hpp
-    Kernel/SKIKBO.cpp
     Inferences/CNFOnTheFly.cpp
     Inferences/CNFOnTheFly.hpp
-    Inferences/CombinatorDemodISE.cpp
-    Inferences/CombinatorDemodISE.hpp
-    Inferences/CombinatorNormalisationISE.hpp
-    Inferences/CombinatorNormalisationISE.cpp
-    Inferences/ArgCong.hpp
-    Inferences/ArgCong.cpp
-    Inferences/NegativeExt.cpp
-    Inferences/NegativeExt.hpp
-    Inferences/Narrow.hpp
-    Inferences/Narrow.cpp
-    Inferences/SubVarSup.hpp
-    Inferences/SubVarSup.cpp
     Inferences/BoolEqToDiseq.hpp
     Inferences/BoolEqToDiseq.cpp
     Inferences/PrimitiveInstantiation.cpp
@@ -325,12 +311,8 @@ set(VAMPIRE_KERNEL_SOURCES
     Inferences/BoolSimp.cpp
     Inferences/CasesSimp.cpp
     Inferences/CasesSimp.hpp
-    Inferences/Cases.cpp
-    Inferences/Cases.hpp
     Inferences/ProofExtra.hpp
     Inferences/ProofExtra.cpp
-    Shell/LambdaElimination.cpp
-    Shell/LambdaElimination.hpp
     )
 source_group(kernel_source_files FILES ${VAMPIRE_KERNEL_SOURCES})
 
@@ -730,7 +712,6 @@ set(UNIT_TESTS
     UnitTests/tBinaryHeap.cpp
     UnitTests/tSafeRecursion.cpp
     UnitTests/tKBO.cpp
-    UnitTests/tSKIKBO.cpp
     UnitTests/tLPO.cpp
     UnitTests/tRatioKeeper.cpp
     UnitTests/tOptionConstraints.cpp

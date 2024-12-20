@@ -246,17 +246,6 @@ TermList ApplicativeHelper::getHead(Term* t)
   return trm;
 }
 
-bool ApplicativeHelper::isComb(const TermList head)
-{
-  if(head.isVar()){ return false; }
-  return env.signature->getFunction(head.term()->functor())->combinator() != Signature::NOT_COMB;
-}
-
-Signature::Combinator ApplicativeHelper::getComb (const TermList head) 
-{
-  return env.signature->getFunction(head.term()->functor())->combinator();
-}
-
 Signature::Proxy ApplicativeHelper::getProxy(const TermList t)
 {
   if(t.isVar()){
@@ -265,38 +254,6 @@ Signature::Proxy ApplicativeHelper::getProxy(const TermList t)
   return env.signature->getFunction(t.term()->functor())->proxy();
 }
 
-bool ApplicativeHelper::isUnderApplied(TermList head, unsigned argNum){
-  ASS(isComb(head));
-  Signature::Combinator c = getComb(head);
-  return ((c == Signature::I_COMB && argNum < 1) ||
-          (c == Signature::K_COMB && argNum < 2) ||
-          (c == Signature::B_COMB && argNum < 3) ||
-          (c == Signature::C_COMB && argNum < 3) ||
-          (c == Signature::S_COMB && argNum < 3));
-}
-
-bool ApplicativeHelper::isExactApplied(TermList head, unsigned argNum){
-  ASS(isComb(head));
-  Signature::Combinator c = getComb(head);
-  return ((c == Signature::I_COMB && argNum == 1) ||
-          (c == Signature::K_COMB && argNum == 2) ||
-          (c == Signature::B_COMB && argNum == 3) ||
-          (c == Signature::C_COMB && argNum == 3) ||
-          (c == Signature::S_COMB && argNum == 3));
-
-}
-
-
-bool ApplicativeHelper::isOverApplied(TermList head, unsigned argNum){
-  ASS(isComb(head));
-  Signature::Combinator c = getComb(head);
-  return ((c == Signature::I_COMB && argNum > 1) ||
-          (c == Signature::K_COMB && argNum > 2) ||
-          (c == Signature::B_COMB && argNum > 3) ||
-          (c == Signature::C_COMB && argNum > 3) ||
-          (c == Signature::S_COMB && argNum > 3));
-
-}
 
 bool ApplicativeHelper::isBool(TermList t){
   return isTrue(t) || isFalse(t);
@@ -308,19 +265,4 @@ bool ApplicativeHelper::isTrue(TermList term){
 
 bool ApplicativeHelper::isFalse(TermList term){
   return term.isTerm() && env.signature->isFoolConstantSymbol(false, term.term()->functor());
-}
-
-bool ApplicativeHelper::isSafe(TermStack& args)
-{
-  for(unsigned i = 0; i < args.size(); i++){
-    TermList ithArg = args[i];
-    /*if(ithArg.isVar() || !ithArg.term()->ground()){
-      return false;
-    }*/
-    TermList head = getHead(ithArg);
-    if(isComb(head) || head.isVar()){
-      return false;
-    }
-  }
-  return true;
 }

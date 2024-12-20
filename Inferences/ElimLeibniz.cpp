@@ -156,13 +156,6 @@ afterLoop:
   }
 
   TermList t2 = AH::createAppTerm(SH::getResultSort(vEquals.term()), vEquals, lerPosLit.arg);
-  
-  TermList typeArgs[] = {argS, AtomicSort::boolSort(), AtomicSort::boolSort()};
-  unsigned b_comb = env.signature->getCombinator(Signature::B_COMB);
-  
-  TermList bComb  = TermList(Term::create(b_comb, 3, typeArgs));
-  TermList vNot   = TermList(Term::createConstant(env.signature->getNotProxy()));
-  t2 = AH::createAppTerm3(SH::getResultSort(bComb.term()), bComb,vNot,t2);
 
   if(subst.unify(var, 0, t2, 0)){
     Clause* c = createConclusion(premise, newLit, posLit, negLit, subst);
